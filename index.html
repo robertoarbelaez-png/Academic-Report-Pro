@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Report Pro | Generador de Informes Académicos</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* ===== TEMA CLARO (default) ===== */
+        body {
+            background-color: #f5f5f5;
+            color: #1a1a1a;
+            transition: all 0.2s ease;
+        }
+        
+        /* ===== TEMA OSCURO ===== */
+        body.dark {
+            background-color: #0a0a0a;
+            color: #e5e5e5;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #eaeaea;
+            transition: all 0.2s ease;
+        }
+        
+        body.dark .card {
+            background: #111111;
+            border-color: #2a2a2a;
+        }
+        
+        /* Inputs */
+        .input-minimal {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            color: #1a1a1a;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .input-minimal:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        
+        body.dark .input-minimal {
+            background: #1a1a1a;
+            border-color: #333333;
+            color: #e5e5e5;
+        }
+        
+        body.dark .input-minimal:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+        
+        body.dark .input-minimal::placeholder {
+            color: #666666;
+        }
+        
+        /* Textareas */
+        .textarea-minimal {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            color: #1a1a1a;
+            font-size: 14px;
+            resize: vertical;
+            transition: all 0.2s ease;
+        }
+        
+        .textarea-minimal:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        
+        body.dark .textarea-minimal {
+            background: #1a1a1a;
+            border-color: #333333;
+            color: #e5e5e5;
+        }
+        
+        body.dark .textarea-minimal:focus {
+            border-color: #3b82f6;
+        }
+        
+        body.dark .textarea-minimal::placeholder {
+            color: #666666;
+        }
+        
+        /* Labels */
+        label {
+            color: #4a4a4a;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        body.dark label {
+            color: #b0b0b0;
+        }
+        
+        /* Tabs */
+        .tab {
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            color: #666666;
+            background: transparent;
+        }
+        
+        .tab:hover {
+            background: #f0f0f0;
+            color: #1a1a1a;
+        }
+        
+        .tab.active {
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        body.dark .tab {
+            color: #999999;
+        }
+        
+        body.dark .tab:hover {
+            background: #2a2a2a;
+            color: white;
+        }
+        
+        body.dark .tab.active {
+            background: white;
+            color: #1a1a1a;
+        }
+        
+        /* Botón primario */
+        .btn-primary {
+            background: #1a1a1a;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            background: #333333;
+            transform: scale(0.98);
+        }
+        
+        body.dark .btn-primary {
+            background: white;
+            color: #1a1a1a;
+        }
+        
+        body.dark .btn-primary:hover {
+            background: #e0e0e0;
+        }
+        
+        /* Botón secundario */
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #e0e0e0;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            color: #4a4a4a;
+        }
+        
+        .btn-secondary:hover {
+            background: #f5f5f5;
+        }
+        
+        body.dark .btn-secondary {
+            border-color: #333333;
+            color: #b0b0b0;
+        }
+        
+        body.dark .btn-secondary:hover {
+            background: #2a2a2a;
+            color: white;
+        }
+        
+        /* Feature items */
+        .feature-item {
+            padding: 16px;
+            border-radius: 16px;
+            border: 1px solid #eaeaea;
+            background: white;
+            transition: all 0.2s ease;
+        }
+        
+        .feature-item:hover {
+            border-color: #3b82f6;
+        }
+        
+        body.dark .feature-item {
+            background: #111111;
+            border-color: #2a2a2a;
+        }
+        
+        body.dark .feature-item h4 {
+            color: #e5e5e5;
+        }
+        
+        body.dark .feature-item p {
+            color: #888888;
+        }
+        
+        /* Checkbox */
+        .checkbox-minimal {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cccccc;
+            border-radius: 5px;
+            cursor: pointer;
+            appearance: none;
+            transition: all 0.2s ease;
+            background: white;
+        }
+        
+        .checkbox-minimal:checked {
+            background: #1a1a1a;
+            border-color: #1a1a1a;
+            position: relative;
+        }
+        
+        .checkbox-minimal:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 11px;
+        }
+        
+        body.dark .checkbox-minimal {
+            background: #1a1a1a;
+            border-color: #444444;
+        }
+        
+        body.dark .checkbox-minimal:checked {
+            background: white;
+            border-color: white;
+        }
+        
+        body.dark .checkbox-minimal:checked::after {
+            color: #1a1a1a;
+        }
+        
+        /* Span de checkboxes */
+        body.dark label span {
+            color: #b0b0b0;
+        }
+        
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: #eaeaea;
+            margin: 24px 0;
+        }
+        
+        body.dark .divider {
+            background: #2a2a2a;
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: #f0f0f0;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #444444;
+        }
+        
+        body.dark .badge {
+            background: #2a2a2a;
+            color: #b0b0b0;
+        }
+        
+        /* Header */
+        .header {
+            padding: 24px 0;
+            border-bottom: 1px solid #eaeaea;
+            margin-bottom: 32px;
+        }
+        
+        body.dark .header {
+            border-bottom-color: #2a2a2a;
+        }
+        
+        /* Logo text */
+        .logo-text {
+            font-weight: 600;
+            font-size: 18px;
+            color: #1a1a1a;
+        }
+        
+        body.dark .logo-text {
+            color: #e5e5e5;
+        }
+        
+        /* Hero text */
+        h1 {
+            color: #1a1a1a;
+        }
+        
+        body.dark h1 {
+            color: #e5e5e5;
+        }
+        
+        .hero-subtitle {
+            color: #666666;
+        }
+        
+        body.dark .hero-subtitle {
+            color: #888888;
+        }
+        
+        /* Info boxes */
+        .info-blue {
+            background: #eff6ff;
+            color: #1e40af;
+        }
+        
+        body.dark .info-blue {
+            background: #1e3a5f;
+            color: #93c5fd;
+        }
+        
+        .info-purple {
+            background: #faf5ff;
+            color: #6b21a5;
+        }
+        
+        body.dark .info-purple {
+            background: #3b0764;
+            color: #d8b4fe;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cccccc;
+            border-radius: 10px;
+        }
+        
+        body.dark ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
+        body.dark ::-webkit-scrollbar-thumb {
+            background: #444444;
+        }
+        
+        /* Contenedor */
+        .container-custom {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        /* Footer */
+        .footer-text {
+            color: #999999;
+            font-size: 12px;
+        }
+        
+        body.dark .footer-text {
+            color: #555555;
+        }
+        
+        /* Tema buttons */
+        .theme-btn {
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+        }
+        
+        .theme-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        body.dark .theme-btn:hover {
+            background: #2a2a2a;
+        }
+        
+        .theme-btn i {
+            font-size: 16px;
+            color: #666666;
+        }
+        
+        body.dark .theme-btn i {
+            color: #999999;
+        }
+        
+        /* Animación */
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container-custom">
+        
+        <!-- Header -->
+        <div class="header flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-alt text-white dark:text-black text-sm"></i>
+                </div>
+                <span class="logo-text">Academic Report Pro</span>
+                <span class="badge">Beta</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <button id="temaClaro" class="theme-btn" title="Modo claro">
+                    <i class="fas fa-sun"></i>
+                </button>
+                <button id="temaOscuro" class="theme-btn" title="Modo oscuro">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Hero -->
+        <div class="mb-10 text-center">
+            <h1 class="text-3xl font-bold mb-2">Generador de Informes Académicos</h1>
+            <p class="hero-subtitle text-sm">Crea informes profesionales con formato académico en minutos</p>
+        </div>
+        
+        <!-- Card principal -->
+        <div class="card p-6 mb-8 fade-in">
+            
+            <!-- Tabs -->
+            <div class="flex gap-1 mb-6 border-b border-gray-100 dark:border-gray-800 pb-2">
+                <button id="btnManual" class="tab active">
+                    <i class="fas fa-pen-alt mr-2 text-xs"></i> Manual
+                </button>
+                <button id="btnAuto" class="tab">
+                    <i class="fas fa-robot mr-2 text-xs"></i> Automático
+                </button>
+                <button id="btnRapido" class="tab">
+                    <i class="fas fa-bolt mr-2 text-xs"></i> Rápido
+                </button>
+            </div>
+            
+            <!-- Tema -->
+            <div class="mb-5">
+                <label class="block text-sm font-medium mb-2">Tema del informe</label>
+                <div class="flex gap-3">
+                    <input type="text" id="temaInput" placeholder="Ej: Impacto de la inteligencia artificial en la educación" 
+                           class="input-minimal flex-1">
+                    <button id="btnEjemplo" class="btn-secondary">
+                        <i class="fas fa-eye mr-1"></i> Ejemplo
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Opciones secciones -->
+            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-xl">
+                <div class="flex flex-wrap gap-5">
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" id="incluirResumen" class="checkbox-minimal">
+                        <span>Resumen ejecutivo</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" id="incluirResultados" checked class="checkbox-minimal">
+                        <span>Resultados</span>
+                    </label>
+                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" id="incluirRecomendaciones" checked class="checkbox-minimal">
+                        <span>Recomendaciones</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- MODO MANUAL -->
+            <div id="modoManual" class="space-y-4">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Estudiante</label>
+                        <input type="text" id="nombreManual" placeholder="Nombre completo" class="input-minimal">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Profesor</label>
+                        <input type="text" id="profesorManual" placeholder="Nombre del docente" class="input-minimal">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Asignatura</label>
+                        <input type="text" id="asignaturaManual" placeholder="Nombre de la materia" class="input-minimal">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Institución</label>
+                        <input type="text" id="institucionManual" placeholder="Universidad" class="input-minimal">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Fecha de entrega</label>
+                        <input type="text" id="fechaEntregaManual" placeholder="DD/MM/AAAA" class="input-minimal">
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div>
+                    <label class="block font-medium mb-2">1. Introducción</label>
+                    <textarea id="introManual" rows="4" placeholder="Contexto, problema, justificación..." class="textarea-minimal"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block font-medium mb-2">2. Objetivos</label>
+                    <textarea id="objetivosManual" rows="3" placeholder="Objetivo general + objetivos específicos..." class="textarea-minimal"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block font-medium mb-2">3. Marco Teórico</label>
+                    <textarea id="marcoManual" rows="4" placeholder="Antecedentes, bases teóricas..." class="textarea-minimal"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block font-medium mb-2">4. Metodología</label>
+                    <textarea id="metodologiaManual" rows="4" placeholder="Enfoque, muestra, instrumentos..." class="textarea-minimal"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block font-medium mb-2">5. Desarrollo</label>
+                    <textarea id="desarrolloManual" rows="5" placeholder="Análisis de resultados..." class="textarea-minimal"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block font-medium mb-2">6. Conclusiones</label>
+                    <textarea id="conclusionesManual" rows="3" placeholder="Hallazgos principales..." class="textarea-minimal"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block font-medium mb-2">7. Recomendaciones</label>
+                    <textarea id="recomendacionesManual" rows="3" placeholder="Sugerencias..." class="textarea-minimal"></textarea>
+                </div>
+            </div>
+            
+            <!-- MODO AUTOMÁTICO -->
+            <div id="modoAuto" class="space-y-4" style="display: none;">
+                <div class="p-4 info-blue rounded-xl text-sm">
+                    <i class="fas fa-info-circle mr-2"></i> Escribe todo lo que sabes sobre el tema. La IA organizará tu información.
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <input type="text" id="nombreAuto" placeholder="Nombre del estudiante" class="input-minimal">
+                    <input type="text" id="profesorAuto" placeholder="Profesor" class="input-minimal">
+                    <input type="text" id="asignaturaAuto" placeholder="Asignatura" class="input-minimal">
+                    <input type="text" id="institucionAuto" placeholder="Institución" class="input-minimal">
+                    <input type="text" id="fechaEntregaAuto" placeholder="Fecha de entrega" class="input-minimal md:col-span-2">
+                </div>
+                <textarea id="textoCompleto" rows="10" placeholder="Escribe aquí todo tu contenido..." class="textarea-minimal"></textarea>
+            </div>
+            
+            <!-- MODO RÁPIDO -->
+            <div id="modoRapido" class="space-y-4" style="display: none;">
+                <div class="p-4 info-purple rounded-xl text-sm">
+                    <i class="fas fa-bolt mr-2"></i> Solo escribe el tema y la IA generará el informe completo.
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <input type="text" id="nombreRapido" placeholder="Nombre (opcional)" class="input-minimal">
+                    <input type="text" id="profesorRapido" placeholder="Profesor (opcional)" class="input-minimal">
+                    <input type="text" id="asignaturaRapido" placeholder="Asignatura (opcional)" class="input-minimal">
+                    <input type="text" id="institucionRapido" placeholder="Institución (opcional)" class="input-minimal">
+                    <input type="text" id="fechaEntregaRapido" placeholder="Fecha (opcional)" class="input-minimal md:col-span-2">
+                </div>
+                <textarea id="temaRapido" rows="4" placeholder="Describe tu tema de investigación..." class="textarea-minimal"></textarea>
+            </div>
+            
+            <button id="btnGenerar" class="btn-primary mt-6">
+                <i class="fas fa-file-pdf mr-2"></i> Generar informe PDF
+            </button>
+        </div>
+        
+        <!-- Features -->
+        <div class="grid md:grid-cols-3 gap-4 mb-10">
+            <div class="feature-item flex items-center gap-4">
+                <i class="fas fa-robot text-gray-400 text-xl"></i>
+                <div>
+                    <h4 class="font-medium text-sm">IA integrada</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">Generación inteligente</p>
+                </div>
+            </div>
+            <div class="feature-item flex items-center gap-4">
+                <i class="fas fa-file-pdf text-gray-400 text-xl"></i>
+                <div>
+                    <h4 class="font-medium text-sm">PDF profesional</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">Formato académico</p>
+                </div>
+            </div>
+            <div class="feature-item flex items-center gap-4">
+                <i class="fas fa-graduation-cap text-gray-400 text-xl"></i>
+                <div>
+                    <h4 class="font-medium text-sm">Referencias reales</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">Fuentes verificadas</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="text-center py-8 border-t border-gray-100 dark:border-gray-800">
+            <p class="footer-text">Academic Report Pro — Generador de informes académicos con IA</p>
+        </div>
+    </div>
+    
+    <script>
+        let modoActual = 'manual';
+        let ultimoFilename = '';
+
+        // Tabs
+        function setModo(modo) {
+            modoActual = modo;
+            document.getElementById('modoManual').style.display = modo === 'manual' ? 'block' : 'none';
+            document.getElementById('modoAuto').style.display = modo === 'auto' ? 'block' : 'none';
+            document.getElementById('modoRapido').style.display = modo === 'rapido' ? 'block' : 'none';
+            
+            ['btnManual', 'btnAuto', 'btnRapido'].forEach(btn => {
+                const el = document.getElementById(btn);
+                if (btn === `btn${modo.charAt(0).toUpperCase() + modo.slice(1)}`) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+        
+        document.getElementById('btnManual').onclick = () => setModo('manual');
+        document.getElementById('btnAuto').onclick = () => setModo('auto');
+        document.getElementById('btnRapido').onclick = () => setModo('rapido');
+        
+        // Tema (guardado en localStorage)
+        function setTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        document.getElementById('temaClaro').onclick = () => setTheme('light');
+        document.getElementById('temaOscuro').onclick = () => setTheme('dark');
+        
+        // Cargar tema guardado
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark');
+        }
+        
+        // Ejemplo
+        document.getElementById('btnEjemplo').onclick = async () => {
+            Swal.fire({ 
+                title: 'Cargando ejemplo...', 
+                didOpen: () => Swal.showLoading(),
+                background: document.body.classList.contains('dark') ? '#1a1a1a' : '#ffffff',
+                color: document.body.classList.contains('dark') ? '#e5e5e5' : '#1a1a1a'
+            });
+            try {
+                const response = await fetch('/ejemplo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tipo: 'informatica' })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    const datos = result.datos;
+                    document.getElementById('temaInput').value = datos.tema;
+                    
+                    if (modoActual === 'manual') {
+                        document.getElementById('nombreManual').value = datos.nombre || '';
+                        document.getElementById('profesorManual').value = datos.profesor || '';
+                        document.getElementById('asignaturaManual').value = datos.asignatura || '';
+                        document.getElementById('institucionManual').value = datos.institucion || '';
+                        document.getElementById('introManual').value = datos.introduccion || '';
+                        document.getElementById('objetivosManual').value = datos.objetivos || '';
+                        document.getElementById('marcoManual').value = datos.marco_teorico || '';
+                        document.getElementById('metodologiaManual').value = datos.metodologia || '';
+                        document.getElementById('desarrolloManual').value = datos.desarrollo || '';
+                        document.getElementById('conclusionesManual').value = datos.conclusiones || '';
+                        document.getElementById('recomendacionesManual').value = datos.recomendaciones || '';
+                    } else if (modoActual === 'auto') {
+                        document.getElementById('nombreAuto').value = datos.nombre || '';
+                        document.getElementById('profesorAuto').value = datos.profesor || '';
+                        document.getElementById('asignaturaAuto').value = datos.asignatura || '';
+                        document.getElementById('institucionAuto').value = datos.institucion || '';
+                        document.getElementById('textoCompleto').value = datos.introduccion + '\n\n' + datos.desarrollo;
+                    } else {
+                        document.getElementById('nombreRapido').value = datos.nombre || '';
+                        document.getElementById('profesorRapido').value = datos.profesor || '';
+                        document.getElementById('asignaturaRapido').value = datos.asignatura || '';
+                        document.getElementById('institucionRapido').value = datos.institucion || '';
+                        document.getElementById('temaRapido').value = datos.tema;
+                    }
+                    Swal.fire('Ejemplo cargado', 'Los campos se han llenado.', 'success');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'No se pudo cargar el ejemplo', 'error');
+            }
+        };
+        
+        // Generar
+        document.getElementById('btnGenerar').onclick = async () => {
+            let datos = { modo: modoActual };
+            const temaComun = document.getElementById('temaInput').value;
+            
+            datos.incluir_resumen = document.getElementById('incluirResumen').checked;
+            datos.incluir_resultados = document.getElementById('incluirResultados').checked;
+            datos.incluir_recomendaciones = document.getElementById('incluirRecomendaciones').checked;
+            
+            if (modoActual === 'manual') {
+                datos.nombre = document.getElementById('nombreManual').value;
+                datos.profesor = document.getElementById('profesorManual').value;
+                datos.asignatura = document.getElementById('asignaturaManual').value;
+                datos.institucion = document.getElementById('institucionManual').value;
+                datos.tema = temaComun;
+                datos.fecha_entrega = document.getElementById('fechaEntregaManual').value;
+                datos.introduccion = document.getElementById('introManual').value;
+                datos.objetivos = document.getElementById('objetivosManual').value;
+                datos.marco_teorico = document.getElementById('marcoManual').value;
+                datos.metodologia = document.getElementById('metodologiaManual').value;
+                datos.desarrollo = document.getElementById('desarrolloManual').value;
+                datos.conclusiones = document.getElementById('conclusionesManual').value;
+                datos.recomendaciones = document.getElementById('recomendacionesManual').value;
+            } else if (modoActual === 'auto') {
+                datos.nombre = document.getElementById('nombreAuto').value;
+                datos.profesor = document.getElementById('profesorAuto').value;
+                datos.asignatura = document.getElementById('asignaturaAuto').value;
+                datos.institucion = document.getElementById('institucionAuto').value;
+                datos.tema = temaComun;
+                datos.fecha_entrega = document.getElementById('fechaEntregaAuto').value;
+                datos.texto_completo = document.getElementById('textoCompleto').value;
+            } else {
+                datos.nombre = document.getElementById('nombreRapido').value;
+                datos.profesor = document.getElementById('profesorRapido').value;
+                datos.asignatura = document.getElementById('asignaturaRapido').value;
+                datos.institucion = document.getElementById('institucionRapido').value;
+                datos.tema = temaComun || document.getElementById('temaRapido').value;
+                datos.fecha_entrega = document.getElementById('fechaEntregaRapido').value;
+                datos.texto_completo = document.getElementById('temaRapido').value;
+            }
+            
+            if (!datos.tema && !datos.texto_completo && !datos.introduccion) {
+                Swal.fire('Error', 'Por favor ingresa un tema', 'error');
+                return;
+            }
+            
+            Swal.fire({ 
+                title: 'Generando informe...', 
+                allowOutsideClick: false, 
+                didOpen: () => Swal.showLoading(),
+                background: document.body.classList.contains('dark') ? '#1a1a1a' : '#ffffff'
+            });
+            
+            try {
+                const response = await fetch('/generar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    ultimoFilename = result.filename;
+                    Swal.fire({
+                        title: '¡Informe listo!',
+                        icon: 'success',
+                        confirmButtonText: '<i class="fas fa-download mr-2"></i> Descargar PDF',
+                        background: document.body.classList.contains('dark') ? '#1a1a1a' : '#ffffff',
+                        color: document.body.classList.contains('dark') ? '#e5e5e5' : '#1a1a1a'
+                    }).then(() => {
+                        window.location.href = `/descargar/${ultimoFilename}`;
+                    });
+                } else {
+                    Swal.fire('Error', result.error, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'No se pudo generar', 'error');
+            }
+        };
+    </script>
+</body>
+</html>
