@@ -114,7 +114,6 @@
             margin-bottom: 40px;
         }
         
-        /* Tabs */
         .tabs {
             display: flex;
             gap: 8px;
@@ -315,14 +314,12 @@
         
         <div class="card">
             
-            <!-- TABS -->
             <div class="tabs">
                 <button class="tab active" onclick="setModo('manual')">✍️ Modo Manual</button>
                 <button class="tab" onclick="setModo('auto')">🤖 Modo Automático</button>
                 <button class="tab" onclick="setModo('rapido')">⚡ Modo Rápido</button>
             </div>
             
-            <!-- Campo común: Tema -->
             <div class="input-group">
                 <label><i class="fas fa-tag"></i> Tema del informe</label>
                 <input type="text" id="tema" placeholder="Ej: Impacto de la inteligencia artificial en la educación">
@@ -336,7 +333,6 @@
                 <input type="text" id="fechaEntrega" placeholder="Fecha de entrega (DD/MM/AAAA)">
             </div>
             
-            <!-- Selector de normas -->
             <div class="input-group">
                 <label><i class="fas fa-book"></i> Norma académica</label>
                 <select id="norma">
@@ -351,7 +347,6 @@
                 </select>
             </div>
             
-            <!-- Secciones opcionales -->
             <div class="seccion-check">
                 <h4><i class="fas fa-sliders-h"></i> Secciones a incluir</h4>
                 <div class="check-group">
@@ -361,25 +356,22 @@
                 </div>
             </div>
             
-            <!-- MODO MANUAL -->
             <div id="modoManual">
-                <textarea id="introManual" rows="4" placeholder="1. INTRODUCCIÓN (contexto, problema, justificación)" class="input-group"></textarea>
-                <textarea id="objetivosManual" rows="3" placeholder="2. OBJETIVOS (general y específicos)" class="input-group"></textarea>
-                <textarea id="marcoManual" rows="4" placeholder="3. MARCO TEÓRICO (antecedentes, bases teóricas)" class="input-group"></textarea>
-                <textarea id="metodologiaManual" rows="4" placeholder="4. METODOLOGÍA (enfoque, muestra, instrumentos)" class="input-group"></textarea>
-                <textarea id="desarrolloManual" rows="5" placeholder="5. DESARROLLO (análisis de resultados)" class="input-group"></textarea>
-                <textarea id="conclusionesManual" rows="3" placeholder="6. CONCLUSIONES (hallazgos principales)" class="input-group"></textarea>
-                <textarea id="recomendacionesManual" rows="3" placeholder="7. RECOMENDACIONES (opcional)" class="input-group"></textarea>
+                <textarea id="introManual" rows="4" placeholder="1. INTRODUCCIÓN" class="input-group"></textarea>
+                <textarea id="objetivosManual" rows="3" placeholder="2. OBJETIVOS" class="input-group"></textarea>
+                <textarea id="marcoManual" rows="4" placeholder="3. MARCO TEÓRICO" class="input-group"></textarea>
+                <textarea id="metodologiaManual" rows="4" placeholder="4. METODOLOGÍA" class="input-group"></textarea>
+                <textarea id="desarrolloManual" rows="5" placeholder="5. DESARROLLO" class="input-group"></textarea>
+                <textarea id="conclusionesManual" rows="3" placeholder="6. CONCLUSIONES" class="input-group"></textarea>
+                <textarea id="recomendacionesManual" rows="3" placeholder="7. RECOMENDACIONES" class="input-group"></textarea>
             </div>
             
-            <!-- MODO AUTOMÁTICO (oculto inicialmente) -->
             <div id="modoAuto" style="display:none;">
-                <textarea id="textoCompleto" rows="10" placeholder="Escribe aquí TODO lo que sabes sobre el tema. La IA organizará tu información automáticamente." class="input-group"></textarea>
+                <textarea id="textoCompleto" rows="10" placeholder="Escribe aquí TODO lo que sabes sobre el tema..." class="input-group"></textarea>
             </div>
             
-            <!-- MODO RÁPIDO (oculto inicialmente) -->
             <div id="modoRapido" style="display:none;">
-                <textarea id="temaRapido" rows="4" placeholder="Describe tu tema de investigación en una o dos frases..." class="input-group"></textarea>
+                <textarea id="temaRapido" rows="4" placeholder="Describe tu tema de investigación..." class="input-group"></textarea>
             </div>
             
             <button class="btn-generar" onclick="generarInforme()">
@@ -388,10 +380,10 @@
         </div>
         
         <div class="beneficios">
-            <div class="beneficio-card"><div class="beneficio-icon"><i class="fas fa-robot"></i></div><h3>IA integrada</h3><p>Generación inteligente</p></div>
-            <div class="beneficio-card"><div class="beneficio-icon"><i class="fas fa-graduation-cap"></i></div><h3>8 normas académicas</h3><p>APA, ICONTEC, Vancouver...</p></div>
-            <div class="beneficio-card"><div class="beneficio-icon"><i class="fas fa-search"></i></div><h3>Referencias reales</h3><p>arXiv + OpenAlex</p></div>
-            <div class="beneficio-card"><div class="beneficio-icon"><i class="fas fa-bolt"></i></div><h3>3 modos de uso</h3><p>Manual, Auto, Rápido</p></div>
+            <div class="beneficio-card"><div class="beneficio-icon"><i class="fas fa-robot"></i></div><h3>IA integrada</h3><p>Generación inteligente de contenido</p></div>
+            <div class="beneficio-card"><div class="beneficio-icon"><i class="fas fa-graduation-cap"></i></div><h3>8 normas académicas</h3><p>APA, ICONTEC, Vancouver, Harvard, MLA, IEEE, Chicago</p></div>
+            <div class="beneficio-card"><div class="beneficio-icon"><i class="fas fa-search"></i></div><h3>Referencias reales</h3><p>Búsqueda en arXiv y OpenAlex</p></div>
+            <div class="beneficio-card"><div class="beneficio-icon"><i class="fas fa-bolt"></i></div><h3>3 modos de uso</h3><p>Manual, Automático y Rápido</p></div>
         </div>
         
         <div class="footer">
@@ -414,8 +406,9 @@
         
         async function generarInforme() {
             const tema = document.getElementById('tema').value;
+            const temaRapido = document.getElementById('temaRapido').value;
             
-            if (!tema && modoActual !== 'manual') {
+            if (!tema && !temaRapido && modoActual !== 'manual') {
                 Swal.fire('Error', 'Por favor ingresa un tema para el informe', 'error');
                 return;
             }
@@ -453,6 +446,7 @@
                 datos.texto_completo = document.getElementById('textoCompleto').value;
             } else {
                 datos.texto_completo = document.getElementById('temaRapido').value;
+                datos.tema = document.getElementById('temaRapido').value;
             }
             
             try {
@@ -476,7 +470,7 @@
                     Swal.fire('Error', result.error, 'error');
                 }
             } catch (error) {
-                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+                Swal.fire('Error', 'No se pudo generar el informe', 'error');
             }
         }
     </script>
