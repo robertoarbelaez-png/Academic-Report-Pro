@@ -14,53 +14,155 @@ import requests
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
 
-# ========== REFERENCIAS REALES ==========
-REFERENCIAS = {
-    'informatica': [
-        "Tanenbaum, A. S. (2017). Organización de Computadores. Pearson.",
-        "Stallings, W. (2016). Sistemas Operativos. Pearson.",
-        "Laudon, K. C., & Laudon, J. P. (2021). Sistemas de Información Gerencial. Pearson."
-    ],
-    'default': [
-        "Hernández Sampieri, R. (2021). Metodología de la Investigación. McGraw-Hill.",
-        "Bisquerra Alzina, R. (2016). Metodología de la investigación educativa. La Muralla."
-    ]
-}
+# ========== CONFIGURACIÓN DE IA ==========
+# IMPORTANTE: En Render, configura esta variable de entorno
+OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-def obtener_referencias(tema):
-    tema_lower = tema.lower()
-    if 'informática' in tema_lower or 'computación' in tema_lower:
-        return REFERENCIAS['informatica']
-    return REFERENCIAS['default']
+def generar_con_ia(tema, tipo_contenido, info_usuario=""):
+    """Genera contenido REAL usando IA (OpenRouter + Gemini)"""
+    
+    if not OPENROUTER_API_KEY:
+        return None
+    
+    prompts = {
+        'introduccion': f"""Genera una INTRODUCCIÓN académica profesional sobre: "{tema}".
 
-# ========== GENERADOR DE CONTENIDO ==========
-def generar_contenido(tipo, tema, info_usuario=""):
+Información adicional del usuario: {info_usuario if info_usuario else 'No hay información adicional'}
+
+La introducción debe incluir:
+1. Contextualización del tema (por qué es importante hoy)
+2. Planteamiento del problema
+3. Justificación del estudio
+4. Estructura del informe
+
+Escribe en español, tono académico pero claro. EXTENSIÓN: 300-400 palabras.""",
+
+        'objetivos': f"""Genera los OBJETIVOS para un informe académico sobre "{tema}".
+
+Debe incluir:
+- 1 Objetivo General (que abarque todo el estudio)
+- 4 Objetivos Específicos (pasos concretos)
+
+Formato: Usa <b>Objetivo General</b> y luego <b>Objetivos Específicos</b> con numeración (1., 2., 3., 4.).""",
+
+        'marco_teorico': f"""Genera el MARCO TEÓRICO para un informe académico sobre "{tema}".
+
+Incluye:
+1. Antecedentes (qué se ha investigado antes)
+2. Bases teóricas (conceptos clave, autores relevantes)
+3. Estado del arte (investigaciones recientes)
+
+EXTENSIÓN: 400-500 palabras. Usa <b>subtítulos</b> para organizar.""",
+
+        'metodologia': f"""Genera la METODOLOGÍA para una investigación sobre "{tema}".
+
+Incluye:
+- Enfoque y tipo de investigación
+- Población y muestra
+- Instrumentos de recolección de datos
+- Procedimiento seguido
+
+EXTENSIÓN: 250-350 palabras.""",
+
+        'desarrollo': f"""Genera la sección de DESARROLLO/ANÁLISIS para un informe sobre "{tema}".
+
+Información base del usuario: {info_usuario if info_usuario else 'Sin información específica'}
+
+Incluye:
+1. Presentación de resultados
+2. Análisis de los hallazgos
+3. Discusión relacionando con el marco teórico
+
+EXTENSIÓN: 400-500 palabras.""",
+
+        'conclusiones': f"""Genera las CONCLUSIONES para un informe sobre "{tema}".
+
+Incluye:
+- Hallazgos principales (3-5 puntos concretos)
+- Limitaciones del estudio
+- Aportaciones del trabajo
+
+EXTENSIÓN: 250-300 palabras.""",
+
+        'recomendaciones': f"""Genera RECOMENDACIONES para un informe sobre "{tema}".
+
+Incluye:
+- Recomendaciones para la institución
+- Recomendaciones para docentes/investigadores
+- Recomendaciones para futuros estudios
+
+EXTENSIÓN: 200-250 palabras."""
+    }
+    
+    prompt = prompts.get(tipo_contenido, "")
+    if not prompt:
+        return None
+    
+    try:
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        data = {
+            "model": "google/gemini-2.0-flash-lite-preview-02-05:free",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "Eres un asistente académico profesional. Generas contenido de alta calidad para informes universitarios. Usas español formal pero claro. NUNCA inventas datos falsos."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "max_tokens": 1000,
+            "temperature": 0.7
+        }
+        
+        response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=60)
+        
+        if response.status_code == 200:
+            contenido = response.json()['choices'][0]['message']['content']
+            return contenido.replace('\n', '<br/>')
+        else:
+            print(f"Error IA: {response.status_code}")
+            return None
+            
+    except Exception as e:
+        print(f"Error conectando con IA: {e}")
+        return None
+
+def generar_contenido_local(tipo, tema, info_usuario=""):
+    """Contenido de respaldo (cuando no hay IA o falla)"""
     tema_limpio = tema if tema else "el tema de investigación"
     
-    if tipo == 'introduccion':
-        return f"""El presente informe académico aborda el estudio de {tema_limpio}, una temática de creciente relevancia en el contexto educativo actual.<br/><br/>
+    contenidos = {
+        'introduccion': f"""El presente informe académico aborda el estudio de {tema_limpio}, una temática de creciente relevancia en el contexto educativo actual.<br/><br/>
 
-<b>Contextualización del problema</b><br/>
+<b>Contextualización</b><br/>
 En las instituciones educativas, se ha observado que los estudiantes presentan dificultades significativas en la comprensión de los conceptos fundamentales relacionados con {tema_limpio}.<br/><br/>
 
 <b>Planteamiento del problema</b><br/>
 ¿Cuál es el nivel de comprensión y aplicación de los conceptos fundamentales de {tema_limpio} en los estudiantes?<br/><br/>
 
 <b>Justificación</b><br/>
-Este trabajo se justifica desde el punto de vista teórico, práctico e institucional, aportando al conocimiento existente y ofreciendo estrategias de mejora."""
-    
-    elif tipo == 'objetivos':
-        return f"""<b>Objetivo General</b><br/><br/>
+Este trabajo se justifica desde el punto de vista teórico, práctico e institucional, aportando al conocimiento existente y ofreciendo estrategias de mejora.<br/><br/>
+
+<b>Estructura del informe</b><br/>
+El documento se organiza en introducción, objetivos, marco teórico, metodología, desarrollo, conclusiones y recomendaciones.""",
+        
+        'objetivos': f"""<b>Objetivo General</b><br/><br/>
 Analizar la comprensión y aplicación de los conceptos fundamentales de {tema_limpio} en estudiantes de educación superior.<br/><br/><br/>
 
 <b>Objetivos Específicos</b><br/><br/>
 1. Identificar los conceptos teóricos básicos relacionados con {tema_limpio}.<br/><br/>
 2. Describir las dificultades más comunes que enfrentan los estudiantes.<br/><br/>
 3. Analizar la relación entre el dominio de {tema_limpio} y el rendimiento académico.<br/><br/>
-4. Proponer estrategias didácticas específicas para mejorar el aprendizaje."""
-    
-    elif tipo == 'marco_teorico':
-        return f"""<b>Antecedentes</b><br/><br/>
+4. Proponer estrategias didácticas específicas para mejorar el aprendizaje.""",
+        
+        'marco_teorico': f"""<b>Antecedentes</b><br/><br/>
 El estudio de {tema_limpio} ha sido abordado por diversos autores en las últimas décadas.<br/><br/>
 
 <b>Bases teóricas</b><br/><br/>
@@ -69,43 +171,79 @@ La teoría constructivista del aprendizaje proporciona el marco pedagógico fund
 <b>Conceptos clave</b><br/><br/>
 • Aprendizaje significativo<br/>
 • Competencia digital<br/>
-• Metacognición"""
-    
-    elif tipo == 'metodologia':
-        return f"""<b>Enfoque y tipo de investigación</b><br/><br/>
+• Metacognición<br/><br/>
+
+<b>Estado del arte</b><br/><br/>
+Investigaciones recientes demuestran que existe una correlación positiva entre el dominio de {tema_limpio} y el éxito académico.""",
+        
+        'metodologia': f"""<b>Enfoque y tipo de investigación</b><br/><br/>
 Enfoque mixto (cualitativo-cuantitativo), diseño no experimental transversal.<br/><br/>
 
-<b>Población y muestra</b><br/>
+<b>Población y muestra</b><br/><br/>
 Estudiantes de educación superior, muestra representativa.<br/><br/>
 
-<b>Instrumentos</b><br/>
+<b>Instrumentos</b><br/><br/>
 • Cuestionario estructurado<br/>
 • Prueba de conocimientos<br/>
-• Entrevistas semiestructuradas"""
-    
-    elif tipo == 'desarrollo':
-        return f"""<b>Análisis de resultados</b><br/><br/>
-Los hallazgos indican que el dominio de {tema_limpio} presenta variaciones significativas.<br/><br/>
+• Entrevistas semiestructuradas<br/><br/>
 
-<b>Dimensiones analizadas</b><br/>
-• Conocimientos teóricos<br/>
-• Habilidades prácticas<br/>
-• Actitudes hacia el aprendizaje"""
+<b>Procedimiento</b><br/><br/>
+Fase 1: Diseño y validación de instrumentos<br/>
+Fase 2: Recolección de datos<br/>
+Fase 3: Análisis e interpretación""",
+        
+        'desarrollo': f"""<b>Análisis de resultados</b><br/><br/>
+Los hallazgos indican que el dominio de {tema_limpio} presenta variaciones significativas entre los estudiantes evaluados.<br/><br/>
+
+<b>Dimensiones analizadas</b><br/><br/>
+• <b>Conocimientos teóricos:</b> Los estudiantes demuestran un dominio básico de los conceptos fundamentales.<br/><br/>
+• <b>Habilidades prácticas:</b> El rendimiento práctico muestra una correlación positiva con la teoría.<br/><br/>
+• <b>Actitudes:</b> La mayoría de los estudiantes considera {tema_limpio} relevante para su formación profesional.<br/><br/>
+
+<b>Discusión</b><br/><br/>
+Los resultados coinciden con lo reportado en la literatura especializada, confirmando la importancia de metodologías activas en el aprendizaje.""",
+        
+        'conclusiones': f"""1. Se ha logrado cumplir con los objetivos planteados en la investigación.<br/><br/>
+2. Las metodologías prácticas demostraron ser más efectivas que la instrucción exclusivamente teórica.<br/><br/>
+3. La experiencia previa es un factor determinante en el rendimiento académico.<br/><br/>
+4. No existen diferencias significativas por género en el aprendizaje.<br/><br/>
+5. Se requiere investigación adicional para generalizar los hallazgos a otras poblaciones.""",
+        
+        'recomendaciones': f"""<b>Para la institución educativa</b><br/><br/>
+1. Fortalecer los programas de formación en {tema_limpio}.<br/><br/>
+2. Invertir en infraestructura tecnológica y recursos didácticos.<br/><br/>
+
+<b>Para los docentes</b><br/><br/>
+3. Implementar metodologías activas como el aprendizaje basado en proyectos.<br/><br/>
+4. Diseñar materiales contextualizados según las necesidades de los estudiantes.<br/><br/>
+
+<b>Para futuras investigaciones</b><br/><br/>
+5. Realizar estudios longitudinales para evaluar el impacto a largo plazo.<br/><br/>
+6. Ampliar la muestra a diferentes contextos educativos."""
+    }
     
-    elif tipo == 'conclusiones':
-        return f"""1. Se ha logrado cumplir con los objetivos planteados.<br/><br/>
-2. Las metodologías prácticas demostraron mayor efectividad.<br/><br/>
-3. Se requiere investigación adicional para generalizar hallazgos."""
-    
-    elif tipo == 'recomendaciones':
-        return f"""<b>Para la institución</b><br/><br/>
-1. Fortalecer programas de formación.<br/><br/>
-<b>Para los docentes</b><br/>
-2. Implementar metodologías activas.<br/><br/>
-<b>Para futuros estudios</b><br/>
-3. Ampliar la muestra y el alcance."""
-    
-    return ""
+    return contenidos.get(tipo, "Contenido en desarrollo.")
+
+def generar_contenido(tipo, tema, info_usuario=""):
+    """Intenta usar IA primero, si falla usa contenido local"""
+    contenido_ia = generar_con_ia(tema, tipo, info_usuario)
+    if contenido_ia:
+        return contenido_ia
+    return generar_contenido_local(tipo, tema, info_usuario)
+
+# ========== REFERENCIAS ACADÉMICAS REALES ==========
+REFERENCIAS = {
+    'default': [
+        "Hernández Sampieri, R., Fernández Collado, C., & Baptista Lucio, P. (2021). Metodología de la Investigación (7ª ed.). McGraw-Hill.",
+        "Bisquerra Alzina, R. (2016). Metodología de la investigación educativa (6ª ed.). La Muralla.",
+        "Sabino, C. A. (2014). El proceso de investigación (4ª ed.). Episteme.",
+        "Flick, U. (2015). El diseño de la investigación cualitativa. Morata.",
+        "Taylor, S. J., & Bogdan, R. (2016). Introducción a los métodos cualitativos de investigación. Paidós."
+    ]
+}
+
+def obtener_referencias(tema):
+    return REFERENCIAS['default']
 
 # ========== GENERADOR DE PDF ==========
 class GeneradorPDF:
@@ -149,7 +287,7 @@ class GeneradorPDF:
         
         desarrollo = datos_usuario.get('desarrollo', '')
         if not desarrollo or len(desarrollo) < 50:
-            desarrollo = generar_contenido('desarrollo', tema)
+            desarrollo = generar_contenido('desarrollo', tema, texto_auto)
         
         conclusiones = datos_usuario.get('conclusiones', '')
         if not conclusiones or len(conclusiones) < 50:
@@ -161,7 +299,6 @@ class GeneradorPDF:
         
         referencias = obtener_referencias(tema)
         
-        # Generar PDF
         filename = f"informe_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:4]}.pdf"
         filepath = os.path.join('informes_generados', filename)
         
@@ -186,10 +323,8 @@ class GeneradorPDF:
         story.append(Paragraph("ÍNDICE", self.estilos['Titulo1']))
         indices = ["1. INTRODUCCIÓN", "2. OBJETIVOS", "3. MARCO TEÓRICO", "4. METODOLOGÍA",
                    "5. DESARROLLO", "6. CONCLUSIONES", "7. REFERENCIAS"]
-        if opciones.get('incluir_resultados', True):
-            indices.insert(5, "6. RESULTADOS")
         if opciones.get('incluir_recomendaciones', True):
-            indices.append("RECOMENDACIONES")
+            indices.insert(-1, "RECOMENDACIONES")
         
         for idx in indices:
             story.append(Paragraph(f"• {idx}", self.estilos['TextoJustificado']))
@@ -197,6 +332,7 @@ class GeneradorPDF:
         
         # SECCIONES
         contador = 1
+        
         story.append(Paragraph(f"{contador}. INTRODUCCIÓN", self.estilos['Titulo1']))
         story.append(Paragraph(introduccion.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
         story.append(PageBreak())
@@ -222,15 +358,6 @@ class GeneradorPDF:
         story.append(PageBreak())
         contador += 1
         
-        if opciones.get('incluir_resultados', True):
-            story.append(Paragraph(f"{contador}. RESULTADOS", self.estilos['Titulo1']))
-            data = [['Indicador', 'Valor', 'Observación'], ['Conocimiento teórico', '72.4/100', 'Dominio moderado'], ['Habilidades prácticas', '68.7/100', 'Requiere refuerzo']]
-            tabla = Table(data, colWidths=[1.8*inch, 1.5*inch, 2*inch])
-            tabla.setStyle(TableStyle([('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1a365d')), ('TEXTCOLOR', (0,0), (-1,0), colors.white), ('GRID', (0,0), (-1,-1), 0.5, colors.grey)]))
-            story.append(tabla)
-            story.append(PageBreak())
-            contador += 1
-        
         story.append(Paragraph(f"{contador}. CONCLUSIONES", self.estilos['Titulo1']))
         story.append(Paragraph(conclusiones.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
         story.append(PageBreak())
@@ -245,6 +372,7 @@ class GeneradorPDF:
         story.append(Paragraph(f"{contador}. REFERENCIAS", self.estilos['Titulo1']))
         for i, ref in enumerate(referencias, 1):
             story.append(Paragraph(f"{i}. {ref}", self.estilos['TextoJustificado']))
+            story.append(Spacer(1, 0.1*inch))
         
         doc.build(story)
         return filename, filepath
@@ -305,4 +433,5 @@ def descargar(filename):
     )
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
