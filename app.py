@@ -10,20 +10,33 @@ import uuid
 from datetime import datetime
 import re
 import requests
+import sys
 
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
 
 # ========== CONFIGURACIÓN DE IA ==========
-# IMPORTANTE: En Render, configura esta variable de entorno
+# La variable se lee desde el entorno (Render)
 OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# LOGS PARA DEPURACIÓN (aparecerán en Render)
+print("=" * 50)
+print("🚀 INICIANDO APLICACIÓN")
+print(f"🔑 API Key cargada: {'SÍ ✅' if OPENROUTER_API_KEY else 'NO ❌'}")
+print(f"📝 Longitud de la API Key: {len(OPENROUTER_API_KEY) if OPENROUTER_API_KEY else 0} caracteres")
+print(f"🌐 Puerto: {os.environ.get('PORT', '5000')}")
+print("=" * 50)
 
 def generar_con_ia(tema, tipo_contenido, info_usuario=""):
     """Genera contenido REAL usando IA (OpenRouter + Gemini)"""
     
+    # Si no hay API key, no intentar
     if not OPENROUTER_API_KEY:
+        print("❌ No hay API key configurada")
         return None
+    
+    print(f"🤖 Intentando generar {tipo_contenido} con IA para: {tema[:50]}...")
     
     prompts = {
         'introduccion': f"""Genera una INTRODUCCIÓN académica profesional sobre: "{tema}".
@@ -105,6 +118,10 @@ EXTENSIÓN: 200-250 palabras."""
             "Content-Type": "application/json"
         }
         
+        # Agregar identificador de la app
+        headers["HTTP-Referer"] = "https://academic-report-pro.onrender.com"
+        headers["X-Title"] = "Academic Report Pro"
+        
         data = {
             "model": "google/gemini-2.0-flash-lite-preview-02-05:free",
             "messages": [
@@ -117,25 +134,34 @@ EXTENSIÓN: 200-250 palabras."""
                     "content": prompt
                 }
             ],
-            "max_tokens": 1000,
-            "temperature": 0.7
+            "max_tokens": 1200,
+            "temperature": 0.8
         }
         
+        print(f"📡 Enviando petición a OpenRouter...")
         response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=60)
         
+        print(f"📡 Respuesta código: {response.status_code}")
+        
         if response.status_code == 200:
-            contenido = response.json()['choices'][0]['message']['content']
+            resultado = response.json()
+            contenido = resultado['choices'][0]['message']['content']
+            print(f"✅ IA generó {len(contenido)} caracteres")
             return contenido.replace('\n', '<br/>')
         else:
-            print(f"Error IA: {response.status_code}")
+            print(f"❌ Error HTTP {response.status_code}: {response.text[:200]}")
             return None
             
+    except requests.exceptions.Timeout:
+        print("❌ Timeout: La IA tardó demasiado en responder")
+        return None
     except Exception as e:
-        print(f"Error conectando con IA: {e}")
+        print(f"❌ Error conectando con IA: {str(e)}")
         return None
 
 def generar_contenido_local(tipo, tema, info_usuario=""):
     """Contenido de respaldo (cuando no hay IA o falla)"""
+    print(f"📝 Usando contenido local para {tipo}")
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
@@ -226,9 +252,14 @@ Los resultados coinciden con lo reportado en la literatura especializada, confir
 
 def generar_contenido(tipo, tema, info_usuario=""):
     """Intenta usar IA primero, si falla usa contenido local"""
+    # Intentar con IA
     contenido_ia = generar_con_ia(tema, tipo, info_usuario)
     if contenido_ia:
+        print(f"✅ Usando IA para {tipo}")
         return contenido_ia
+    
+    # Fallback a contenido local
+    print(f"⚠️ Usando contenido LOCAL para {tipo}")
     return generar_contenido_local(tipo, tema, info_usuario)
 
 # ========== REFERENCIAS ACADÉMICAS REALES ==========
@@ -267,6 +298,8 @@ class GeneradorPDF:
         profesor = datos_usuario.get('profesor', 'Docente') or "Docente"
         institucion = datos_usuario.get('institucion', 'Institución Educativa') or "Institución Educativa"
         fecha_entrega = datos_usuario.get('fecha_entrega', datetime.now().strftime('%d/%m/%Y'))
+        
+        print(f"\n📄 Generando informe para tema: {tema}")
         
         # Generar o usar contenido del usuario
         introduccion = datos_usuario.get('introduccion', '')
@@ -375,6 +408,7 @@ class GeneradorPDF:
             story.append(Spacer(1, 0.1*inch))
         
         doc.build(story)
+        print(f"✅ PDF generado: {filename}")
         return filename, filepath
 
 generador = GeneradorPDF()
@@ -382,6 +416,7 @@ generador = GeneradorPDF()
 # ========== RUTAS ==========
 @app.route('/')
 def index():
+    print("📄 Página principal solicitada")
     return render_template('index.html')
 
 @app.route('/generar', methods=['POST'])
@@ -390,6 +425,10 @@ def generar():
         datos = request.json
         modo = datos.get('modo', 'auto')
         texto_auto = datos.get('texto_completo', '') if modo in ['auto', 'rapido'] else ''
+        
+        print(f"\n📨 Solicitud de generación recibida")
+        print(f"   Modo: {modo}")
+        print(f"   Tema: {datos.get('tema', 'No especificado')}")
         
         opciones = {
             'incluir_resumen': datos.get('incluir_resumen', False),
@@ -422,10 +461,12 @@ def generar():
         })
     
     except Exception as e:
+        print(f"❌ Error en generación: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/descargar/<filename>')
 def descargar(filename):
+    print(f"📥 Descargando: {filename}")
     return send_file(
         os.path.join('informes_generados', filename),
         as_attachment=True,
@@ -434,4 +475,5 @@ def descargar(filename):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Servidor iniciado en puerto {port}")
     app.run(debug=False, host='0.0.0.0', port=port)
