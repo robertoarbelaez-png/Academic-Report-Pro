@@ -10,28 +10,24 @@ import uuid
 from datetime import datetime
 import re
 import requests
-import sys
 
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
 
 # ========== CONFIGURACIÓN DE IA ==========
-# La variable se lee desde el entorno (Render)
 OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# LOGS PARA DEPURACIÓN (aparecerán en Render)
+# LOGS PARA DEPURACIÓN
 print("=" * 50)
 print("🚀 INICIANDO APLICACIÓN")
 print(f"🔑 API Key cargada: {'SÍ ✅' if OPENROUTER_API_KEY else 'NO ❌'}")
 print(f"📝 Longitud de la API Key: {len(OPENROUTER_API_KEY) if OPENROUTER_API_KEY else 0} caracteres")
-print(f"🌐 Puerto: {os.environ.get('PORT', '5000')}")
 print("=" * 50)
 
 def generar_con_ia(tema, tipo_contenido, info_usuario=""):
-    """Genera contenido REAL usando IA (OpenRouter + Gemini)"""
+    """Genera contenido REAL usando IA (OpenRouter)"""
     
-    # Si no hay API key, no intentar
     if not OPENROUTER_API_KEY:
         print("❌ No hay API key configurada")
         return None
@@ -41,9 +37,9 @@ def generar_con_ia(tema, tipo_contenido, info_usuario=""):
     prompts = {
         'introduccion': f"""Genera una INTRODUCCIÓN académica profesional sobre: "{tema}".
 
-Información adicional del usuario: {info_usuario if info_usuario else 'No hay información adicional'}
+Información adicional: {info_usuario if info_usuario else 'No hay información adicional'}
 
-La introducción debe incluir:
+Debe incluir:
 1. Contextualización del tema (por qué es importante hoy)
 2. Planteamiento del problema
 3. Justificación del estudio
@@ -54,8 +50,8 @@ Escribe en español, tono académico pero claro. EXTENSIÓN: 300-400 palabras.""
         'objetivos': f"""Genera los OBJETIVOS para un informe académico sobre "{tema}".
 
 Debe incluir:
-- 1 Objetivo General (que abarque todo el estudio)
-- 4 Objetivos Específicos (pasos concretos)
+- 1 Objetivo General
+- 4 Objetivos Específicos
 
 Formato: Usa <b>Objetivo General</b> y luego <b>Objetivos Específicos</b> con numeración (1., 2., 3., 4.).""",
 
@@ -118,24 +114,21 @@ EXTENSIÓN: 200-250 palabras."""
             "Content-Type": "application/json"
         }
         
-        # Agregar identificador de la app
-        headers["HTTP-Referer"] = "https://academic-report-pro.onrender.com"
-        headers["X-Title"] = "Academic Report Pro"
-        
+        # Modelo gratuito más estable
         data = {
-            "model": "google/gemini-2.0-flash-lite-preview-02-05:free",
+            "model": "meta-llama/llama-3.2-3b-instruct:free",
             "messages": [
                 {
                     "role": "system",
-                    "content": "Eres un asistente académico profesional. Generas contenido de alta calidad para informes universitarios. Usas español formal pero claro. NUNCA inventas datos falsos."
+                    "content": "Eres un asistente académico profesional. Generas contenido de alta calidad para informes universitarios en español. Usas un lenguaje formal pero claro."
                 },
                 {
                     "role": "user",
                     "content": prompt
                 }
             ],
-            "max_tokens": 1200,
-            "temperature": 0.8
+            "max_tokens": 1000,
+            "temperature": 0.7
         }
         
         print(f"📡 Enviando petición a OpenRouter...")
@@ -150,6 +143,17 @@ EXTENSIÓN: 200-250 palabras."""
             return contenido.replace('\n', '<br/>')
         else:
             print(f"❌ Error HTTP {response.status_code}: {response.text[:200]}")
+            
+            # Si falla, intentar con modelo alternativo
+            if response.status_code == 400:
+                print("🔄 Intentando con modelo alternativo...")
+                data["model"] = "google/gemini-2.0-flash-lite-preview-02-05:free"
+                response2 = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=60)
+                if response2.status_code == 200:
+                    resultado = response2.json()
+                    contenido = resultado['choices'][0]['message']['content']
+                    print(f"✅ IA generó {len(contenido)} caracteres (modelo alternativo)")
+                    return contenido.replace('\n', '<br/>')
             return None
             
     except requests.exceptions.Timeout:
@@ -252,13 +256,10 @@ Los resultados coinciden con lo reportado en la literatura especializada, confir
 
 def generar_contenido(tipo, tema, info_usuario=""):
     """Intenta usar IA primero, si falla usa contenido local"""
-    # Intentar con IA
     contenido_ia = generar_con_ia(tema, tipo, info_usuario)
     if contenido_ia:
         print(f"✅ Usando IA para {tipo}")
         return contenido_ia
-    
-    # Fallback a contenido local
     print(f"⚠️ Usando contenido LOCAL para {tipo}")
     return generar_contenido_local(tipo, tema, info_usuario)
 
@@ -301,7 +302,6 @@ class GeneradorPDF:
         
         print(f"\n📄 Generando informe para tema: {tema}")
         
-        # Generar o usar contenido del usuario
         introduccion = datos_usuario.get('introduccion', '')
         if not introduccion or len(introduccion) < 50:
             introduccion = generar_contenido('introduccion', tema, texto_auto)
