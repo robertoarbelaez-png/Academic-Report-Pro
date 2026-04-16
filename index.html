@@ -6,7 +6,7 @@
     <title>Academic Report Pro | Generador de Informes Académicos</title>
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -15,644 +15,978 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
+        /* ===== RESET Y BASE ===== */
         * {
-            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a202c;
+            line-height: 1.5;
         }
         
         /* ===== TEMA CLARO (default) ===== */
-        body {
-            background-color: #f5f5f5;
-            color: #1a1a1a;
-            transition: all 0.2s ease;
+        body.light {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #1a202c;
         }
         
         /* ===== TEMA OSCURO ===== */
         body.dark {
-            background-color: #0a0a0a;
-            color: #e5e5e5;
+            background: linear-gradient(135deg, #1e1b2e 0%, #2d1b3e 100%);
+            color: #e2e8f0;
         }
         
-        /* Cards */
+        /* ===== CONTENEDOR PRINCIPAL ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* ===== HEADER MEJORADO ===== */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-wrapper {
+            display: inline-block;
+            background: white;
+            border-radius: 50%;
+            padding: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .logo-wrapper:hover {
+            transform: scale(1.05);
+        }
+        
+        body.dark .logo-wrapper {
+            background: #2d3748;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        
+        body.dark h1 {
+            background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+        }
+        
+        body.dark .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* ===== TARJETAS MEJORADAS ===== */
         .card {
             background: white;
-            border-radius: 20px;
-            border: 1px solid #eaeaea;
-            transition: all 0.2s ease;
-        }
-        
-        body.dark .card {
-            background: #111111;
-            border-color: #2a2a2a;
-        }
-        
-        /* Inputs */
-        .input-minimal {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            background: white;
-            color: #1a1a1a;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-        
-        .input-minimal:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        
-        body.dark .input-minimal {
-            background: #1a1a1a;
-            border-color: #333333;
-            color: #e5e5e5;
-        }
-        
-        body.dark .input-minimal:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-        }
-        
-        body.dark .input-minimal::placeholder {
-            color: #666666;
-        }
-        
-        /* Textareas */
-        .textarea-minimal {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            background: white;
-            color: #1a1a1a;
-            font-size: 14px;
-            resize: vertical;
-            transition: all 0.2s ease;
-        }
-        
-        .textarea-minimal:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-        
-        body.dark .textarea-minimal {
-            background: #1a1a1a;
-            border-color: #333333;
-            color: #e5e5e5;
-        }
-        
-        body.dark .textarea-minimal:focus {
-            border-color: #3b82f6;
-        }
-        
-        body.dark .textarea-minimal::placeholder {
-            color: #666666;
-        }
-        
-        /* Labels */
-        label {
-            color: #4a4a4a;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        body.dark label {
-            color: #b0b0b0;
-        }
-        
-        /* Tabs */
-        .tab {
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            color: #666666;
-            background: transparent;
-        }
-        
-        .tab:hover {
-            background: #f0f0f0;
-            color: #1a1a1a;
-        }
-        
-        .tab.active {
-            background: #1a1a1a;
-            color: white;
-        }
-        
-        body.dark .tab {
-            color: #999999;
-        }
-        
-        body.dark .tab:hover {
-            background: #2a2a2a;
-            color: white;
-        }
-        
-        body.dark .tab.active {
-            background: white;
-            color: #1a1a1a;
-        }
-        
-        /* Botón primario */
-        .btn-primary {
-            background: #1a1a1a;
-            color: white;
-            padding: 14px 24px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.2s ease;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-        }
-        
-        .btn-primary:hover {
-            background: #333333;
-            transform: scale(0.98);
-        }
-        
-        body.dark .btn-primary {
-            background: white;
-            color: #1a1a1a;
-        }
-        
-        body.dark .btn-primary:hover {
-            background: #e0e0e0;
-        }
-        
-        /* Botón secundario */
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid #e0e0e0;
-            padding: 12px 20px;
-            border-radius: 40px;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            color: #4a4a4a;
-        }
-        
-        .btn-secondary:hover {
-            background: #f5f5f5;
-        }
-        
-        body.dark .btn-secondary {
-            border-color: #333333;
-            color: #b0b0b0;
-        }
-        
-        body.dark .btn-secondary:hover {
-            background: #2a2a2a;
-            color: white;
-        }
-        
-        /* Feature items */
-        .feature-item {
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid #eaeaea;
-            background: white;
-            transition: all 0.2s ease;
-        }
-        
-        .feature-item:hover {
-            border-color: #3b82f6;
-        }
-        
-        body.dark .feature-item {
-            background: #111111;
-            border-color: #2a2a2a;
-        }
-        
-        body.dark .feature-item h4 {
-            color: #e5e5e5;
-        }
-        
-        body.dark .feature-item p {
-            color: #888888;
-        }
-        
-        /* Checkbox */
-        .checkbox-minimal {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #cccccc;
-            border-radius: 5px;
-            cursor: pointer;
-            appearance: none;
-            transition: all 0.2s ease;
-            background: white;
-        }
-        
-        .checkbox-minimal:checked {
-            background: #1a1a1a;
-            border-color: #1a1a1a;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
         
-        .checkbox-minimal:checked::after {
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            border-radius: 1.5rem 1.5rem 0 0;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 25px 30px -12px rgba(0, 0, 0, 0.15);
+        }
+        
+        body.dark .card {
+            background: #1a202c;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card-body {
+            padding: 2rem;
+        }
+        
+        /* ===== BOTONES MEJORADOS ===== */
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+        
+        .btn:active::after {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+            transform: translateY(-1px);
+        }
+        
+        body.dark .btn-secondary {
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+        
+        body.dark .btn-secondary:hover {
+            background: #4a5568;
+        }
+        
+        .btn-mode {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn-mode.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: scale(1.02);
+            border: none;
+        }
+        
+        body.dark .btn-mode {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background-size: 200% auto;
+            color: white;
+            width: 100%;
+            padding: 0.875rem;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        
+        .btn-success:hover {
+            background-position: right center;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4);
+        }
+        
+        /* ===== FORMULARIOS MEJORADOS ===== */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            color: #4a5568;
+        }
+        
+        body.dark .form-group label {
+            color: #cbd5e0;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 0.75rem;
+            font-size: 0.95rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            background: #fafbfc;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        body.dark input, body.dark textarea, body.dark select {
+            background: #2d3748;
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+        
+        body.dark input:focus, body.dark textarea:focus {
+            border-color: #a78bfa;
+            background: #374151;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+        }
+        
+        ::placeholder {
+            color: #cbd5e0;
+            font-weight: 400;
+        }
+        
+        body.dark ::placeholder {
+            color: #718096;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        /* ===== CHECKBOXES PERSONALIZADOS ===== */
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+            margin-top: 0.5rem;
+        }
+        
+        .checkbox-custom {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        
+        .checkbox-custom input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+        
+        .checkmark {
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #cbd5e0;
+            border-radius: 0.375rem;
+            margin-right: 0.5rem;
+            transition: all 0.2s;
+            display: inline-block;
+            position: relative;
+        }
+        
+        .checkbox-custom input:checked + .checkmark {
+            background: #667eea;
+            border-color: #667eea;
+        }
+        
+        .checkbox-custom input:checked + .checkmark::after {
             content: '✓';
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             color: white;
-            font-size: 11px;
+            font-size: 0.75rem;
         }
         
-        body.dark .checkbox-minimal {
-            background: #1a1a1a;
-            border-color: #444444;
+        body.dark .checkmark {
+            border-color: #718096;
         }
         
-        body.dark .checkbox-minimal:checked {
-            background: white;
-            border-color: white;
+        body.dark .checkbox-custom input:checked + .checkmark {
+            background: #a78bfa;
+            border-color: #a78bfa;
         }
         
-        body.dark .checkbox-minimal:checked::after {
-            color: #1a1a1a;
+        .checkbox-custom span {
+            font-size: 0.9rem;
+            color: #4a5568;
         }
         
-        /* Span de checkboxes */
-        body.dark label span {
-            color: #b0b0b0;
+        body.dark .checkbox-custom span {
+            color: #cbd5e0;
         }
         
-        /* Divider */
-        .divider {
-            height: 1px;
-            background: #eaeaea;
-            margin: 24px 0;
-        }
-        
-        body.dark .divider {
-            background: #2a2a2a;
-        }
-        
-        /* Badge */
-        .badge {
-            display: inline-flex;
+        /* ===== ALERTAS MEJORADAS ===== */
+        .alert-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+            border-left: 4px solid #3b82f6;
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            background: #f0f0f0;
-            border-radius: 30px;
-            font-size: 12px;
-            font-weight: 500;
-            color: #444444;
+            gap: 0.75rem;
         }
         
-        body.dark .badge {
-            background: #2a2a2a;
-            color: #b0b0b0;
+        .alert-info::before {
+            content: '💡';
+            font-size: 1.25rem;
         }
         
-        /* Header */
-        .header {
-            padding: 24px 0;
-            border-bottom: 1px solid #eaeaea;
-            margin-bottom: 32px;
-        }
-        
-        body.dark .header {
-            border-bottom-color: #2a2a2a;
-        }
-        
-        /* Logo text */
-        .logo-text {
-            font-weight: 600;
-            font-size: 18px;
-            color: #1a1a1a;
-        }
-        
-        body.dark .logo-text {
-            color: #e5e5e5;
-        }
-        
-        /* Hero text */
-        h1 {
-            color: #1a1a1a;
-        }
-        
-        body.dark h1 {
-            color: #e5e5e5;
-        }
-        
-        .hero-subtitle {
-            color: #666666;
-        }
-        
-        body.dark .hero-subtitle {
-            color: #888888;
-        }
-        
-        /* Info boxes */
-        .info-blue {
-            background: #eff6ff;
+        .alert-info p {
+            margin: 0;
+            flex: 1;
             color: #1e40af;
+            font-size: 0.9rem;
         }
         
-        body.dark .info-blue {
-            background: #1e3a5f;
+        body.dark .alert-info {
+            background: linear-gradient(135deg, #1e3a5f 0%, #1e3a5f 100%);
+        }
+        
+        body.dark .alert-info p {
             color: #93c5fd;
         }
         
-        .info-purple {
-            background: #faf5ff;
-            color: #6b21a5;
+        .alert-purple {
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            border-left: 4px solid #8b5cf6;
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
         
-        body.dark .info-purple {
-            background: #3b0764;
+        .alert-purple::before {
+            content: '⚡';
+            font-size: 1.25rem;
+        }
+        
+        .alert-purple p {
+            margin: 0;
+            flex: 1;
+            color: #6b21a5;
+            font-size: 0.9rem;
+        }
+        
+        body.dark .alert-purple {
+            background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+        }
+        
+        body.dark .alert-purple p {
             color: #d8b4fe;
         }
         
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
+        /* ===== CARDS DE VENTAJAS MEJORADAS ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
         }
         
-        ::-webkit-scrollbar-track {
-            background: #f0f0f0;
+        .feature-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
         }
         
-        ::-webkit-scrollbar-thumb {
-            background: #cccccc;
-            border-radius: 10px;
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
         
-        body.dark ::-webkit-scrollbar-track {
-            background: #1a1a1a;
+        .feature-card:hover::before {
+            transform: scaleX(1);
         }
         
-        body.dark ::-webkit-scrollbar-thumb {
-            background: #444444;
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
         
-        /* Contenedor */
-        .container-custom {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 24px;
+        body.dark .feature-card {
+            background: #1a202c;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
         
-        /* Footer */
-        .footer-text {
-            color: #999999;
-            font-size: 12px;
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
         }
         
-        body.dark .footer-text {
-            color: #555555;
+        .feature-card h3 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
         }
         
-        /* Tema buttons */
+        body.dark .feature-card h3 {
+            color: #e2e8f0;
+        }
+        
+        .feature-card p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        body.dark .feature-card p {
+            color: #9ca3af;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .feature-card:nth-child(1) { animation-delay: 0.1s; }
+        .feature-card:nth-child(2) { animation-delay: 0.2s; }
+        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+        
+        /* ===== DIVISORES ===== */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+            margin: 1.5rem 0;
+        }
+        
+        body.dark .divider {
+            background: linear-gradient(90deg, transparent, #4a5568, transparent);
+        }
+        
+        /* ===== FOOTER MEJORADO ===== */
+        .footer {
+            margin-top: 3rem;
+            padding: 2rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.875rem;
+        }
+        
+        body.dark .footer {
+            border-top-color: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .footer a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* ===== BOTONES DE TEMA ===== */
+        .theme-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+        
         .theme-btn {
-            padding: 8px;
-            border-radius: 10px;
-            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
             cursor: pointer;
-            background: transparent;
-            border: none;
+            transition: all 0.2s;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .theme-btn:hover {
-            background: #f0f0f0;
-        }
-        
-        body.dark .theme-btn:hover {
-            background: #2a2a2a;
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
         }
         
         .theme-btn i {
-            font-size: 16px;
-            color: #666666;
+            font-size: 1rem;
+            color: white;
         }
         
-        body.dark .theme-btn i {
-            color: #999999;
+        body.dark .theme-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.2);
         }
         
-        /* Animación */
+        /* ===== SCROLLBAR PERSONALIZADA ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8, #6b46a5);
+        }
+        
+        body.dark ::-webkit-scrollbar-track {
+            background: #1a202c;
+        }
+        
+        /* ===== UTILIDADES ===== */
+        .hidden {
+            display: none;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .mt-4 {
+            margin-top: 1rem;
+        }
+        
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+        
         .fade-in {
             animation: fadeIn 0.3s ease;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .card-body {
+                padding: 1.25rem;
+            }
+            
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .checkbox-group {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .theme-buttons {
+                top: 10px;
+                right: 10px;
+            }
+            
+            .logo-wrapper {
+                padding: 0.75rem;
+            }
+            
+            .logo {
+                width: 45px;
+                height: 45px;
+            }
+        }
+        
+        /* ===== FORM ROW PARA GRID ===== */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* ===== ANIMACIONES DE TRANSICIÓN ===== */
+        .mode-transition {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        /* ===== ESTILOS ADICIONALES ===== */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        .helper-text {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-top: 0.25rem;
+        }
+        
+        body.dark .helper-text {
+            color: #9ca3af;
         }
     </style>
 </head>
 <body>
+    <!-- Botones de tema flotantes -->
+    <div class="theme-buttons">
+        <button id="temaClaro" class="theme-btn" title="Modo claro">
+            <i class="fas fa-sun"></i>
+        </button>
+        <button id="temaOscuro" class="theme-btn" title="Modo oscuro">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
     
-    <div class="container-custom">
-        
-        <!-- Header -->
-        <div class="header flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-black dark:bg-white rounded-lg flex items-center justify-center">
-                    <i class="fas fa-file-alt text-white dark:text-black text-sm"></i>
+    <div class="container">
+        <!-- Header Mejorado -->
+        <div class="header">
+            <div class="logo-wrapper">
+                <div class="logo">
+                    <svg viewBox="0 0 100 100" width="60" height="60">
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="50" r="45" fill="url(#gradient)"/>
+                        <text x="50" y="67" text-anchor="middle" fill="white" font-size="40" font-weight="bold" font-family="Arial">📄</text>
+                    </svg>
                 </div>
-                <span class="logo-text">Academic Report Pro</span>
-                <span class="badge">Beta</span>
             </div>
-            <div class="flex items-center gap-1">
-                <button id="temaClaro" class="theme-btn" title="Modo claro">
-                    <i class="fas fa-sun"></i>
-                </button>
-                <button id="temaOscuro" class="theme-btn" title="Modo oscuro">
-                    <i class="fas fa-moon"></i>
-                </button>
-            </div>
+            <h1>Academic Report <span class="badge">Pro</span></h1>
+            <p class="subtitle">Generador de informes académicos con IA - Crea informes profesionales en minutos</p>
         </div>
         
-        <!-- Hero -->
-        <div class="mb-10 text-center">
-            <h1 class="text-3xl font-bold mb-2">Generador de Informes Académicos</h1>
-            <p class="hero-subtitle text-sm">Crea informes profesionales con formato académico en minutos</p>
-        </div>
-        
-        <!-- Card principal -->
-        <div class="card p-6 mb-8 fade-in">
-            
-            <!-- Tabs -->
-            <div class="flex gap-1 mb-6 border-b border-gray-100 dark:border-gray-800 pb-2">
-                <button id="btnManual" class="tab active">
-                    <i class="fas fa-pen-alt mr-2 text-xs"></i> Manual
-                </button>
-                <button id="btnAuto" class="tab">
-                    <i class="fas fa-robot mr-2 text-xs"></i> Automático
-                </button>
-                <button id="btnRapido" class="tab">
-                    <i class="fas fa-bolt mr-2 text-xs"></i> Rápido
-                </button>
-            </div>
-            
-            <!-- Tema -->
-            <div class="mb-5">
-                <label class="block text-sm font-medium mb-2">Tema del informe</label>
-                <div class="flex gap-3">
-                    <input type="text" id="temaInput" placeholder="Ej: Impacto de la inteligencia artificial en la educación" 
-                           class="input-minimal flex-1">
-                    <button id="btnEjemplo" class="btn-secondary">
-                        <i class="fas fa-eye mr-1"></i> Ejemplo
+        <!-- Card principal mejorada -->
+        <div class="card fade-in">
+            <div class="card-body">
+                <!-- Tabs mejorados -->
+                <div class="btn-group">
+                    <button id="btnManual" class="btn btn-mode active">
+                        <i class="fas fa-pen-alt mr-2"></i> Modo Manual
+                    </button>
+                    <button id="btnAuto" class="btn btn-mode">
+                        <i class="fas fa-robot mr-2"></i> Modo Automático
+                    </button>
+                    <button id="btnRapido" class="btn btn-mode">
+                        <i class="fas fa-bolt mr-2"></i> Modo Rápido
                     </button>
                 </div>
-            </div>
-            
-            <!-- Opciones secciones -->
-            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-xl">
-                <div class="flex flex-wrap gap-5">
-                    <label class="flex items-center gap-2 text-sm cursor-pointer">
-                        <input type="checkbox" id="incluirResumen" class="checkbox-minimal">
-                        <span>Resumen ejecutivo</span>
+                
+                <!-- Tema del informe -->
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-tag mr-1"></i> Tema del informe
                     </label>
-                    <label class="flex items-center gap-2 text-sm cursor-pointer">
-                        <input type="checkbox" id="incluirResultados" checked class="checkbox-minimal">
-                        <span>Resultados</span>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <input type="text" id="temaInput" placeholder="Ej: Impacto de la inteligencia artificial en la educación" 
+                               class="flex-1" style="flex: 1;">
+                        <button id="btnEjemplo" class="btn btn-secondary" style="flex: 0 0 auto;">
+                            <i class="fas fa-eye mr-1"></i> Ejemplo
+                        </button>
+                    </div>
+                    <div class="helper-text">
+                        <i class="fas fa-info-circle"></i> Define el tema principal de tu informe académico
+                    </div>
+                </div>
+                
+                <!-- Opciones secciones mejoradas -->
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-layer-group mr-1"></i> Secciones a incluir
                     </label>
-                    <label class="flex items-center gap-2 text-sm cursor-pointer">
-                        <input type="checkbox" id="incluirRecomendaciones" checked class="checkbox-minimal">
-                        <span>Recomendaciones</span>
-                    </label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-custom">
+                            <input type="checkbox" id="incluirResumen">
+                            <span class="checkmark"></span>
+                            <span>📋 Resumen ejecutivo</span>
+                        </label>
+                        <label class="checkbox-custom">
+                            <input type="checkbox" id="incluirResultados" checked>
+                            <span class="checkmark"></span>
+                            <span>📊 Resultados</span>
+                        </label>
+                        <label class="checkbox-custom">
+                            <input type="checkbox" id="incluirRecomendaciones" checked>
+                            <span class="checkmark"></span>
+                            <span>💡 Recomendaciones</span>
+                        </label>
+                    </div>
                 </div>
+                
+                <!-- MODO MANUAL -->
+                <div id="modoManual" class="mode-transition">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-user mr-1"></i> Estudiante</label>
+                            <input type="text" id="nombreManual" placeholder="Nombre completo">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-chalkboard-user mr-1"></i> Profesor</label>
+                            <input type="text" id="profesorManual" placeholder="Nombre del docente">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-book mr-1"></i> Asignatura</label>
+                            <input type="text" id="asignaturaManual" placeholder="Nombre de la materia">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-university mr-1"></i> Institución</label>
+                            <input type="text" id="institucionManual" placeholder="Universidad">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar mr-1"></i> Fecha de entrega</label>
+                            <input type="text" id="fechaEntregaManual" placeholder="DD/MM/AAAA">
+                        </div>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="form-group">
+                        <label>1. Introducción</label>
+                        <textarea id="introManual" rows="4" placeholder="Contexto, problema, justificación..." class="textarea-minimal"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>2. Objetivos</label>
+                        <textarea id="objetivosManual" rows="3" placeholder="Objetivo general + objetivos específicos..." class="textarea-minimal"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>3. Marco Teórico</label>
+                        <textarea id="marcoManual" rows="4" placeholder="Antecedentes, bases teóricas..." class="textarea-minimal"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>4. Metodología</label>
+                        <textarea id="metodologiaManual" rows="4" placeholder="Enfoque, muestra, instrumentos..." class="textarea-minimal"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>5. Desarrollo</label>
+                        <textarea id="desarrolloManual" rows="5" placeholder="Análisis de resultados..." class="textarea-minimal"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>6. Conclusiones</label>
+                        <textarea id="conclusionesManual" rows="3" placeholder="Hallazgos principales..." class="textarea-minimal"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>7. Recomendaciones</label>
+                        <textarea id="recomendacionesManual" rows="3" placeholder="Sugerencias..." class="textarea-minimal"></textarea>
+                    </div>
+                </div>
+                
+                <!-- MODO AUTOMÁTICO -->
+                <div id="modoAuto" class="mode-transition" style="display: none;">
+                    <div class="alert-info">
+                        <p><strong>✨ Modo Automático</strong> - Escribe todo lo que sabes sobre el tema. La IA organizará tu información de manera profesional.</p>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-user mr-1"></i> Estudiante</label>
+                            <input type="text" id="nombreAuto" placeholder="Nombre del estudiante">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-chalkboard-user mr-1"></i> Profesor</label>
+                            <input type="text" id="profesorAuto" placeholder="Profesor">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-book mr-1"></i> Asignatura</label>
+                            <input type="text" id="asignaturaAuto" placeholder="Asignatura">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-university mr-1"></i> Institución</label>
+                            <input type="text" id="institucionAuto" placeholder="Institución">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar mr-1"></i> Fecha de entrega</label>
+                            <input type="text" id="fechaEntregaAuto" placeholder="DD/MM/AAAA">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-file-alt mr-1"></i> Contenido completo</label>
+                        <textarea id="textoCompleto" rows="10" placeholder="Escribe aquí todo tu contenido (introducción, desarrollo, conclusiones, etc.)... La IA se encargará de estructurarlo profesionalmente."></textarea>
+                        <div class="helper-text">💡 Tip: Mientras más detallado sea tu texto, mejor será el resultado</div>
+                    </div>
+                </div>
+                
+                <!-- MODO RÁPIDO -->
+                <div id="modoRapido" class="mode-transition" style="display: none;">
+                    <div class="alert-purple">
+                        <p><strong>⚡ Modo Rápido</strong> - Solo escribe el tema y la IA generará el informe completo automáticamente.</p>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fas fa-user mr-1"></i> Nombre (opcional)</label>
+                            <input type="text" id="nombreRapido" placeholder="Tu nombre">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-chalkboard-user mr-1"></i> Profesor (opcional)</label>
+                            <input type="text" id="profesorRapido" placeholder="Nombre del profesor">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-book mr-1"></i> Asignatura (opcional)</label>
+                            <input type="text" id="asignaturaRapido" placeholder="Asignatura">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-university mr-1"></i> Institución (opcional)</label>
+                            <input type="text" id="institucionRapido" placeholder="Institución">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar mr-1"></i> Fecha (opcional)</label>
+                            <input type="text" id="fechaEntregaRapido" placeholder="DD/MM/AAAA">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-lightbulb mr-1"></i> Tema o descripción</label>
+                        <textarea id="temaRapido" rows="4" placeholder="Describe tu tema de investigación en detalle. Ejemplo: 'Impacto de las redes sociales en la salud mental de adolescentes, enfocado en ansiedad y depresión, con estudio de casos en España 2024'"></textarea>
+                        <div class="helper-text">🚀 La IA generará un informe completo y profesional basado en tu descripción</div>
+                    </div>
+                </div>
+                
+                <button id="btnGenerar" class="btn btn-success mt-4">
+                    <i class="fas fa-file-pdf mr-2"></i> Generar informe PDF profesional
+                </button>
             </div>
-            
-            <!-- MODO MANUAL -->
-            <div id="modoManual" class="space-y-4">
-                <div class="grid md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Estudiante</label>
-                        <input type="text" id="nombreManual" placeholder="Nombre completo" class="input-minimal">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Profesor</label>
-                        <input type="text" id="profesorManual" placeholder="Nombre del docente" class="input-minimal">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Asignatura</label>
-                        <input type="text" id="asignaturaManual" placeholder="Nombre de la materia" class="input-minimal">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Institución</label>
-                        <input type="text" id="institucionManual" placeholder="Universidad" class="input-minimal">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Fecha de entrega</label>
-                        <input type="text" id="fechaEntregaManual" placeholder="DD/MM/AAAA" class="input-minimal">
-                    </div>
-                </div>
-                
-                <div class="divider"></div>
-                
-                <div>
-                    <label class="block font-medium mb-2">1. Introducción</label>
-                    <textarea id="introManual" rows="4" placeholder="Contexto, problema, justificación..." class="textarea-minimal"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block font-medium mb-2">2. Objetivos</label>
-                    <textarea id="objetivosManual" rows="3" placeholder="Objetivo general + objetivos específicos..." class="textarea-minimal"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block font-medium mb-2">3. Marco Teórico</label>
-                    <textarea id="marcoManual" rows="4" placeholder="Antecedentes, bases teóricas..." class="textarea-minimal"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block font-medium mb-2">4. Metodología</label>
-                    <textarea id="metodologiaManual" rows="4" placeholder="Enfoque, muestra, instrumentos..." class="textarea-minimal"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block font-medium mb-2">5. Desarrollo</label>
-                    <textarea id="desarrolloManual" rows="5" placeholder="Análisis de resultados..." class="textarea-minimal"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block font-medium mb-2">6. Conclusiones</label>
-                    <textarea id="conclusionesManual" rows="3" placeholder="Hallazgos principales..." class="textarea-minimal"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block font-medium mb-2">7. Recomendaciones</label>
-                    <textarea id="recomendacionesManual" rows="3" placeholder="Sugerencias..." class="textarea-minimal"></textarea>
-                </div>
-            </div>
-            
-            <!-- MODO AUTOMÁTICO -->
-            <div id="modoAuto" class="space-y-4" style="display: none;">
-                <div class="p-4 info-blue rounded-xl text-sm">
-                    <i class="fas fa-info-circle mr-2"></i> Escribe todo lo que sabes sobre el tema. La IA organizará tu información.
-                </div>
-                <div class="grid md:grid-cols-2 gap-4">
-                    <input type="text" id="nombreAuto" placeholder="Nombre del estudiante" class="input-minimal">
-                    <input type="text" id="profesorAuto" placeholder="Profesor" class="input-minimal">
-                    <input type="text" id="asignaturaAuto" placeholder="Asignatura" class="input-minimal">
-                    <input type="text" id="institucionAuto" placeholder="Institución" class="input-minimal">
-                    <input type="text" id="fechaEntregaAuto" placeholder="Fecha de entrega" class="input-minimal md:col-span-2">
-                </div>
-                <textarea id="textoCompleto" rows="10" placeholder="Escribe aquí todo tu contenido..." class="textarea-minimal"></textarea>
-            </div>
-            
-            <!-- MODO RÁPIDO -->
-            <div id="modoRapido" class="space-y-4" style="display: none;">
-                <div class="p-4 info-purple rounded-xl text-sm">
-                    <i class="fas fa-bolt mr-2"></i> Solo escribe el tema y la IA generará el informe completo.
-                </div>
-                <div class="grid md:grid-cols-2 gap-4">
-                    <input type="text" id="nombreRapido" placeholder="Nombre (opcional)" class="input-minimal">
-                    <input type="text" id="profesorRapido" placeholder="Profesor (opcional)" class="input-minimal">
-                    <input type="text" id="asignaturaRapido" placeholder="Asignatura (opcional)" class="input-minimal">
-                    <input type="text" id="institucionRapido" placeholder="Institución (opcional)" class="input-minimal">
-                    <input type="text" id="fechaEntregaRapido" placeholder="Fecha (opcional)" class="input-minimal md:col-span-2">
-                </div>
-                <textarea id="temaRapido" rows="4" placeholder="Describe tu tema de investigación..." class="textarea-minimal"></textarea>
-            </div>
-            
-            <button id="btnGenerar" class="btn-primary mt-6">
-                <i class="fas fa-file-pdf mr-2"></i> Generar informe PDF
-            </button>
         </div>
         
-        <!-- Features -->
-        <div class="grid md:grid-cols-3 gap-4 mb-10">
-            <div class="feature-item flex items-center gap-4">
-                <i class="fas fa-robot text-gray-400 text-xl"></i>
-                <div>
-                    <h4 class="font-medium text-sm">IA integrada</h4>
-                    <p class="text-xs text-gray-500 dark:text-gray-500">Generación inteligente</p>
-                </div>
+        <!-- Features mejorados -->
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>IA Integrada</h3>
+                <p>Generación inteligente de contenido académico con estructura profesional</p>
             </div>
-            <div class="feature-item flex items-center gap-4">
-                <i class="fas fa-file-pdf text-gray-400 text-xl"></i>
-                <div>
-                    <h4 class="font-medium text-sm">PDF profesional</h4>
-                    <p class="text-xs text-gray-500 dark:text-gray-500">Formato académico</p>
-                </div>
+            <div class="feature-card">
+                <div class="feature-icon">📄</div>
+                <h3>PDF Profesional</h3>
+                <p>Formato académico con portada, índice y referencias estilo APA/MLA</p>
             </div>
-            <div class="feature-item flex items-center gap-4">
-                <i class="fas fa-graduation-cap text-gray-400 text-xl"></i>
-                <div>
-                    <h4 class="font-medium text-sm">Referencias reales</h4>
-                    <p class="text-xs text-gray-500 dark:text-gray-500">Fuentes verificadas</p>
-                </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎓</div>
+                <h3>Referencias Reales</h3>
+                <p>Generación automática de citas y fuentes bibliográficas verificadas</p>
             </div>
         </div>
         
-        <!-- Footer -->
-        <div class="text-center py-8 border-t border-gray-100 dark:border-gray-800">
-            <p class="footer-text">Academic Report Pro — Generador de informes académicos con IA</p>
+        <!-- Footer mejorado -->
+        <div class="footer">
+            <p>© 2024 Academic Report Pro — Generador de informes académicos con IA</p>
+            <p style="margin-top: 0.5rem; font-size: 0.75rem;">
+                <i class="fas fa-shield-alt"></i> Informes profesionales | 
+                <i class="fas fa-clock"></i> Generación instantánea | 
+                <i class="fas fa-globe"></i> 100% online
+            </p>
         </div>
     </div>
     
@@ -685,9 +1019,11 @@
         function setTheme(theme) {
             if (theme === 'dark') {
                 document.body.classList.add('dark');
+                document.body.classList.remove('light');
                 localStorage.setItem('theme', 'dark');
             } else {
                 document.body.classList.remove('dark');
+                document.body.classList.add('light');
                 localStorage.setItem('theme', 'light');
             }
         }
@@ -699,15 +1035,19 @@
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             document.body.classList.add('dark');
+        } else {
+            document.body.classList.add('light');
         }
         
         // Ejemplo
         document.getElementById('btnEjemplo').onclick = async () => {
             Swal.fire({ 
                 title: 'Cargando ejemplo...', 
+                text: 'Por favor espera mientras cargamos un ejemplo',
+                allowOutsideClick: false,
                 didOpen: () => Swal.showLoading(),
-                background: document.body.classList.contains('dark') ? '#1a1a1a' : '#ffffff',
-                color: document.body.classList.contains('dark') ? '#e5e5e5' : '#1a1a1a'
+                background: document.body.classList.contains('dark') ? '#1a202c' : '#ffffff',
+                color: document.body.classList.contains('dark') ? '#e2e8f0' : '#1a202c'
             });
             try {
                 const response = await fetch('/ejemplo', {
@@ -745,7 +1085,7 @@
                         document.getElementById('institucionRapido').value = datos.institucion || '';
                         document.getElementById('temaRapido').value = datos.tema;
                     }
-                    Swal.fire('Ejemplo cargado', 'Los campos se han llenado.', 'success');
+                    Swal.fire('¡Ejemplo cargado!', 'Los campos se han llenado con contenido de ejemplo.', 'success');
                 }
             } catch (error) {
                 Swal.fire('Error', 'No se pudo cargar el ejemplo', 'error');
@@ -794,15 +1134,17 @@
             }
             
             if (!datos.tema && !datos.texto_completo && !datos.introduccion) {
-                Swal.fire('Error', 'Por favor ingresa un tema', 'error');
+                Swal.fire('Error', 'Por favor ingresa un tema o contenido para generar el informe', 'error');
                 return;
             }
             
             Swal.fire({ 
                 title: 'Generando informe...', 
+                text: 'La IA está procesando tu solicitud',
                 allowOutsideClick: false, 
                 didOpen: () => Swal.showLoading(),
-                background: document.body.classList.contains('dark') ? '#1a1a1a' : '#ffffff'
+                background: document.body.classList.contains('dark') ? '#1a202c' : '#ffffff',
+                color: document.body.classList.contains('dark') ? '#e2e8f0' : '#1a202c'
             });
             
             try {
@@ -815,19 +1157,20 @@
                 if (result.success) {
                     ultimoFilename = result.filename;
                     Swal.fire({
-                        title: '¡Informe listo!',
+                        title: '¡Informe generado!',
+                        text: 'Tu informe académico está listo para descargar',
                         icon: 'success',
-                        confirmButtonText: '<i class="fas fa-download mr-2"></i> Descargar PDF',
-                        background: document.body.classList.contains('dark') ? '#1a1a1a' : '#ffffff',
-                        color: document.body.classList.contains('dark') ? '#e5e5e5' : '#1a1a1a'
+                        confirmButtonText: '<i class="fas fa-download"></i> Descargar PDF',
+                        background: document.body.classList.contains('dark') ? '#1a202c' : '#ffffff',
+                        color: document.body.classList.contains('dark') ? '#e2e8f0' : '#1a202c'
                     }).then(() => {
                         window.location.href = `/descargar/${ultimoFilename}`;
                     });
                 } else {
-                    Swal.fire('Error', result.error, 'error');
+                    Swal.fire('Error', result.error || 'No se pudo generar el informe', 'error');
                 }
             } catch (error) {
-                Swal.fire('Error', 'No se pudo generar', 'error');
+                Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
             }
         };
     </script>
