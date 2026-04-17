@@ -114,22 +114,22 @@ EXTENSIÓN: 200-250 palabras."""
             "Content-Type": "application/json"
         }
         
-        # Modelo gratuito más estable
-        data = {
-           "model": "google/gemini-2.0-flash-lite:free",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Eres un asistente académico profesional. Generas contenido de alta calidad para informes universitarios en español. Usas un lenguaje formal pero claro."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "max_tokens": 1000,
-            "temperature": 0.7
+       # Modelo gratuito más estable
+data = {
+    "model": "google/gemini-2.0-flash-lite:free",
+    "messages": [
+        {
+            "role": "system",
+            "content": "Eres un asistente académico profesional. Generas contenido de alta calidad para informes universitarios en español. Usas un lenguaje formal pero claro."
+        },
+        {
+            "role": "user",
+            "content": prompt
         }
+    ],
+    "max_tokens": 1000,
+    "temperature": 0.7
+}
         
         print(f"📡 Enviando petición a OpenRouter...")
         response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=60)
