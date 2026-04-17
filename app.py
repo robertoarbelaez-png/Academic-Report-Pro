@@ -10,128 +10,107 @@ import uuid
 from datetime import datetime
 import re
 import requests
-import time
 
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
 
-# ========== CONFIGURACIÓN DE IA ==========
-OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+# ========== CONFIGURACIÓN DE GROQ ==========
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 print("=" * 50)
 print("🚀 INICIANDO APLICACIÓN")
-print(f"🔑 API Key cargada: {'SÍ ✅' if OPENROUTER_API_KEY else 'NO ❌'}")
+print(f"🔑 Groq API Key cargada: {'SÍ ✅' if GROQ_API_KEY else 'NO ❌'}")
 print("=" * 50)
 
 def generar_informe_completo_con_ia(tema, info_usuario=""):
-    """Genera TODO el informe en UNA sola llamada a la IA"""
+    """Genera TODO el informe en UNA sola llamada a Groq (rápido y gratis)"""
     
-    if not OPENROUTER_API_KEY:
-        print("❌ No hay API key configurada")
+    if not GROQ_API_KEY:
+        print("❌ No hay API key de Groq configurada")
         return None
     
-    print(f"🤖 Generando informe COMPLETO con IA para: {tema[:50]}...")
+    print(f"🤖 Generando informe COMPLETO con Groq para: {tema[:50]}...")
     
     prompt = f"""Genera un INFORME ACADÉMICO COMPLETO sobre el tema: "{tema}".
 
 Información adicional del usuario: {info_usuario if info_usuario else 'No hay información adicional'}
 
-El informe debe tener EXACTAMENTE estas secciones:
+El informe debe tener EXACTAMENTE estas secciones con subtítulos en negrita:
 
-## INTRODUCCIÓN
-(Contexto del tema, por qué es importante, planteamiento del problema, justificación)
+**INTRODUCCIÓN**
+(Contexto del tema, por qué es importante hoy, planteamiento del problema, justificación del estudio - 300-400 palabras)
 
-## OBJETIVOS
-### Objetivo General
-(1 objetivo general)
-### Objetivos Específicos
-(4 objetivos específicos numerados)
+**OBJETIVOS**
+**Objetivo General:** (1 objetivo general)
+**Objetivos Específicos:** (4 objetivos específicos numerados)
 
-## MARCO TEÓRICO
-### Antecedentes
-(Qué se ha investigado antes)
-### Bases Teóricas
-(Conceptos clave, autores relevantes)
-### Estado del Arte
-(Investigaciones recientes con autores y años reales)
+**MARCO TEÓRICO**
+**Antecedentes:** (qué se ha investigado antes, con autores reales)
+**Bases Teóricas:** (conceptos clave, autores relevantes)
+**Estado del Arte:** (investigaciones recientes con autores y años reales)
 
-## METODOLOGÍA
-### Enfoque y tipo de investigación
-### Población y muestra
-### Instrumentos de recolección
-### Procedimiento
+**METODOLOGÍA**
+**Enfoque y tipo de investigación:** 
+**Población y muestra:** 
+**Instrumentos de recolección:** 
+**Procedimiento:** 
 
-## DESARROLLO
-### Análisis de resultados
-### Dimensiones analizadas
-### Discusión
+**DESARROLLO**
+**Análisis de resultados:** 
+**Dimensiones analizadas:** 
+**Discusión:** 
 
-## CONCLUSIONES
-(Hallazgos principales, limitaciones, aportaciones)
+**CONCLUSIONES**
+(Hallazgos principales, limitaciones, aportaciones - 5 puntos clave)
 
-## RECOMENDACIONES
-(Para institución, para docentes, para futuros estudios)
+**RECOMENDACIONES**
+(Recomendaciones para institución, docentes y futuros estudios)
 
-Escribe en español, tono académico profesional. Cada sección debe ser detallada (200-400 palabras por sección). Usa formato HTML con <b> para subtítulos y <br/> para saltos de línea."""
-    
-    # Lista de modelos gratuitos
-    modelos = [
-        "microsoft/phi-3.5-mini-128k-instruct:free",
-        "mistralai/mistral-7b-instruct:free",
-        "meta-llama/llama-3.2-3b-instruct:free"
-    ]
+Escribe en español, tono académico profesional. Usa el formato exacto con **texto en negrita** para los subtítulos. EXTENSIÓN TOTAL: 2000-3000 palabras."""
     
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Authorization": f"Bearer {GROQ_API_KEY}",
         "Content-Type": "application/json"
     }
     
-    for modelo in modelos:
-        try:
-            print(f"📡 Intentando con modelo: {modelo}")
-            
-            data = {
-                "model": modelo,
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "Eres un asistente académico profesional. Generas informes completos y detallados. Usas español formal. Cada sección es extensa y bien desarrollada."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                "max_tokens": 4000,
-                "temperature": 0.7
+    data = {
+        "model": "llama-3.3-70b-versatile",  # Modelo gratuito y rápido de Groq
+        "messages": [
+            {
+                "role": "system",
+                "content": "Eres un asistente académico profesional. Generas informes universitarios completos y detallados en español. Usas formato claro con **negritas** para subtítulos. Cada sección es extensa y bien desarrollada."
+            },
+            {
+                "role": "user",
+                "content": prompt
             }
-            
-            response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=120)
-            print(f"📡 Respuesta código: {response.status_code}")
-            
-            if response.status_code == 200:
-                resultado = response.json()
-                contenido_completo = resultado['choices'][0]['message']['content']
-                print(f"✅ IA generó informe completo de {len(contenido_completo)} caracteres")
-                
-                # Extraer secciones del contenido generado
-                secciones = extraer_secciones_desde_ia(contenido_completo, tema)
-                return secciones
-            elif response.status_code == 429:
-                print(f"⚠️ Modelo {modelo} saturado, probando siguiente...")
-                time.sleep(2)
-                continue
-            else:
-                print(f"❌ Error con {modelo}: {response.status_code}")
-                continue
-                
-        except Exception as e:
-            print(f"❌ Error con modelo {modelo}: {str(e)}")
-            continue
+        ],
+        "temperature": 0.7,
+        "max_tokens": 4000
+    }
     
-    print("❌ Todos los modelos fallaron. Usando contenido local.")
-    return None
+    try:
+        print(f"📡 Enviando petición a Groq...")
+        response = requests.post(GROQ_URL, headers=headers, json=data, timeout=120)
+        
+        print(f"📡 Respuesta código: {response.status_code}")
+        
+        if response.status_code == 200:
+            resultado = response.json()
+            contenido_completo = resultado['choices'][0]['message']['content']
+            print(f"✅ Groq generó {len(contenido_completo)} caracteres")
+            
+            # Extraer secciones del contenido generado
+            secciones = extraer_secciones_desde_ia(contenido_completo, tema)
+            return secciones
+        else:
+            print(f"❌ Error HTTP {response.status_code}: {response.text[:200]}")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Error conectando con Groq: {str(e)}")
+        return None
 
 def extraer_secciones_desde_ia(contenido, tema):
     """Extrae las secciones del contenido generado por IA"""
@@ -148,19 +127,22 @@ def extraer_secciones_desde_ia(contenido, tema):
     
     # Buscar cada sección en el contenido
     patrones = {
-        'introduccion': r'## INTRODUCCIÓN(.*?)(?=## OBJETIVOS|$)',
-        'objetivos': r'## OBJETIVOS(.*?)(?=## MARCO TEÓRICO|$)',
-        'marco_teorico': r'## MARCO TEÓRICO(.*?)(?=## METODOLOGÍA|$)',
-        'metodologia': r'## METODOLOGÍA(.*?)(?=## DESARROLLO|$)',
-        'desarrollo': r'## DESARROLLO(.*?)(?=## CONCLUSIONES|$)',
-        'conclusiones': r'## CONCLUSIONES(.*?)(?=## RECOMENDACIONES|$)',
-        'recomendaciones': r'## RECOMENDACIONES(.*?)(?=$)'
+        'introduccion': r'\*\*INTRODUCCIÓN\*\*(.*?)(?=\*\*OBJETIVOS\*\*|$)',
+        'objetivos': r'\*\*OBJETIVOS\*\*(.*?)(?=\*\*MARCO TEÓRICO\*\*|$)',
+        'marco_teorico': r'\*\*MARCO TEÓRICO\*\*(.*?)(?=\*\*METODOLOGÍA\*\*|$)',
+        'metodologia': r'\*\*METODOLOGÍA\*\*(.*?)(?=\*\*DESARROLLO\*\*|$)',
+        'desarrollo': r'\*\*DESARROLLO\*\*(.*?)(?=\*\*CONCLUSIONES\*\*|$)',
+        'conclusiones': r'\*\*CONCLUSIONES\*\*(.*?)(?=\*\*RECOMENDACIONES\*\*|$)',
+        'recomendaciones': r'\*\*RECOMENDACIONES\*\*(.*?)(?=$)'
     }
     
     for key, patron in patrones.items():
         match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
         if match:
-            secciones[key] = match.group(1).strip().replace('\n', '<br/>')
+            texto = match.group(1).strip()
+            # Convertir **negritas** a <b>negritas</b> para ReportLab
+            texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
+            secciones[key] = texto.replace('\n', '<br/>')
             print(f"✅ Sección {key} extraída ({len(secciones[key])} caracteres)")
     
     # Si alguna sección está vacía, usar contenido local
@@ -309,36 +291,15 @@ class GeneradorPDF:
             desarrollo = secciones_ia.get('desarrollo', '')
             conclusiones = secciones_ia.get('conclusiones', '')
             recomendaciones = secciones_ia.get('recomendaciones', '')
-            print("✅ Usando secciones generadas por IA")
+            print("✅ Usando secciones generadas por Groq")
         else:
-            # Usar contenido del usuario o local
-            introduccion = datos_usuario.get('introduccion', '')
-            if not introduccion or len(introduccion) < 50:
-                introduccion = generar_contenido_local('introduccion', tema)
-            
-            objetivos = datos_usuario.get('objetivos', '')
-            if not objetivos or len(objetivos) < 50:
-                objetivos = generar_contenido_local('objetivos', tema)
-            
-            marco_teorico = datos_usuario.get('marco_teorico', '')
-            if not marco_teorico or len(marco_teorico) < 50:
-                marco_teorico = generar_contenido_local('marco_teorico', tema)
-            
-            metodologia = datos_usuario.get('metodologia', '')
-            if not metodologia or len(metodologia) < 50:
-                metodologia = generar_contenido_local('metodologia', tema)
-            
-            desarrollo = datos_usuario.get('desarrollo', '')
-            if not desarrollo or len(desarrollo) < 50:
-                desarrollo = generar_contenido_local('desarrollo', tema)
-            
-            conclusiones = datos_usuario.get('conclusiones', '')
-            if not conclusiones or len(conclusiones) < 50:
-                conclusiones = generar_contenido_local('conclusiones', tema)
-            
-            recomendaciones = datos_usuario.get('recomendaciones', '')
-            if opciones.get('incluir_recomendaciones', True) and (not recomendaciones or len(recomendaciones) < 50):
-                recomendaciones = generar_contenido_local('recomendaciones', tema)
+            introduccion = generar_contenido_local('introduccion', tema)
+            objetivos = generar_contenido_local('objetivos', tema)
+            marco_teorico = generar_contenido_local('marco_teorico', tema)
+            metodologia = generar_contenido_local('metodologia', tema)
+            desarrollo = generar_contenido_local('desarrollo', tema)
+            conclusiones = generar_contenido_local('conclusiones', tema)
+            recomendaciones = generar_contenido_local('recomendaciones', tema)
         
         referencias = obtener_referencias(tema)
         
@@ -450,7 +411,7 @@ def generar():
             'incluir_recomendaciones': datos.get('incluir_recomendaciones', True)
         }
         
-        # Intentar generar con IA (una sola llamada para todo el informe)
+        # Intentar generar con Groq (una sola llamada para todo el informe)
         secciones_ia = None
         if tema and len(tema) > 5:
             secciones_ia = generar_informe_completo_con_ia(tema, texto_auto)
