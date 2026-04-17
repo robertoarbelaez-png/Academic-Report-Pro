@@ -10,6 +10,7 @@ import uuid
 from datetime import datetime
 import re
 import requests
+import time
 
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
@@ -23,95 +24,62 @@ print("🚀 INICIANDO APLICACIÓN")
 print(f"🔑 API Key cargada: {'SÍ ✅' if OPENROUTER_API_KEY else 'NO ❌'}")
 print("=" * 50)
 
-def generar_con_ia(tema, tipo_contenido, info_usuario=""):
-    """Genera contenido REAL usando IA con reintentos automáticos en modelos gratuitos"""
+def generar_informe_completo_con_ia(tema, info_usuario=""):
+    """Genera TODO el informe en UNA sola llamada a la IA"""
     
     if not OPENROUTER_API_KEY:
         print("❌ No hay API key configurada")
         return None
     
-    print(f"🤖 Intentando generar {tipo_contenido} con IA para: {tema[:50]}...")
+    print(f"🤖 Generando informe COMPLETO con IA para: {tema[:50]}...")
     
-    prompts = {
-        'introduccion': f"""Genera una INTRODUCCIÓN académica profesional sobre: "{tema}".
+    prompt = f"""Genera un INFORME ACADÉMICO COMPLETO sobre el tema: "{tema}".
 
-Información adicional: {info_usuario if info_usuario else 'No hay información adicional'}
+Información adicional del usuario: {info_usuario if info_usuario else 'No hay información adicional'}
 
-Debe incluir:
-1. Contextualización del tema (por qué es importante hoy)
-2. Planteamiento del problema
-3. Justificación del estudio
-4. Estructura del informe
+El informe debe tener EXACTAMENTE estas secciones:
 
-Escribe en español, tono académico pero claro. EXTENSIÓN: 300-400 palabras.""",
+## INTRODUCCIÓN
+(Contexto del tema, por qué es importante, planteamiento del problema, justificación)
 
-        'objetivos': f"""Genera los OBJETIVOS para un informe académico sobre "{tema}".
+## OBJETIVOS
+### Objetivo General
+(1 objetivo general)
+### Objetivos Específicos
+(4 objetivos específicos numerados)
 
-Debe incluir:
-- 1 Objetivo General
-- 4 Objetivos Específicos
+## MARCO TEÓRICO
+### Antecedentes
+(Qué se ha investigado antes)
+### Bases Teóricas
+(Conceptos clave, autores relevantes)
+### Estado del Arte
+(Investigaciones recientes con autores y años reales)
 
-Formato: Usa <b>Objetivo General</b> y luego <b>Objetivos Específicos</b> con numeración (1., 2., 3., 4.).""",
+## METODOLOGÍA
+### Enfoque y tipo de investigación
+### Población y muestra
+### Instrumentos de recolección
+### Procedimiento
 
-        'marco_teorico': f"""Genera el MARCO TEÓRICO para un informe académico sobre "{tema}".
+## DESARROLLO
+### Análisis de resultados
+### Dimensiones analizadas
+### Discusión
 
-Incluye:
-1. Antecedentes (qué se ha investigado antes)
-2. Bases teóricas (conceptos clave, autores relevantes)
-3. Estado del arte (investigaciones recientes)
+## CONCLUSIONES
+(Hallazgos principales, limitaciones, aportaciones)
 
-EXTENSIÓN: 400-500 palabras. Usa <b>subtítulos</b> para organizar.""",
+## RECOMENDACIONES
+(Para institución, para docentes, para futuros estudios)
 
-        'metodologia': f"""Genera la METODOLOGÍA para una investigación sobre "{tema}".
-
-Incluye:
-- Enfoque y tipo de investigación
-- Población y muestra
-- Instrumentos de recolección de datos
-- Procedimiento seguido
-
-EXTENSIÓN: 250-350 palabras.""",
-
-        'desarrollo': f"""Genera la sección de DESARROLLO/ANÁLISIS para un informe sobre "{tema}".
-
-Información base del usuario: {info_usuario if info_usuario else 'Sin información específica'}
-
-Incluye:
-1. Presentación de resultados
-2. Análisis de los hallazgos
-3. Discusión relacionando con el marco teórico
-
-EXTENSIÓN: 400-500 palabras.""",
-
-        'conclusiones': f"""Genera las CONCLUSIONES para un informe sobre "{tema}".
-
-Incluye:
-- Hallazgos principales (3-5 puntos concretos)
-- Limitaciones del estudio
-- Aportaciones del trabajo
-
-EXTENSIÓN: 250-300 palabras.""",
-
-        'recomendaciones': f"""Genera RECOMENDACIONES para un informe sobre "{tema}".
-
-Incluye:
-- Recomendaciones para la institución
-- Recomendaciones para docentes/investigadores
-- Recomendaciones para futuros estudios
-
-EXTENSIÓN: 200-250 palabras."""
-    }
+Escribe en español, tono académico profesional. Cada sección debe ser detallada (200-400 palabras por sección). Usa formato HTML con <b> para subtítulos y <br/> para saltos de línea."""
     
-    prompt = prompts.get(tipo_contenido, "")
-    if not prompt:
-        return None
-    
-    # Lista de modelos gratuitos para probar en orden
+    # Lista de modelos gratuitos
     modelos = [
         "microsoft/phi-3.5-mini-128k-instruct:free",
         "mistralai/mistral-7b-instruct:free",
-        "meta-llama/llama-3.2-3b-instruct:free",
-        "google/gemini-2.0-flash-exp:free"
+        "meta-llama/llama-3.2-3b-instruct:free"
     ]
     
     headers = {
@@ -119,36 +87,40 @@ EXTENSIÓN: 200-250 palabras."""
         "Content-Type": "application/json"
     }
     
-    for i, modelo in enumerate(modelos):
+    for modelo in modelos:
         try:
-            print(f"📡 Intentando con modelo {i+1}/{len(modelos)}: {modelo}")
+            print(f"📡 Intentando con modelo: {modelo}")
             
             data = {
                 "model": modelo,
                 "messages": [
                     {
                         "role": "system",
-                        "content": "Eres un asistente académico profesional. Generas contenido de alta calidad para informes universitarios en español. Usas un lenguaje formal pero claro."
+                        "content": "Eres un asistente académico profesional. Generas informes completos y detallados. Usas español formal. Cada sección es extensa y bien desarrollada."
                     },
                     {
                         "role": "user",
                         "content": prompt
                     }
                 ],
-                "max_tokens": 1000,
+                "max_tokens": 4000,
                 "temperature": 0.7
             }
             
-            response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=60)
+            response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=120)
             print(f"📡 Respuesta código: {response.status_code}")
             
             if response.status_code == 200:
                 resultado = response.json()
-                contenido = resultado['choices'][0]['message']['content']
-                print(f"✅ IA generó {len(contenido)} caracteres con modelo {modelo}")
-                return contenido.replace('\n', '<br/>')
+                contenido_completo = resultado['choices'][0]['message']['content']
+                print(f"✅ IA generó informe completo de {len(contenido_completo)} caracteres")
+                
+                # Extraer secciones del contenido generado
+                secciones = extraer_secciones_desde_ia(contenido_completo, tema)
+                return secciones
             elif response.status_code == 429:
-                print(f"⚠️ Modelo {modelo} saturado (429), probando siguiente...")
+                print(f"⚠️ Modelo {modelo} saturado, probando siguiente...")
+                time.sleep(2)
                 continue
             else:
                 print(f"❌ Error con {modelo}: {response.status_code}")
@@ -158,12 +130,49 @@ EXTENSIÓN: 200-250 palabras."""
             print(f"❌ Error con modelo {modelo}: {str(e)}")
             continue
     
-    print("❌ Todos los modelos gratuitos están saturados temporalmente. Usando contenido local.")
+    print("❌ Todos los modelos fallaron. Usando contenido local.")
     return None
 
+def extraer_secciones_desde_ia(contenido, tema):
+    """Extrae las secciones del contenido generado por IA"""
+    
+    secciones = {
+        'introduccion': '',
+        'objetivos': '',
+        'marco_teorico': '',
+        'metodologia': '',
+        'desarrollo': '',
+        'conclusiones': '',
+        'recomendaciones': ''
+    }
+    
+    # Buscar cada sección en el contenido
+    patrones = {
+        'introduccion': r'## INTRODUCCIÓN(.*?)(?=## OBJETIVOS|$)',
+        'objetivos': r'## OBJETIVOS(.*?)(?=## MARCO TEÓRICO|$)',
+        'marco_teorico': r'## MARCO TEÓRICO(.*?)(?=## METODOLOGÍA|$)',
+        'metodologia': r'## METODOLOGÍA(.*?)(?=## DESARROLLO|$)',
+        'desarrollo': r'## DESARROLLO(.*?)(?=## CONCLUSIONES|$)',
+        'conclusiones': r'## CONCLUSIONES(.*?)(?=## RECOMENDACIONES|$)',
+        'recomendaciones': r'## RECOMENDACIONES(.*?)(?=$)'
+    }
+    
+    for key, patron in patrones.items():
+        match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
+        if match:
+            secciones[key] = match.group(1).strip().replace('\n', '<br/>')
+            print(f"✅ Sección {key} extraída ({len(secciones[key])} caracteres)")
+    
+    # Si alguna sección está vacía, usar contenido local
+    for key in secciones:
+        if not secciones[key] or len(secciones[key]) < 50:
+            print(f"⚠️ Sección {key} vacía, usando contenido local")
+            secciones[key] = generar_contenido_local(key, tema)
+    
+    return secciones
+
 def generar_contenido_local(tipo, tema, info_usuario=""):
-    """Contenido de respaldo (cuando no hay IA o falla)"""
-    print(f"📝 Usando contenido local para {tipo}")
+    """Contenido de respaldo"""
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
@@ -176,7 +185,7 @@ En las instituciones educativas, se ha observado que los estudiantes presentan d
 ¿Cuál es el nivel de comprensión y aplicación de los conceptos fundamentales de {tema_limpio} en los estudiantes?<br/><br/>
 
 <b>Justificación</b><br/>
-Este trabajo se justifica desde el punto de vista teórico, práctico e institucional, aportando al conocimiento existente y ofreciendo estrategias de mejora.<br/><br/>
+Este trabajo se justifica desde el punto de vista teórico, práctico e institucional.<br/><br/>
 
 <b>Estructura del informe</b><br/>
 El documento se organiza en introducción, objetivos, marco teórico, metodología, desarrollo, conclusiones y recomendaciones.""",
@@ -224,44 +233,35 @@ Fase 3: Análisis e interpretación""",
 Los hallazgos indican que el dominio de {tema_limpio} presenta variaciones significativas entre los estudiantes evaluados.<br/><br/>
 
 <b>Dimensiones analizadas</b><br/><br/>
-• <b>Conocimientos teóricos:</b> Los estudiantes demuestran un dominio básico de los conceptos fundamentales.<br/><br/>
-• <b>Habilidades prácticas:</b> El rendimiento práctico muestra una correlación positiva con la teoría.<br/><br/>
-• <b>Actitudes:</b> La mayoría de los estudiantes considera {tema_limpio} relevante para su formación profesional.<br/><br/>
+• <b>Conocimientos teóricos:</b> Los estudiantes demuestran un dominio básico.<br/><br/>
+• <b>Habilidades prácticas:</b> El rendimiento práctico muestra correlación positiva con la teoría.<br/><br/>
+• <b>Actitudes:</b> La mayoría considera {tema_limpio} relevante para su formación.<br/><br/>
 
 <b>Discusión</b><br/><br/>
-Los resultados coinciden con lo reportado en la literatura especializada, confirmando la importancia de metodologías activas en el aprendizaje.""",
+Los resultados coinciden con lo reportado en la literatura especializada.""",
         
-        'conclusiones': f"""1. Se ha logrado cumplir con los objetivos planteados en la investigación.<br/><br/>
-2. Las metodologías prácticas demostraron ser más efectivas que la instrucción exclusivamente teórica.<br/><br/>
-3. La experiencia previa es un factor determinante en el rendimiento académico.<br/><br/>
-4. No existen diferencias significativas por género en el aprendizaje.<br/><br/>
-5. Se requiere investigación adicional para generalizar los hallazgos a otras poblaciones.""",
+        'conclusiones': f"""1. Se ha logrado cumplir con los objetivos planteados.<br/><br/>
+2. Las metodologías prácticas demostraron ser más efectivas.<br/><br/>
+3. La experiencia previa es un factor determinante.<br/><br/>
+4. No existen diferencias significativas por género.<br/><br/>
+5. Se requiere investigación adicional para generalizar los hallazgos.""",
         
         'recomendaciones': f"""<b>Para la institución educativa</b><br/><br/>
 1. Fortalecer los programas de formación en {tema_limpio}.<br/><br/>
-2. Invertir en infraestructura tecnológica y recursos didácticos.<br/><br/>
+2. Invertir en infraestructura tecnológica.<br/><br/>
 
 <b>Para los docentes</b><br/><br/>
-3. Implementar metodologías activas como el aprendizaje basado en proyectos.<br/><br/>
-4. Diseñar materiales contextualizados según las necesidades de los estudiantes.<br/><br/>
+3. Implementar metodologías activas.<br/><br/>
+4. Diseñar materiales contextualizados.<br/><br/>
 
 <b>Para futuras investigaciones</b><br/><br/>
-5. Realizar estudios longitudinales para evaluar el impacto a largo plazo.<br/><br/>
-6. Ampliar la muestra a diferentes contextos educativos."""
+5. Realizar estudios longitudinales.<br/><br/>
+6. Ampliar la muestra a diferentes contextos."""
     }
     
     return contenidos.get(tipo, "Contenido en desarrollo.")
 
-def generar_contenido(tipo, tema, info_usuario=""):
-    """Intenta usar IA primero, si falla usa contenido local"""
-    contenido_ia = generar_con_ia(tema, tipo, info_usuario)
-    if contenido_ia:
-        print(f"✅ Usando IA para {tipo}")
-        return contenido_ia
-    print(f"⚠️ Usando contenido LOCAL para {tipo}")
-    return generar_contenido_local(tipo, tema, info_usuario)
-
-# ========== REFERENCIAS ACADÉMICAS ==========
+# ========== REFERENCIAS ==========
 REFERENCIAS = {
     'default': [
         "Hernández Sampieri, R., Fernández Collado, C., & Baptista Lucio, P. (2021). Metodología de la Investigación (7ª ed.). McGraw-Hill.",
@@ -290,7 +290,7 @@ class GeneradorPDF:
             fontSize=24, alignment=TA_CENTER, spaceAfter=20, textColor=colors.HexColor('#1a365d')))
         return styles
     
-    def generar_pdf(self, datos_usuario, opciones, texto_auto=""):
+    def generar_pdf(self, datos_usuario, opciones, secciones_ia=None):
         nombre = datos_usuario.get('nombre', 'Estudiante') or "Estudiante"
         tema = datos_usuario.get('tema', 'Tema de Investigación') or "Tema de Investigación"
         asignatura = datos_usuario.get('asignatura', 'Asignatura') or "Asignatura"
@@ -300,33 +300,45 @@ class GeneradorPDF:
         
         print(f"\n📄 Generando informe para tema: {tema}")
         
-        introduccion = datos_usuario.get('introduccion', '')
-        if not introduccion or len(introduccion) < 50:
-            introduccion = generar_contenido('introduccion', tema, texto_auto)
-        
-        objetivos = datos_usuario.get('objetivos', '')
-        if not objetivos or len(objetivos) < 50:
-            objetivos = generar_contenido('objetivos', tema)
-        
-        marco_teorico = datos_usuario.get('marco_teorico', '')
-        if not marco_teorico or len(marco_teorico) < 50:
-            marco_teorico = generar_contenido('marco_teorico', tema)
-        
-        metodologia = datos_usuario.get('metodologia', '')
-        if not metodologia or len(metodologia) < 50:
-            metodologia = generar_contenido('metodologia', tema)
-        
-        desarrollo = datos_usuario.get('desarrollo', '')
-        if not desarrollo or len(desarrollo) < 50:
-            desarrollo = generar_contenido('desarrollo', tema, texto_auto)
-        
-        conclusiones = datos_usuario.get('conclusiones', '')
-        if not conclusiones or len(conclusiones) < 50:
-            conclusiones = generar_contenido('conclusiones', tema)
-        
-        recomendaciones = datos_usuario.get('recomendaciones', '')
-        if opciones.get('incluir_recomendaciones', True) and (not recomendaciones or len(recomendaciones) < 50):
-            recomendaciones = generar_contenido('recomendaciones', tema)
+        # Usar secciones de IA si existen
+        if secciones_ia:
+            introduccion = secciones_ia.get('introduccion', '')
+            objetivos = secciones_ia.get('objetivos', '')
+            marco_teorico = secciones_ia.get('marco_teorico', '')
+            metodologia = secciones_ia.get('metodologia', '')
+            desarrollo = secciones_ia.get('desarrollo', '')
+            conclusiones = secciones_ia.get('conclusiones', '')
+            recomendaciones = secciones_ia.get('recomendaciones', '')
+            print("✅ Usando secciones generadas por IA")
+        else:
+            # Usar contenido del usuario o local
+            introduccion = datos_usuario.get('introduccion', '')
+            if not introduccion or len(introduccion) < 50:
+                introduccion = generar_contenido_local('introduccion', tema)
+            
+            objetivos = datos_usuario.get('objetivos', '')
+            if not objetivos or len(objetivos) < 50:
+                objetivos = generar_contenido_local('objetivos', tema)
+            
+            marco_teorico = datos_usuario.get('marco_teorico', '')
+            if not marco_teorico or len(marco_teorico) < 50:
+                marco_teorico = generar_contenido_local('marco_teorico', tema)
+            
+            metodologia = datos_usuario.get('metodologia', '')
+            if not metodologia or len(metodologia) < 50:
+                metodologia = generar_contenido_local('metodologia', tema)
+            
+            desarrollo = datos_usuario.get('desarrollo', '')
+            if not desarrollo or len(desarrollo) < 50:
+                desarrollo = generar_contenido_local('desarrollo', tema)
+            
+            conclusiones = datos_usuario.get('conclusiones', '')
+            if not conclusiones or len(conclusiones) < 50:
+                conclusiones = generar_contenido_local('conclusiones', tema)
+            
+            recomendaciones = datos_usuario.get('recomendaciones', '')
+            if opciones.get('incluir_recomendaciones', True) and (not recomendaciones or len(recomendaciones) < 50):
+                recomendaciones = generar_contenido_local('recomendaciones', tema)
         
         referencias = obtener_referencias(tema)
         
@@ -421,11 +433,16 @@ def generar():
     try:
         datos = request.json
         modo = datos.get('modo', 'auto')
+        tema = datos.get('tema', '')
         texto_auto = datos.get('texto_completo', '') if modo in ['auto', 'rapido'] else ''
+        
+        # Si es modo rápido y hay tema, usarlo
+        if modo == 'rapido' and texto_auto:
+            tema = texto_auto
         
         print(f"\n📨 Solicitud de generación recibida")
         print(f"   Modo: {modo}")
-        print(f"   Tema: {datos.get('tema', 'No especificado')}")
+        print(f"   Tema: {tema[:50] if tema else 'No especificado'}...")
         
         opciones = {
             'incluir_resumen': datos.get('incluir_resumen', False),
@@ -433,9 +450,14 @@ def generar():
             'incluir_recomendaciones': datos.get('incluir_recomendaciones', True)
         }
         
+        # Intentar generar con IA (una sola llamada para todo el informe)
+        secciones_ia = None
+        if tema and len(tema) > 5:
+            secciones_ia = generar_informe_completo_con_ia(tema, texto_auto)
+        
         datos_usuario = {
             'nombre': datos.get('nombre', ''),
-            'tema': datos.get('tema', ''),
+            'tema': tema,
             'asignatura': datos.get('asignatura', ''),
             'profesor': datos.get('profesor', ''),
             'institucion': datos.get('institucion', ''),
@@ -449,7 +471,7 @@ def generar():
             'recomendaciones': datos.get('recomendaciones', '')
         }
         
-        filename, filepath = generador.generar_pdf(datos_usuario, opciones, texto_auto)
+        filename, filepath = generador.generar_pdf(datos_usuario, opciones, secciones_ia)
         
         return jsonify({
             'success': True,
