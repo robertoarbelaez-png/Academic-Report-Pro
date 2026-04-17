@@ -18,15 +18,13 @@ os.makedirs('informes_generados', exist_ok=True)
 OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# LOGS PARA DEPURACIÓN
 print("=" * 50)
 print("🚀 INICIANDO APLICACIÓN")
 print(f"🔑 API Key cargada: {'SÍ ✅' if OPENROUTER_API_KEY else 'NO ❌'}")
-print(f"📝 Longitud de la API Key: {len(OPENROUTER_API_KEY) if OPENROUTER_API_KEY else 0} caracteres")
 print("=" * 50)
 
 def generar_con_ia(tema, tipo_contenido, info_usuario=""):
-    """Genera contenido REAL usando IA (OpenRouter + Llama)"""
+    """Genera contenido REAL usando IA con reintentos automáticos en modelos gratuitos"""
     
     if not OPENROUTER_API_KEY:
         print("❌ No hay API key configurada")
@@ -108,60 +106,60 @@ EXTENSIÓN: 200-250 palabras."""
     if not prompt:
         return None
     
-    try:
-        headers = {
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        # Modelo gratuito que SÍ funciona (Llama 3.2)
-        data = {
-            "model": "meta-llama/llama-3.2-3b-instruct:free",
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "Eres un asistente académico profesional. Generas contenido de alta calidad para informes universitarios en español. Usas un lenguaje formal pero claro."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            "max_tokens": 1000,
-            "temperature": 0.7
-        }
-        
-        print(f"📡 Enviando petición a OpenRouter...")
-        response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=60)
-        
-        print(f"📡 Respuesta código: {response.status_code}")
-        
-        if response.status_code == 200:
-            resultado = response.json()
-            contenido = resultado['choices'][0]['message']['content']
-            print(f"✅ IA generó {len(contenido)} caracteres")
-            return contenido.replace('\n', '<br/>')
-        else:
-            print(f"❌ Error HTTP {response.status_code}: {response.text[:200]}")
+    # Lista de modelos gratuitos para probar en orden
+    modelos = [
+        "microsoft/phi-3.5-mini-128k-instruct:free",
+        "mistralai/mistral-7b-instruct:free",
+        "meta-llama/llama-3.2-3b-instruct:free",
+        "google/gemini-2.0-flash-exp:free"
+    ]
+    
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    for i, modelo in enumerate(modelos):
+        try:
+            print(f"📡 Intentando con modelo {i+1}/{len(modelos)}: {modelo}")
             
-            # Si falla con Llama, intentar con modelo alternativo
-            if response.status_code == 400:
-                print("🔄 Intentando con modelo alternativo...")
-                data["model"] = "microsoft/phi-3.5-mini-128k-instruct:free"
-                response2 = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=60)
-                if response2.status_code == 200:
-                    resultado = response2.json()
-                    contenido = resultado['choices'][0]['message']['content']
-                    print(f"✅ IA generó {len(contenido)} caracteres (modelo alternativo)")
-                    return contenido.replace('\n', '<br/>')
-            return None
+            data = {
+                "model": modelo,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "Eres un asistente académico profesional. Generas contenido de alta calidad para informes universitarios en español. Usas un lenguaje formal pero claro."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "max_tokens": 1000,
+                "temperature": 0.7
+            }
             
-    except requests.exceptions.Timeout:
-        print("❌ Timeout: La IA tardó demasiado en responder")
-        return None
-    except Exception as e:
-        print(f"❌ Error conectando con IA: {str(e)}")
-        return None
+            response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=60)
+            print(f"📡 Respuesta código: {response.status_code}")
+            
+            if response.status_code == 200:
+                resultado = response.json()
+                contenido = resultado['choices'][0]['message']['content']
+                print(f"✅ IA generó {len(contenido)} caracteres con modelo {modelo}")
+                return contenido.replace('\n', '<br/>')
+            elif response.status_code == 429:
+                print(f"⚠️ Modelo {modelo} saturado (429), probando siguiente...")
+                continue
+            else:
+                print(f"❌ Error con {modelo}: {response.status_code}")
+                continue
+                
+        except Exception as e:
+            print(f"❌ Error con modelo {modelo}: {str(e)}")
+            continue
+    
+    print("❌ Todos los modelos gratuitos están saturados temporalmente. Usando contenido local.")
+    return None
 
 def generar_contenido_local(tipo, tema, info_usuario=""):
     """Contenido de respaldo (cuando no hay IA o falla)"""
@@ -263,7 +261,7 @@ def generar_contenido(tipo, tema, info_usuario=""):
     print(f"⚠️ Usando contenido LOCAL para {tipo}")
     return generar_contenido_local(tipo, tema, info_usuario)
 
-# ========== REFERENCIAS ACADÉMICAS REALES ==========
+# ========== REFERENCIAS ACADÉMICAS ==========
 REFERENCIAS = {
     'default': [
         "Hernández Sampieri, R., Fernández Collado, C., & Baptista Lucio, P. (2021). Metodología de la Investigación (7ª ed.). McGraw-Hill.",
@@ -413,7 +411,6 @@ class GeneradorPDF:
 
 generador = GeneradorPDF()
 
-# ========== RUTAS ==========
 @app.route('/')
 def index():
     print("📄 Página principal solicitada")
