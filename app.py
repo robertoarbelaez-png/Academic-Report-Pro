@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.lib.units import inch, mm
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -87,9 +87,7 @@ def limpiar_texto(texto):
     """Limpia caracteres extraños del texto"""
     if not texto:
         return ""
-    # Eliminar caracteres no imprimibles (excepto letras, números, espacios, puntuación básica)
     texto = re.sub(r'[^\x20-\x7E\xA0-\xFF\u00C0-\u00FF\u0100-\u017F\n\r]', '', texto)
-    # Reemplazar múltiples saltos de línea
     texto = re.sub(r'\n{3,}', '<br/><br/>', texto)
     return texto
 
@@ -106,38 +104,40 @@ def generar_informe_completo_con_ia(tema, info_usuario=""):
 
 Información adicional: {info_usuario if info_usuario else 'No hay información adicional'}
 
-El informe debe tener EXACTAMENTE estas secciones. Usa SOLO español. Escribe CONCLUSIONES (no Conclusions) y RECOMENDACIONES (no Recommendations):
+⚠️ IMPORTANTE: Cada sección debe tener contenido ESPECÍFICO relacionado directamente con "{tema}". NO uses plantillas genéricas como "aprendizaje significativo" o "teoría constructivista" a menos que estén directamente relacionadas con el tema.
+
+Escribe EXACTAMENTE estas secciones con el siguiente formato:
 
 **INTRODUCCIÓN**
-(Contexto del tema, por qué es importante, planteamiento del problema, justificación - 300-400 palabras)
+(Escribe aquí 300-400 palabras específicas sobre el tema, explicando contexto, problema y justificación)
 
 **OBJETIVOS**
-**Objetivo General:** (1 objetivo)
-**Objetivos Específicos:** (4 objetivos numerados)
+**Objetivo General:** (1 objetivo específico relacionado con el tema)
+**Objetivos Específicos:** (4 objetivos específicos numerados, directamente relacionados con el tema)
 
 **MARCO TEÓRICO**
-**Antecedentes:** (qué se ha investigado antes)
-**Bases Teóricas:** (conceptos clave, autores)
-**Estado del Arte:** (investigaciones recientes)
+**Antecedentes:** (investigaciones previas específicas sobre el tema, con autores y años reales)
+**Bases Teóricas:** (conceptos clave específicos del tema, no genéricos)
+**Estado del Arte:** (investigaciones recientes específicas sobre el tema)
 
 **METODOLOGÍA**
-**Enfoque:** 
-**Población y muestra:** 
-**Instrumentos:** 
-**Procedimiento:** 
+**Enfoque:** (tipo de investigación apropiado para el tema)
+**Población y muestra:** (específica al tema, ej: productores de café, estudiantes, etc.)
+**Instrumentos:** (encuestas, entrevistas, análisis de datos - específicos al tema)
+**Procedimiento:** (pasos concretos para investigar el tema)
 
 **DESARROLLO**
-**Análisis de resultados:** 
-**Dimensiones analizadas:** 
-**Discusión:** 
+**Análisis de resultados:** (hallazgos específicos sobre el tema)
+**Dimensiones analizadas:** (aspectos concretos del tema)
+**Discusión:** (relación de hallazgos con la literatura)
 
 **CONCLUSIONES**
-(5 puntos principales)
+(5 puntos específicos sobre el tema)
 
 **RECOMENDACIONES**
-(Para institución, docentes, futuros estudios)
+(Para institución, para profesionales del área, para futuros estudios)
 
-Escribe en español, tono académico profesional. NO uses caracteres especiales raros."""
+Escribe TODO en español. Usa CONCLUSIONES (no Conclusions). Usa RECOMENDACIONES (no Recommendations). Cada sección debe ser detallada y específica al tema "{tema}"."""
     
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -147,11 +147,11 @@ Escribe en español, tono académico profesional. NO uses caracteres especiales 
     data = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
-            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos y detallados en español. Usas CONCLUSIONES (no Conclusions) y RECOMENDACIONES (no Recommendations). NO usas caracteres extraños."},
+            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos y detallados. SIEMPRE generas contenido ESPECÍFICO al tema solicitado. NUNCA usas plantillas genéricas como 'aprendizaje significativo' o 'teoría constructivista' a menos que el tema lo requiera. Usas CONCLUSIONES (no Conclusions) y RECOMENDACIONES (no Recommendations)."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
-        "max_tokens": 4000
+        "max_tokens": 5000
     }
     
     try:
@@ -164,10 +164,8 @@ Escribe en español, tono académico profesional. NO uses caracteres especiales 
             contenido = resultado['choices'][0]['message']['content']
             print(f"✅ Groq generó {len(contenido)} caracteres")
             
-            # Limpiar contenido
             contenido = limpiar_texto(contenido)
             
-            # Extraer secciones
             secciones = {
                 'introduccion': extraer_seccion(contenido, 'INTRODUCCIÓN'),
                 'objetivos': extraer_seccion(contenido, 'OBJETIVOS'),
@@ -178,11 +176,11 @@ Escribe en español, tono académico profesional. NO uses caracteres especiales 
                 'recomendaciones': extraer_seccion(contenido, 'RECOMENDACIONES')
             }
             
-            # Rellenar secciones vacías
+            # Verificar que todas las secciones tengan contenido específico
             for key in secciones:
-                if not secciones[key] or len(secciones[key]) < 50:
-                    print(f"⚠️ Sección {key} vacía, usando contenido local")
-                    secciones[key] = generar_contenido_local(key, tema)
+                if not secciones[key] or len(secciones[key]) < 100:
+                    print(f"⚠️ Sección {key} incompleta, regenerando...")
+                    secciones[key] = generar_seccion_individual(key, tema)
             
             return secciones
         else:
@@ -193,11 +191,43 @@ Escribe en español, tono académico profesional. NO uses caracteres especiales 
         print(f"❌ Error conectando con Groq: {str(e)}")
         return None
 
+def generar_seccion_individual(seccion, tema):
+    """Genera una sección específica si la principal falló"""
+    prompts = {
+        'objetivos': f"Genera solo los OBJETIVOS para un informe sobre '{tema}'. Incluye 1 Objetivo General y 4 Objetivos Específicos directamente relacionados con el tema. Usa **negritas**.",
+        'marco_teorico': f"Genera solo el MARCO TEÓRICO para un informe sobre '{tema}'. Incluye Antecedentes (con autores reales), Bases Teóricas y Estado del Arte. Específico al tema.",
+        'metodologia': f"Genera solo la METODOLOGÍA para un informe sobre '{tema}'. Incluye Enfoque, Población y muestra, Instrumentos y Procedimiento. Específico al tema.",
+        'desarrollo': f"Genera solo el DESARROLLO para un informe sobre '{tema}'. Incluye Análisis de resultados, Dimensiones analizadas y Discusión."
+    }
+    
+    if seccion not in prompts:
+        return generar_contenido_local(seccion, tema)
+    
+    if not GROQ_API_KEY:
+        return generar_contenido_local(seccion, tema)
+    
+    try:
+        headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+        data = {
+            "model": "llama-3.3-70b-versatile",
+            "messages": [{"role": "user", "content": prompts[seccion]}],
+            "max_tokens": 1500
+        }
+        response = requests.post(GROQ_URL, headers=headers, json=data, timeout=60)
+        if response.status_code == 200:
+            contenido = response.json()['choices'][0]['message']['content']
+            contenido = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', contenido)
+            return contenido.replace('\n', '<br/>')
+    except Exception as e:
+        print(f"Error generando sección {seccion}: {e}")
+    
+    return generar_contenido_local(seccion, tema)
+
 def extraer_seccion(contenido, nombre):
     """Extrae una sección del contenido generado por IA"""
     patrones = [
         rf'\*\*{nombre}\*\*:?(.*?)(?=\*\*[A-Z]|$)',
-        rf'{nombre}:?(.*?)(?=\n\n\*\*[A-Z]|$)',
+        rf'{nombre}:?(.*?)(?=\n\n\*\*[A-Z]|\n\n[A-Z]|$)',
         rf'{nombre}\s*\n(.*?)(?=\n\n\*\*[A-Z]|\n\n[A-Z]|$)'
     ]
     
@@ -207,42 +237,51 @@ def extraer_seccion(contenido, nombre):
             texto = match.group(1).strip()
             texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
             texto = texto.replace('\n', '<br/>')
-            # Limitar longitud
-            if len(texto) > 3500:
-                texto = texto[:3500] + "..."
+            if len(texto) > 4000:
+                texto = texto[:4000] + "..."
             return texto
     
     return ""
 
 def generar_contenido_local(tipo, tema):
-    """Contenido de respaldo"""
+    """Contenido de respaldo (solo si la IA falla completamente)"""
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
-        'introduccion': f"""El presente informe académico aborda el estudio de {tema_limpio}, una temática de creciente relevancia.<br/><br/>
-<b>Contextualización</b><br/>En las instituciones educativas, se observan dificultades en la comprensión de {tema_limpio}.<br/><br/>
-<b>Planteamiento del problema</b><br/>¿Cuál es el nivel de comprensión de {tema_limpio}?<br/><br/>
-<b>Justificación</b><br/>Este estudio aporta al conocimiento existente.""",
+        'introduccion': f"""El presente informe académico aborda el estudio de {tema_limpio}, una temática de creciente relevancia en el contexto actual.<br/><br/>
+<b>Contextualización</b><br/>Este tema ha cobrado importancia en los últimos años debido a sus implicaciones en diversos ámbitos.<br/><br/>
+<b>Planteamiento del problema</b><br/>Es necesario comprender a fondo los aspectos fundamentales relacionados con {tema_limpio}.<br/><br/>
+<b>Justificación</b><br/>Este estudio contribuye al conocimiento existente y ofrece perspectivas valiosas.""",
         
-        'objetivos': f"""<b>Objetivo General</b><br/><br/>Analizar la comprensión de {tema_limpio}.<br/><br/><br/>
-<b>Objetivos Específicos</b><br/><br/>1. Identificar conceptos teóricos.<br/><br/>2. Describir dificultades.<br/><br/>3. Analizar relación con rendimiento.<br/><br/>4. Proponer estrategias.""",
+        'objetivos': f"""<b>Objetivo General</b><br/><br/>Analizar los aspectos fundamentales de {tema_limpio}.<br/><br/><br/>
+<b>Objetivos Específicos</b><br/><br/>1. Identificar los conceptos clave relacionados con {tema_limpio}.<br/><br/>
+2. Describir las principales características y componentes.<br/><br/>
+3. Analizar la relación entre variables relevantes.<br/><br/>
+4. Proponer recomendaciones basadas en el análisis.""",
         
-        'marco_teorico': f"""<b>Antecedentes</b><br/><br/>El estudio de {tema_limpio} ha sido abordado por diversos autores.<br/><br/>
-<b>Bases teóricas</b><br/>La teoría constructivista del aprendizaje es fundamental.<br/><br/>
-<b>Conceptos clave</b><br/>• Aprendizaje significativo<br/>• Competencia digital<br/>• Metacognición""",
+        'marco_teorico': f"""<b>Antecedentes</b><br/><br/>Diversos autores han estudiado {tema_limpio} en las últimas décadas.<br/><br/>
+<b>Bases teóricas</b><br/>Las teorías existentes proporcionan un marco conceptual sólido.<br/><br/>
+<b>Conceptos clave</b><br/>• Concepto fundamental 1<br/>• Concepto fundamental 2<br/>• Concepto fundamental 3<br/><br/>
+<b>Estado del arte</b><br/>Investigaciones recientes han profundizado en aspectos específicos de {tema_limpio}.""",
         
-        'metodologia': f"""<b>Enfoque</b><br/>Enfoque mixto.<br/><br/>
-<b>Población y muestra</b><br/>Estudiantes de educación superior.<br/><br/>
-<b>Instrumentos</b><br/>Cuestionario, prueba de conocimientos, entrevistas.""",
+        'metodologia': f"""<b>Enfoque</b><br/>Enfoque mixto (cualitativo-cuantitativo).<br/><br/>
+<b>Población y muestra</b><br/>Población relevante al tema de estudio, muestra representativa.<br/><br/>
+<b>Instrumentos</b><br/>Cuestionarios, entrevistas, revisión documental.<br/><br/>
+<b>Procedimiento</b><br/>Fase 1: Recolección de datos<br/>Fase 2: Análisis e interpretación<br/>Fase 3: Elaboración de conclusiones""",
         
-        'desarrollo': f"""<b>Análisis de resultados</b><br/>Los hallazgos indican variaciones significativas.<br/><br/>
-<b>Dimensiones analizadas</b><br/>• Conocimientos teóricos<br/>• Habilidades prácticas<br/>• Actitudes""",
+        'desarrollo': f"""<b>Análisis de resultados</b><br/>Los hallazgos indican aspectos relevantes sobre {tema_limpio}.<br/><br/>
+<b>Dimensiones analizadas</b><br/>• Dimensión 1<br/>• Dimensión 2<br/>• Dimensión 3<br/><br/>
+<b>Discusión</b><br/>Los resultados coinciden parcialmente con lo reportado en la literatura.""",
         
-        'conclusiones': f"""1. Se cumplieron los objetivos.<br/><br/>2. Metodologías prácticas son más efectivas.<br/><br/>3. La experiencia previa influye.<br/><br/>4. No hay diferencias por género.<br/><br/>5. Se requiere más investigación.""",
+        'conclusiones': f"""1. Se han identificado los aspectos fundamentales de {tema_limpio}.<br/><br/>
+2. El análisis realizado aporta al conocimiento existente.<br/><br/>
+3. Se requiere mayor investigación en áreas específicas.<br/><br/>
+4. Las recomendaciones propuestas son viables.<br/><br/>
+5. Este estudio sienta bases para futuras investigaciones.""",
         
-        'recomendaciones': f"""<b>Para la institución</b><br/>1. Fortalecer programas.<br/><br/>
-<b>Para los docentes</b><br/>2. Implementar metodologías activas.<br/><br/>
-<b>Para futuros estudios</b><br/>3. Ampliar la muestra."""
+        'recomendaciones': f"""<b>Para la institución</b><br/>1. Fortalecer líneas de investigación relacionadas.<br/><br/>
+<b>Para los profesionales</b><br/>2. Aplicar los hallazgos en contextos prácticos.<br/><br/>
+<b>Para futuros estudios</b><br/>3. Ampliar la muestra y el alcance geográfico."""
     }
     return contenidos.get(tipo, "Contenido en desarrollo.")
 
@@ -291,11 +330,9 @@ class GeneradorPDF:
         fecha_entrega = datos_usuario.get('fecha_entrega', datetime.now().strftime('%d/%m/%Y'))
         norma = datos_usuario.get('norma', 'apa7')
         
-        # Obtener configuración de la norma
         config_norma = NORMAS_CONFIG.get(norma, NORMAS_CONFIG['apa7'])
         print(f"📏 Aplicando norma: {config_norma['nombre']}")
         
-        # Usar secciones de IA si existen
         if secciones_ia and isinstance(secciones_ia, dict):
             introduccion = limpiar_texto(secciones_ia.get('introduccion', ''))
             objetivos = limpiar_texto(secciones_ia.get('objetivos', ''))
@@ -320,7 +357,6 @@ class GeneradorPDF:
         filename = f"informe_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:4]}.pdf"
         filepath = os.path.join('informes_generados', filename)
         
-        # Crear estilos según la norma
         styles = self.crear_estilos(config_norma)
         
         doc = SimpleDocTemplate(filepath, 
@@ -358,39 +394,31 @@ class GeneradorPDF:
             story.append(Paragraph(f"• {idx}", styles['TextoJustificado']))
         story.append(PageBreak())
         
-        # ===== SECCIONES (CADA UNA UNA SOLA VEZ) =====
-        
-        # 1. INTRODUCCIÓN
+        # SECCIONES
         story.append(Paragraph("1. INTRODUCCIÓN", styles['Titulo1']))
         story.append(Paragraph(introduccion, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        # 2. OBJETIVOS
         story.append(Paragraph("2. OBJETIVOS", styles['Titulo1']))
         story.append(Paragraph(objetivos, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        # 3. MARCO TEÓRICO
         story.append(Paragraph("3. MARCO TEÓRICO", styles['Titulo1']))
         story.append(Paragraph(marco_teorico, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        # 4. METODOLOGÍA
         story.append(Paragraph("4. METODOLOGÍA", styles['Titulo1']))
         story.append(Paragraph(metodologia, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        # 5. DESARROLLO
         story.append(Paragraph("5. DESARROLLO", styles['Titulo1']))
         story.append(Paragraph(desarrollo, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        # 6. CONCLUSIONES
         story.append(Paragraph("6. CONCLUSIONES", styles['Titulo1']))
         story.append(Paragraph(conclusiones, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        # 7. RECOMENDACIONES (opcional)
         if opciones.get('incluir_recomendaciones', True):
             story.append(Paragraph("7. RECOMENDACIONES", styles['Titulo1']))
             story.append(Paragraph(recomendaciones, styles['TextoJustificado']))
@@ -399,13 +427,12 @@ class GeneradorPDF:
         else:
             story.append(Paragraph("7. REFERENCIAS", styles['Titulo1']))
         
-        # REFERENCIAS
         for i, ref in enumerate(referencias, 1):
             story.append(Paragraph(f"{i}. {ref}", styles['TextoJustificado']))
             story.append(Spacer(1, 0.1*inch))
         
         doc.build(story)
-        print(f"✅ PDF generado: {filename} (Norma: {config_norma['nombre']})")
+        print(f"✅ PDF generado: {filename}")
         return filename, filepath
 
 generador = GeneradorPDF()
