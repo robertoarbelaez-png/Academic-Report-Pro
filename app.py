@@ -36,38 +36,35 @@ def generar_informe_completo_con_ia(tema, info_usuario=""):
 
 Información adicional: {info_usuario if info_usuario else 'No hay información adicional'}
 
-El informe debe tener estas secciones con **negritas**:
+El informe debe tener estas secciones:
 
-**INTRODUCCIÓN**
-(Contexto, problema, justificación - 300-400 palabras)
+INTRODUCCION: (Contexto, problema, justificación - 300-400 palabras)
 
-**OBJETIVOS**
-**Objetivo General:** (1)
-**Objetivos Específicos:** (4 numerados)
+OBJETIVOS: 
+- Objetivo General: (1)
+- Objetivos Específicos: (4 numerados)
 
-**MARCO TEÓRICO**
-**Antecedentes:** (autores reales)
-**Bases Teóricas:** (conceptos clave)
-**Estado del Arte:** (investigaciones recientes)
+MARCO TEORICO:
+- Antecedentes:
+- Bases Teóricas:
+- Estado del Arte:
 
-**METODOLOGÍA**
-**Enfoque:** 
-**Población y muestra:** 
-**Instrumentos:** 
-**Procedimiento:** 
+METODOLOGIA:
+- Enfoque:
+- Población y muestra:
+- Instrumentos:
+- Procedimiento:
 
-**DESARROLLO**
-**Análisis de resultados:** 
-**Dimensiones analizadas:** 
-**Discusión:** 
+DESARROLLO:
+- Análisis de resultados:
+- Dimensiones analizadas:
+- Discusión:
 
-**CONCLUSIONES**
-(5 puntos principales)
+CONCLUSIONES: (5 puntos principales)
 
-**RECOMENDACIONES**
-(Para institución, docentes, futuros estudios)
+RECOMENDACIONES: (Para institución, docentes, futuros estudios)
 
-Escribe en español, tono académico profesional. Usa **texto** para subtítulos."""
+Escribe en español, tono académico profesional. Cada sección debe ser detallada."""
     
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -77,7 +74,7 @@ Escribe en español, tono académico profesional. Usa **texto** para subtítulos
     data = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
-            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos en español."},
+            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos y detallados en español."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
@@ -95,38 +92,63 @@ Escribe en español, tono académico profesional. Usa **texto** para subtítulos
             print(f"✅ Groq generó {len(contenido)} caracteres")
             
             # Extraer secciones
-            secciones = {}
-            secciones['introduccion'] = extraer_seccion(contenido, 'INTRODUCCIÓN')
-            secciones['objetivos'] = extraer_seccion(contenido, 'OBJETIVOS')
-            secciones['marco_teorico'] = extraer_seccion(contenido, 'MARCO TEÓRICO')
-            secciones['metodologia'] = extraer_seccion(contenido, 'METODOLOGÍA')
-            secciones['desarrollo'] = extraer_seccion(contenido, 'DESARROLLO')
-            secciones['conclusiones'] = extraer_seccion(contenido, 'CONCLUSIONES')
-            secciones['recomendaciones'] = extraer_seccion(contenido, 'RECOMENDACIONES')
+            secciones = {
+                'introduccion': extraer_seccion_simple(contenido, 'INTRODUCCION'),
+                'objetivos': extraer_seccion_simple(contenido, 'OBJETIVOS'),
+                'marco_teorico': extraer_seccion_simple(contenido, 'MARCO TEORICO'),
+                'metodologia': extraer_seccion_simple(contenido, 'METODOLOGIA'),
+                'desarrollo': extraer_seccion_simple(contenido, 'DESARROLLO'),
+                'conclusiones': extraer_seccion_simple(contenido, 'CONCLUSIONES'),
+                'recomendaciones': extraer_seccion_simple(contenido, 'RECOMENDACIONES')
+            }
             
-            # Rellenar secciones vacías con contenido local
+            # Verificar que todas las secciones tengan contenido
             for key in secciones:
                 if not secciones[key] or len(secciones[key]) < 50:
+                    print(f"⚠️ Sección {key} vacía, usando contenido local")
                     secciones[key] = generar_contenido_local(key, tema)
             
             return secciones
         else:
-            print(f"❌ Error: {response.status_code}")
+            print(f"❌ Error HTTP {response.status_code}: {response.text[:200]}")
             return None
+            
     except Exception as e:
-        print(f"❌ Error: {str(e)}")
+        print(f"❌ Error conectando con Groq: {str(e)}")
         return None
 
-def extraer_seccion(contenido, nombre):
-    patron = rf'\*\*{nombre}\*\*(.*?)(?=\*\*|$)'
-    match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
-    if match:
-        texto = match.group(1).strip()
-        texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
-        return texto.replace('\n', '<br/>')
+def extraer_seccion_simple(contenido, nombre):
+    """Extrae una sección del contenido generado por IA"""
+    # Buscar patrones como "INTRODUCCION:" o "INTRODUCCION\n"
+    patrones = [
+        rf'{nombre}[:\\s]*(.*?)(?={{"|$|\\n\\n[A-Z]|\\n[A-Z]+:)',
+        rf'{nombre}\\s*\\n(.*?)(?=\\n\\n[A-Z]|\\n[A-Z]+:)',
+    ]
+    
+    for patron in patrones:
+        match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
+        if match:
+            texto = match.group(1).strip()
+            # Limpiar y formatear
+            texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
+            texto = texto.replace('\n', '<br/>')
+            # Limitar longitud
+            if len(texto) > 3000:
+                texto = texto[:3000] + "..."
+            return texto
+    
+    # Si no encuentra la sección, buscar por palabras clave
+    if nombre == 'INTRODUCCION':
+        match = re.search(r'(?i)(INTRODUCCIÓN|INTRODUCCION)[:\\s]*(.*?)(?=\\n\\n[A-Z]|$)', contenido, re.DOTALL)
+        if match:
+            texto = match.group(2).strip()
+            texto = texto.replace('\n', '<br/>')
+            return texto[:2000]
+    
     return ""
 
 def generar_contenido_local(tipo, tema):
+    """Contenido de respaldo (cuando no hay IA o falla)"""
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
@@ -191,15 +213,16 @@ class GeneradorPDF:
         institucion = datos_usuario.get('institucion', 'Institución Educativa') or "Institución Educativa"
         fecha_entrega = datos_usuario.get('fecha_entrega', datetime.now().strftime('%d/%m/%Y'))
         
-        if secciones_ia:
-            introduccion = secciones_ia.get('introduccion', generar_contenido_local('introduccion', tema))
-            objetivos = secciones_ia.get('objetivos', generar_contenido_local('objetivos', tema))
-            marco_teorico = secciones_ia.get('marco_teorico', generar_contenido_local('marco_teorico', tema))
-            metodologia = secciones_ia.get('metodologia', generar_contenido_local('metodologia', tema))
-            desarrollo = secciones_ia.get('desarrollo', generar_contenido_local('desarrollo', tema))
-            conclusiones = secciones_ia.get('conclusiones', generar_contenido_local('conclusiones', tema))
-            recomendaciones = secciones_ia.get('recomendaciones', generar_contenido_local('recomendaciones', tema))
-            print("✅ Usando secciones generadas por Groq")
+        # Usar secciones de IA si existen
+        if secciones_ia and isinstance(secciones_ia, dict):
+            introduccion = secciones_ia.get('introduccion', '')
+            objetivos = secciones_ia.get('objetivos', '')
+            marco_teorico = secciones_ia.get('marco_teorico', '')
+            metodologia = secciones_ia.get('metodologia', '')
+            desarrollo = secciones_ia.get('desarrollo', '')
+            conclusiones = secciones_ia.get('conclusiones', '')
+            recomendaciones = secciones_ia.get('recomendaciones', '')
+            print("✅ Usando secciones generadas por IA")
         else:
             introduccion = generar_contenido_local('introduccion', tema)
             objetivos = generar_contenido_local('objetivos', tema)
@@ -208,6 +231,7 @@ class GeneradorPDF:
             desarrollo = generar_contenido_local('desarrollo', tema)
             conclusiones = generar_contenido_local('conclusiones', tema)
             recomendaciones = generar_contenido_local('recomendaciones', tema)
+            print("⚠️ Usando contenido local")
         
         referencias = obtener_referencias(tema)
         
@@ -243,34 +267,44 @@ class GeneradorPDF:
         story.append(PageBreak())
         
         # SECCIONES
-        contador = 1
-        for titulo, contenido in [
-            (f"{contador}. INTRODUCCIÓN", introduccion),
-            (f"{contador+1}. OBJETIVOS", objetivos),
-            (f"{contador+2}. MARCO TEÓRICO", marco_teorico),
-            (f"{contador+3}. METODOLOGÍA", metodologia),
-            (f"{contador+4}. DESARROLLO", desarrollo),
-            (f"{contador+5}. CONCLUSIONES", conclusiones),
-            (f"{contador+6}. RECOMENDACIONES", recomendaciones) if opciones.get('incluir_recomendaciones', True) else None,
-            (f"{contador+7}. REFERENCIAS", None)
-        ]:
-            if titulo and "RECOMENDACIONES" in titulo:
-                story.append(Paragraph(titulo, self.estilos['Titulo1']))
-                story.append(Paragraph(contenido.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
-                story.append(PageBreak())
-                contador += 1
-            elif titulo and "REFERENCIAS" in titulo:
-                story.append(Paragraph(titulo, self.estilos['Titulo1']))
-                for i, ref in enumerate(referencias, 1):
-                    story.append(Paragraph(f"{i}. {ref}", self.estilos['TextoJustificado']))
-                    story.append(Spacer(1, 0.1*inch))
-            elif titulo:
-                story.append(Paragraph(titulo, self.estilos['Titulo1']))
-                story.append(Paragraph(contenido.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
-                story.append(PageBreak())
-                contador += 1
+        story.append(Paragraph("1. INTRODUCCIÓN", self.estilos['Titulo1']))
+        story.append(Paragraph(introduccion, self.estilos['TextoJustificado']))
+        story.append(PageBreak())
+        
+        story.append(Paragraph("2. OBJETIVOS", self.estilos['Titulo1']))
+        story.append(Paragraph(objetivos, self.estilos['TextoJustificado']))
+        story.append(PageBreak())
+        
+        story.append(Paragraph("3. MARCO TEÓRICO", self.estilos['Titulo1']))
+        story.append(Paragraph(marco_teorico, self.estilos['TextoJustificado']))
+        story.append(PageBreak())
+        
+        story.append(Paragraph("4. METODOLOGÍA", self.estilos['Titulo1']))
+        story.append(Paragraph(metodologia, self.estilos['TextoJustificado']))
+        story.append(PageBreak())
+        
+        story.append(Paragraph("5. DESARROLLO", self.estilos['Titulo1']))
+        story.append(Paragraph(desarrollo, self.estilos['TextoJustificado']))
+        story.append(PageBreak())
+        
+        story.append(Paragraph("6. CONCLUSIONES", self.estilos['Titulo1']))
+        story.append(Paragraph(conclusiones, self.estilos['TextoJustificado']))
+        story.append(PageBreak())
+        
+        if opciones.get('incluir_recomendaciones', True):
+            story.append(Paragraph("7. RECOMENDACIONES", self.estilos['Titulo1']))
+            story.append(Paragraph(recomendaciones, self.estilos['TextoJustificado']))
+            story.append(PageBreak())
+            story.append(Paragraph("8. REFERENCIAS", self.estilos['Titulo1']))
+        else:
+            story.append(Paragraph("7. REFERENCIAS", self.estilos['Titulo1']))
+        
+        for i, ref in enumerate(referencias, 1):
+            story.append(Paragraph(f"{i}. {ref}", self.estilos['TextoJustificado']))
+            story.append(Spacer(1, 0.1*inch))
         
         doc.build(story)
+        print(f"✅ PDF generado: {filename}")
         return filename, filepath
 
 generador = GeneradorPDF()
@@ -311,16 +345,27 @@ def generar():
         
         filename, filepath = generador.generar_pdf(datos_usuario, opciones, secciones_ia)
         
-        return jsonify({'success': True, 'filename': filename, 'download_url': f'/descargar/{filename}'})
+        return jsonify({
+            'success': True,
+            'filename': filename,
+            'download_url': f'/descargar/{filename}'
+        })
     
     except Exception as e:
         print(f"❌ Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/descargar/<filename>')
 def descargar(filename):
-    return send_file(os.path.join('informes_generados', filename), as_attachment=True, download_name=filename)
+    return send_file(
+        os.path.join('informes_generados', filename),
+        as_attachment=True,
+        download_name=filename
+    )
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Servidor iniciado en puerto {port}")
     app.run(debug=False, host='0.0.0.0', port=port)
