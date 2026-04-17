@@ -4,53 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Academic Report Pro | Generador de Informes Académicos con IA</title>
-    <meta name="description" content="Genera informes académicos profesionales con IA. 8 normas, 3 modos de uso, referencias automáticas y PDF listo para entregar.">
-    
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- SweetAlert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'sans-serif'],
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out',
-                        'slide-up': 'slideUp 0.4s ease-out',
-                        'float': 'float 6s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        fadeIn: { from: { opacity: '0' }, to: { opacity: '1' } },
-                        slideUp: { from: { transform: 'translateY(20px)', opacity: '0' }, to: { transform: 'translateY(0)', opacity: '1' } },
-                        float: { '0%,100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-10px)' } },
-                    }
-                }
-            }
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
-    
     <style>
         html { scroll-behavior: smooth; }
-        .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0); background-size: 32px 32px; }
-        .dark .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0); }
-        .count-up { transition: all 0.5s ease-out; }
+        .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.03) 1px, transparent 0); background-size: 32px 32px; }
+        .dark .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0); }
     </style>
 </head>
 <body class="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans">
     
-    <!-- HEADER -->
+    <!-- Header -->
     <header class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-md dark:border-slate-800/70 dark:bg-slate-950/80">
         <div class="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
             <a href="#" class="flex items-center gap-2 font-semibold">
@@ -62,6 +31,7 @@
                 <a class="hover:text-blue-600 transition" href="#beneficios">Beneficios</a>
                 <a class="hover:text-blue-600 transition" href="#caracteristicas">Características</a>
                 <a class="hover:text-blue-600 transition" href="#modos">Modos</a>
+                <a class="hover:text-blue-600 transition" href="#generador">Generador</a>
                 <a class="hover:text-blue-600 transition" href="#faq">FAQ</a>
             </nav>
             <div class="flex items-center gap-2">
@@ -76,12 +46,12 @@
         </div>
     </header>
     
-    <!-- HERO SECTION -->
+    <!-- Hero -->
     <section class="relative overflow-hidden">
         <div class="bg-grid absolute inset-0 opacity-30"></div>
         <div class="relative mx-auto max-w-6xl px-4 py-16 md:py-20">
             <div class="grid items-center gap-12 md:grid-cols-2">
-                <div class="animate-slide-up">
+                <div>
                     <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs font-medium backdrop-blur dark:border-slate-800 dark:bg-slate-950/60">
                         <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         IA lista para informes académicos
@@ -90,68 +60,47 @@
                         Informes académicos <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">profesionales</span>, en minutos
                     </h1>
                     <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">
-                        <strong>Academic Report Pro</strong> genera informes completos con formato académico, referencias reales y IA integrada. Listo para entregar en PDF.
+                        <strong>Academic Report Pro</strong> genera informes completos con formato académico, referencias reales y IA integrada.
                     </p>
                     <div class="mt-8 flex flex-col gap-3 sm:flex-row">
                         <a href="#generador" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all">
                             <i class="fas fa-file-pdf mr-2"></i> Empezar ahora
                         </a>
-                        <a href="#caracteristicas" class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900 transition">
-                            <i class="fas fa-play mr-2"></i> Ver cómo funciona
-                        </a>
                     </div>
-                    
-                    <!-- Stats -->
                     <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <div class="rounded-2xl border border-slate-200 bg-white/60 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/50">
-                            <div class="text-xs text-slate-500 dark:text-slate-400">Normas</div>
+                            <div class="text-xs text-slate-500">Normas</div>
                             <div class="mt-1 text-2xl font-extrabold text-blue-600">8</div>
                         </div>
                         <div class="rounded-2xl border border-slate-200 bg-white/60 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/50">
-                            <div class="text-xs text-slate-500 dark:text-slate-400">Modos</div>
+                            <div class="text-xs text-slate-500">Modos</div>
                             <div class="mt-1 text-2xl font-extrabold text-blue-600">3</div>
                         </div>
                         <div class="rounded-2xl border border-slate-200 bg-white/60 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/50">
-                            <div class="text-xs text-slate-500 dark:text-slate-400">Referencias</div>
+                            <div class="text-xs text-slate-500">Referencias</div>
                             <div class="mt-1 text-2xl font-extrabold text-blue-600">3</div>
                         </div>
                         <div class="rounded-2xl border border-slate-200 bg-white/60 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/50">
-                            <div class="text-xs text-slate-500 dark:text-slate-400">Salida</div>
+                            <div class="text-xs text-slate-500">Salida</div>
                             <div class="mt-1 text-2xl font-extrabold text-blue-600">PDF</div>
                         </div>
                     </div>
-                    
-                    <p class="mt-6 text-sm text-slate-500 dark:text-slate-400 italic">
-                        "De la idea al informe académico profesional en segundos"
-                    </p>
                 </div>
-                
-                <!-- Mockup / Card Preview -->
-                <div class="relative animate-float">
+                <div class="relative">
                     <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-950">
                         <div class="flex items-center justify-between">
                             <div>
                                 <div class="text-xs text-slate-500">Vista previa</div>
                                 <div class="mt-1 text-sm font-semibold">Informe generado</div>
                             </div>
-                            <div class="rounded-full border border-slate-200 px-3 py-1 text-xs dark:border-slate-800">PDF profesional</div>
+                            <div class="rounded-full border border-slate-200 px-3 py-1 text-xs">PDF</div>
                         </div>
                         <div class="mt-5 space-y-2">
                             <div class="h-3 w-3/4 rounded bg-slate-200 dark:bg-slate-800"></div>
                             <div class="h-2 w-full rounded bg-slate-200 dark:bg-slate-800"></div>
                             <div class="h-2 w-11/12 rounded bg-slate-200 dark:bg-slate-800"></div>
                         </div>
-                        <div class="mt-6 grid grid-cols-2 gap-3">
-                            <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                                <div class="text-xs text-slate-500">Norma</div>
-                                <div class="mt-1 text-sm font-semibold">APA 7ª</div>
-                            </div>
-                            <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
-                                <div class="text-xs text-slate-500">Modo</div>
-                                <div class="mt-1 text-sm font-semibold">Rápido</div>
-                            </div>
-                        </div>
-                        <div class="mt-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white">
+                        <div class="mt-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white">
                             <div class="flex items-center justify-between">
                                 <div class="text-sm font-semibold">Generar PDF</div>
                                 <div class="text-xs opacity-80">Listo para entregar</div>
@@ -163,127 +112,76 @@
         </div>
     </section>
     
-    <!-- BENEFICIOS -->
+    <!-- Beneficios -->
     <section id="beneficios" class="border-t border-slate-200 py-16 dark:border-slate-800">
         <div class="mx-auto max-w-6xl px-4">
             <h2 class="text-2xl font-bold">Beneficios</h2>
-            <p class="mt-2 text-slate-600 dark:text-slate-400">Diseñado para que pases menos tiempo formateando y más tiempo investigando.</p>
             <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div class="rounded-2xl border border-slate-200 p-6 hover:shadow-md transition dark:border-slate-800">
                     <i class="fas fa-graduation-cap text-2xl text-blue-600"></i>
                     <h3 class="mt-4 font-semibold">Calidad académica</h3>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Redacción enfocada en estructura académica: introducción, marco teórico, metodología, etc.</p>
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Redacción enfocada en estructura académica completa.</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 p-6 hover:shadow-md transition dark:border-slate-800">
                     <i class="fas fa-book text-2xl text-blue-600"></i>
                     <h3 class="mt-4 font-semibold">Normas en un clic</h3>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Cambia de norma (APA, ICONTEC, IEEE, etc.) sin rehacer todo el formato.</p>
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Cambia de norma sin rehacer todo el formato.</p>
                 </div>
                 <div class="rounded-2xl border border-slate-200 p-6 hover:shadow-md transition dark:border-slate-800">
                     <i class="fas fa-file-pdf text-2xl text-blue-600"></i>
                     <h3 class="mt-4 font-semibold">PDF listo para entregar</h3>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Márgenes, fuente e interlineado alineados con la norma seleccionada.</p>
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Márgenes, fuente e interlineado según norma.</p>
                 </div>
             </div>
         </div>
     </section>
     
-    <!-- CARACTERÍSTICAS -->
-    <section id="caracteristicas" class="py-16 bg-slate-50 dark:bg-slate-900/30">
-        <div class="mx-auto max-w-6xl px-4">
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold">Características principales</h2>
-                    <p class="mt-2 text-slate-600 dark:text-slate-400">Todo lo necesario para generar informes completos y profesionales.</p>
-                </div>
-                <div class="text-sm">
-                    <span class="rounded-full border border-slate-200 px-3 py-1 dark:border-slate-800">Groq</span>
-                    <span class="ml-2 rounded-full border border-slate-200 px-3 py-1 dark:border-slate-800">Llama 3.3 70B</span>
-                </div>
-            </div>
-            <div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
-                        <thead class="bg-slate-100 dark:bg-slate-900/50">
-                            <tr><th class="px-5 py-4 text-left font-semibold">Característica</th><th class="px-5 py-4 text-left font-semibold">Descripción</th></tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                            <tr><td class="px-5 py-4 font-medium">IA integrada (Groq)</td><td class="px-5 py-4 text-slate-600 dark:text-slate-400">Genera contenido académico específico y de calidad</td></tr>
-                            <tr><td class="px-5 py-4 font-medium">8 normas académicas</td><td class="px-5 py-4 text-slate-600 dark:text-slate-400">APA 7ª, APA 6ª, ICONTEC, Vancouver, Chicago, Harvard, MLA, IEEE</td></tr>
-                            <tr><td class="px-5 py-4 font-medium">3 modos de uso</td><td class="px-5 py-4 text-slate-600 dark:text-slate-400">Manual, Automático, Rápido</td></tr>
-                            <tr><td class="px-5 py-4 font-medium">3 modos de referencias</td><td class="px-5 py-4 text-slate-600 dark:text-slate-400">Automático (IA), Manual (usuario), Mixto (ambos)</td></tr>
-                            <tr><td class="px-5 py-4 font-medium">PDF profesional</td><td class="px-5 py-4 text-slate-600 dark:text-slate-400">Formato académico con márgenes, fuentes e interlineado según norma</td></tr>
-                            <tr><td class="px-5 py-4 font-medium">Modo oscuro/claro</td><td class="px-5 py-4 text-slate-600 dark:text-slate-400">Interfaz adaptable con persistencia</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- MODOS DE USO + GENERADOR (FUNCIONALIDAD ORIGINAL) -->
-    <section id="generador" class="py-16">
-        <div class="mx-auto max-w-6xl px-4">
+    <!-- Generador -->
+    <section id="generador" class="py-16 bg-slate-50 dark:bg-slate-900/30">
+        <div class="mx-auto max-w-4xl px-4">
             <h2 class="text-2xl font-bold text-center">Genera tu informe ahora</h2>
             <p class="mt-2 text-center text-slate-600 dark:text-slate-400">Completa los campos y obtén tu PDF profesional</p>
             
-            <!-- ========== AQUÍ EMPIEZA EL FORMULARIO ORIGINAL (FUNCIONALIDAD COMPLETA) ========== -->
             <div class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-800 dark:bg-slate-950">
                 
-                <!-- Tabs de modo (funcionalidad original) -->
+                <!-- Tabs de modo -->
                 <div class="flex gap-3 mb-6">
-                    <button id="btnManual" class="tab-btn flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-blue-600 text-white">✍️ Modo Manual</button>
-                    <button id="btnAuto" class="tab-btn flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">🤖 Modo Automático</button>
-                    <button id="btnRapido" class="tab-btn flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">⚡ Modo Rápido</button>
+                    <button id="btnManual" class="tab-btn flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-blue-600 text-white">✍️ Manual</button>
+                    <button id="btnAuto" class="tab-btn flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">🤖 Automático</button>
+                    <button id="btnRapido" class="tab-btn flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">⚡ Rápido</button>
                 </div>
                 
-                <!-- Tema del informe -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1"><i class="fas fa-tag mr-1 text-blue-600"></i> Tema del informe</label>
-                    <input type="text" id="tema" placeholder="Ej: Impacto de la inteligencia artificial en la educación" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                </div>
+                <input type="text" id="tema" placeholder="Tema del informe" class="w-full p-3 border rounded-xl mb-4 dark:bg-slate-900 dark:border-slate-700">
                 
-                <!-- Datos personales -->
-                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <div class="grid md:grid-cols-2 gap-3 mb-4">
                     <input type="text" id="nombre" placeholder="Nombre del estudiante" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                    <input type="text" id="profesor" placeholder="Nombre del profesor" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
+                    <input type="text" id="profesor" placeholder="Profesor" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
                     <input type="text" id="asignatura" placeholder="Asignatura" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
                     <input type="text" id="institucion" placeholder="Institución" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                    <input type="text" id="fechaEntrega" placeholder="Fecha de entrega (DD/MM/AAAA)" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
+                    <input type="text" id="fechaEntrega" placeholder="Fecha (DD/MM/AAAA)" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
                 </div>
                 
-                <!-- Norma académica -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1"><i class="fas fa-book mr-1 text-blue-600"></i> Norma académica</label>
-                    <select id="norma" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                        <option value="apa7">📘 APA 7ª Edición</option>
-                        <option value="apa6">📗 APA 6ª Edición</option>
-                        <option value="icontec">🇨🇴 ICONTEC (Colombia)</option>
-                        <option value="vancouver">🩺 Vancouver</option>
-                        <option value="chicago">📖 Chicago</option>
-                        <option value="harvard">💼 Harvard</option>
-                        <option value="mla">✍️ MLA</option>
-                        <option value="ieee">⚡ IEEE</option>
-                    </select>
-                </div>
+                <select id="norma" class="w-full p-3 border rounded-xl mb-4 dark:bg-slate-900 dark:border-slate-700">
+                    <option value="apa7">📘 APA 7ª Edición</option>
+                    <option value="apa6">📗 APA 6ª Edición</option>
+                    <option value="icontec">🇨🇴 ICONTEC (Colombia)</option>
+                    <option value="vancouver">🩺 Vancouver</option>
+                    <option value="chicago">📖 Chicago</option>
+                    <option value="harvard">💼 Harvard</option>
+                    <option value="mla">✍️ MLA</option>
+                    <option value="ieee">⚡ IEEE</option>
+                </select>
                 
-                <!-- Modo referencias -->
-                <div class="mb-4">
-                    <label class="block text-sm font-medium mb-1"><i class="fas fa-cog mr-1 text-blue-600"></i> Modo de referencias</label>
-                    <select id="modoReferencias" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                        <option value="auto">🤖 Automático (IA genera referencias)</option>
-                        <option value="manual">📝 Manual (Tú escribes tus referencias)</option>
-                        <option value="mixto">🔄 Mixto (Tus referencias + IA complementa)</option>
-                    </select>
-                </div>
+                <select id="modoReferencias" class="w-full p-3 border rounded-xl mb-4 dark:bg-slate-900 dark:border-slate-700">
+                    <option value="auto">🤖 Automático (IA genera referencias)</option>
+                    <option value="manual">📝 Manual (Tú escribes tus referencias)</option>
+                    <option value="mixto">🔄 Mixto (Tus referencias + IA)</option>
+                </select>
                 
-                <!-- Campo referencias manuales -->
                 <div id="campoReferenciasManual" style="display:none;" class="mb-4">
-                    <label class="block text-sm font-medium mb-1"><i class="fas fa-list-alt mr-1 text-blue-600"></i> Tus referencias</label>
                     <textarea id="referenciasManual" rows="3" placeholder="Escribe una referencia por línea..." class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
                 </div>
                 
-                <!-- Modo Manual -->
                 <div id="modoManual" class="space-y-3">
                     <textarea id="introManual" rows="3" placeholder="1. INTRODUCCIÓN" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
                     <textarea id="objetivosManual" rows="3" placeholder="2. OBJETIVOS" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
@@ -294,22 +192,18 @@
                     <textarea id="recomendacionesManual" rows="3" placeholder="7. RECOMENDACIONES" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
                 </div>
                 
-                <!-- Modo Automático -->
                 <div id="modoAuto" style="display:none;" class="mb-4">
                     <textarea id="textoCompleto" rows="8" placeholder="Escribe aquí TODO lo que sabes sobre el tema..." class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
                 </div>
                 
-                <!-- Modo Rápido -->
                 <div id="modoRapido" style="display:none;" class="mb-4">
                     <textarea id="temaRapido" rows="4" placeholder="Describe tu tema de investigación..." class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
                 </div>
                 
-                <!-- Botón generar -->
                 <button id="btnGenerar" class="w-full mt-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg transition-all">
                     <i class="fas fa-file-pdf mr-2"></i> Generar Informe PDF
                 </button>
             </div>
-            <!-- ========== AQUÍ TERMINA EL FORMULARIO ORIGINAL ========== -->
         </div>
     </section>
     
@@ -327,18 +221,14 @@
                     <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Tienes 3 modos: automático (IA), manual (usuario) y mixto (ambos).</p>
                 </details>
                 <details class="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
-                    <summary class="font-semibold cursor-pointer">¿El PDF queda listo para entregar?</summary>
-                    <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Sí. Se genera con formato académico (márgenes, fuente e interlineado) según la norma seleccionada.</p>
-                </details>
-                <details class="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
                     <summary class="font-semibold cursor-pointer">¿Es gratis?</summary>
-                    <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Sí, actualmente es completamente gratuito durante la fase beta.</p>
+                    <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Sí, actualmente es completamente gratuito.</p>
                 </details>
             </div>
         </div>
     </section>
     
-    <!-- FOOTER -->
+    <!-- Footer -->
     <footer class="border-t border-slate-200 py-8 dark:border-slate-800">
         <div class="mx-auto max-w-6xl px-4 text-center text-sm text-slate-500 dark:text-slate-400">
             <p>© 2025 Academic Report Pro — Generador de informes académicos con IA</p>
@@ -346,11 +236,9 @@
         </div>
     </footer>
     
-    <!-- ========== JAVASCRIPT ORIGINAL (FUNCIONALIDAD COMPLETA) ========== -->
     <script>
         let modoActual = 'manual';
         
-        // Tabs de modo
         function actualizarModo(modo) {
             modoActual = modo;
             document.getElementById('modoManual').style.display = modo === 'manual' ? 'block' : 'none';
@@ -372,7 +260,6 @@
         document.getElementById('btnAuto').onclick = () => actualizarModo('auto');
         document.getElementById('btnRapido').onclick = () => actualizarModo('rapido');
         
-        // Campo referencias manuales
         const modoReferencias = document.getElementById('modoReferencias');
         const campoReferenciasManual = document.getElementById('campoReferenciasManual');
         
@@ -398,8 +285,7 @@
             }
         }
         
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') setTheme('dark');
+        if (localStorage.getItem('theme') === 'dark') setTheme('dark');
         
         themeToggle.addEventListener('click', () => {
             const isDark = document.documentElement.classList.contains('dark');
@@ -413,11 +299,11 @@
             if (modoActual === 'rapido') tema = temaRapido;
             
             if (!tema || tema.trim() === '') {
-                Swal.fire('Error', 'Por favor ingresa un tema para el informe', 'error');
+                Swal.fire('Error', 'Por favor ingresa un tema', 'error');
                 return;
             }
             
-            Swal.fire({ title: 'Generando informe...', text: 'La IA está procesando tu información', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Generando informe...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             
             const datos = {
                 modo: modoActual,
@@ -458,7 +344,7 @@
                     Swal.fire('Error', result.error, 'error');
                 }
             } catch (error) {
-                Swal.fire('Error', 'No se pudo generar el informe', 'error');
+                Swal.fire('Error', 'No se pudo generar', 'error');
             }
         };
     </script>
