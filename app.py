@@ -20,126 +20,130 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 print("=" * 50)
-print("🚀 INICIANDO APLICACIÓN (VERSIÓN DEFINITIVA)")
+print("🚀 INICIANDO APLICACIÓN (VERSIÓN FINAL CORREGIDA)")
 print(f"🔑 Groq API Key cargada: {'SÍ ✅' if GROQ_API_KEY else 'NO ❌'}")
 print("=" * 50)
 
 # ========== NORMAS ACADÉMICAS ==========
 NORMAS_CONFIG = {
-    'apa7': {
-        'nombre': 'APA 7ª Edición',
-        'margen_superior': 72, 'margen_inferior': 72,
-        'margen_izquierdo': 72, 'margen_derecho': 72,
-        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 24,
-        'sangria': 36
-    },
-    'apa6': {
-        'nombre': 'APA 6ª Edición',
-        'margen_superior': 72, 'margen_inferior': 72,
-        'margen_izquierdo': 72, 'margen_derecho': 72,
-        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 24,
-        'sangria': 36
-    },
-    'icontec': {
-        'nombre': 'ICONTEC (Colombia)',
-        'margen_superior': 85, 'margen_inferior': 85,
-        'margen_izquierdo': 113, 'margen_derecho': 85,
-        'fuente': 'Helvetica', 'tamaño': 12, 'interlineado': 18,
-        'sangria': 0
-    },
-    'vancouver': {
-        'nombre': 'Vancouver',
-        'margen_superior': 72, 'margen_inferior': 72,
-        'margen_izquierdo': 72, 'margen_derecho': 72,
-        'fuente': 'Times-Roman', 'tamaño': 11, 'interlineado': 16,
-        'sangria': 0
-    },
-    'chicago': {
-        'nombre': 'Chicago',
-        'margen_superior': 72, 'margen_inferior': 72,
-        'margen_izquierdo': 72, 'margen_derecho': 72,
-        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 18,
-        'sangria': 36
-    },
-    'harvard': {
-        'nombre': 'Harvard',
-        'margen_superior': 72, 'margen_inferior': 72,
-        'margen_izquierdo': 72, 'margen_derecho': 72,
-        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 18,
-        'sangria': 36
-    },
-    'mla': {
-        'nombre': 'MLA 9ª Edición',
-        'margen_superior': 72, 'margen_inferior': 72,
-        'margen_izquierdo': 72, 'margen_derecho': 72,
-        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 24,
-        'sangria': 36
-    },
-    'ieee': {
-        'nombre': 'IEEE',
-        'margen_superior': 72, 'margen_inferior': 72,
-        'margen_izquierdo': 72, 'margen_derecho': 72,
-        'fuente': 'Times-Roman', 'tamaño': 10, 'interlineado': 12,
-        'sangria': 0
-    }
+    'apa7': {'nombre': 'APA 7ª Edición', 'margen_superior': 72, 'margen_inferior': 72,
+             'margen_izquierdo': 72, 'margen_derecho': 72, 'fuente': 'Times-Roman', 
+             'tamaño': 12, 'interlineado': 24, 'sangria': 36},
+    'apa6': {'nombre': 'APA 6ª Edición', 'margen_superior': 72, 'margen_inferior': 72,
+             'margen_izquierdo': 72, 'margen_derecho': 72, 'fuente': 'Times-Roman',
+             'tamaño': 12, 'interlineado': 24, 'sangria': 36},
+    'icontec': {'nombre': 'ICONTEC (Colombia)', 'margen_superior': 85, 'margen_inferior': 85,
+                'margen_izquierdo': 113, 'margen_derecho': 85, 'fuente': 'Helvetica',
+                'tamaño': 12, 'interlineado': 18, 'sangria': 0},
+    'vancouver': {'nombre': 'Vancouver', 'margen_superior': 72, 'margen_inferior': 72,
+                  'margen_izquierdo': 72, 'margen_derecho': 72, 'fuente': 'Times-Roman',
+                  'tamaño': 11, 'interlineado': 16, 'sangria': 0},
+    'chicago': {'nombre': 'Chicago', 'margen_superior': 72, 'margen_inferior': 72,
+                'margen_izquierdo': 72, 'margen_derecho': 72, 'fuente': 'Times-Roman',
+                'tamaño': 12, 'interlineado': 18, 'sangria': 36},
+    'harvard': {'nombre': 'Harvard', 'margen_superior': 72, 'margen_inferior': 72,
+                'margen_izquierdo': 72, 'margen_derecho': 72, 'fuente': 'Times-Roman',
+                'tamaño': 12, 'interlineado': 18, 'sangria': 36},
+    'mla': {'nombre': 'MLA 9ª Edición', 'margen_superior': 72, 'margen_inferior': 72,
+            'margen_izquierdo': 72, 'margen_derecho': 72, 'fuente': 'Times-Roman',
+            'tamaño': 12, 'interlineado': 24, 'sangria': 36},
+    'ieee': {'nombre': 'IEEE', 'margen_superior': 72, 'margen_inferior': 72,
+             'margen_izquierdo': 72, 'margen_derecho': 72, 'fuente': 'Times-Roman',
+             'tamaño': 10, 'interlineado': 12, 'sangria': 0}
 }
 
 def limpiar_texto(texto):
+    """Limpia caracteres extraños y corrige errores comunes"""
     if not texto:
         return ""
     texto = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', texto)
     texto = re.sub(r'\n{3,}', '<br/><br/>', texto)
+    # CORRECCIÓN 1: Título "INFORMÉ" -> "INFORME"
+    texto = texto.replace('INFORMÉ', 'INFORME')
+    texto = texto.replace('Informé', 'Informe')
+    # CORRECCIÓN 2: "Conclusions" -> "CONCLUSIONES"
     texto = texto.replace('Conclusions', 'CONCLUSIONES')
     texto = texto.replace('CONCLUSIONS', 'CONCLUSIONES')
-    texto = texto.replace('INFORMÉ', 'INFORME')
-    # Si aún no hay tabla, forzar una básica
-    if 'Tabla 1' not in texto and 'tabla' not in texto.lower():
-        texto += "\n\n**Tabla 1. Resultados de la investigación**\n| Indicador | Porcentaje | Fuente |\n|-----------|------------|--------|\n| Productores afectados | 75% | Encuesta propia |\n| Reducción de producción | 15% | MADR (2024) |"
     return texto
 
+def convertir_tabla_texto_a_reportlab(texto):
+    """Convierte una tabla en formato texto plano a una tabla de ReportLab"""
+    if not texto:
+        return None
+    
+    # Buscar patrón de tabla: | algo | algo | algo |
+    lineas = texto.split('<br/>')
+    datos_tabla = []
+    
+    for linea in lineas:
+        if '|' in linea and '---' not in linea:
+            celdas = [c.strip() for c in linea.split('|') if c.strip()]
+            if len(celdas) >= 2:
+                datos_tabla.append(celdas)
+    
+    if len(datos_tabla) >= 2:
+        # Crear tabla de ReportLab
+        tabla = Table(datos_tabla, colWidths=[2*inch, 1.5*inch, 1.5*inch])
+        tabla.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a365d')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        return tabla
+    return None
+
 def generar_informe_completo_con_ia(tema, info_usuario="", modo_referencias="auto", referencias_manuales=""):
+    """Genera TODO el informe en UNA sola llamada a Groq"""
+    
     if not GROQ_API_KEY:
         print("❌ No hay API key de Groq configurada")
         return None, None
     
     print(f"🤖 Generando informe COMPLETO con Groq para: {tema[:50]}...")
     
-    # Prompt CORREGIDO y SUPER ESTRICTO
+    # PROMPT CORREGIDO: tabla SOLO en Desarrollo, NO duplicada
     prompt = f"""Tema: "{tema}"
 
 ⚠️ INSTRUCCIONES ESTRICTAS (OBEDECE SIN EXCEPCIÓN):
 
-1. **IDIOMA**: Todo el informe debe estar en ESPAÑOL. La sección de conclusiones DEBE llamarse "CONCLUSIONES". NUNCA escribas "Conclusions" ni "CONCLUSIONS".
-2. **MARCO TEÓRICO**: Debe tener mínimo 3 párrafos extensos. Cita autores reales como Jaramillo (2022), Echeverri (2021) o estudios de la Federación Nacional de Cafeteros.
-3. **TABLA OBLIGATORIA**: En la sección de Desarrollo, DEBES generar una tabla con formato de texto como esta:
-
-**Tabla 1. Resultados de la encuesta**
-| Indicador | Porcentaje | Fuente |
-|-----------|------------|--------|
-| Productores afectados por sequía | 68% | Encuesta propia (2024) |
-| Reducción en la calidad del grano | 52% | Federación Nacional de Cafeteros |
-| Adopción de prácticas sostenibles | 45% | Cenicafé |
-
-4. **OBJETIVOS**: Deben ser específicos sobre el tema del café y el cambio climático. Nada de "identificar conceptos clave".
-5. **METODOLOGÍA**: Incluye datos duros. Ejemplo: "Se encuestó a 150 caficultores en Caldas, Quindío y Risaralda durante febrero-marzo de 2025".
+1. **TÍTULO**: El título del informe debe ser "INFORME ACADÉMICO" (sin tilde en INFORME).
+2. **IDIOMA**: Todo en español. Usa "CONCLUSIONES" (nunca "Conclusions").
+3. **TABLA**: La tabla DEBE aparecer SOLO UNA VEZ en la sección de DESARROLLO. NO la repitas en otras secciones.
 
 **ESTRUCTURA OBLIGATORIA:**
 
-**INTRODUCCIÓN** (Desarrollo extenso de 400 palabras)
+**INTRODUCCIÓN** (400 palabras con contexto y citas)
+
 **OBJETIVOS**
-**Objetivo General:** 
-**Objetivos Específicos:** 
-**MARCO TEÓRICO** (Muy extenso, con citas)
-**METODOLOGÍA** (Con números y lugares realistas)
-**DESARROLLO** (Incluye la Tabla 1 aquí)
-**CONCLUSIONES** (5 puntos)
+**Objetivo General:** (1 específico sobre el tema)
+**Objetivos Específicos:** (4 específicos)
+
+**MARCO TEÓRICO** (Mínimo 400 palabras. Cita autores reales como Jaramillo, Echeverri, IPCC)
+
+**METODOLOGÍA** (Incluye números concretos: cantidad de encuestados, lugares específicos, fechas)
+
+**DESARROLLO**
+**Resultados obtenidos:** (texto descriptivo)
+**Tabla 1. Resultados de la investigación**
+| Indicador | Porcentaje | Fuente |
+|-----------|------------|--------|
+| Productores afectados | 75% | Encuesta propia |
+| Reducción de producción | 15% | MADR (2024) |
+**Análisis por dimensiones:** (texto)
+**Discusión:** (texto)
+
+**CONCLUSIONES** (5 puntos numerados)
+
 **RECOMENDACIONES** (3 puntos)"""
     
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
     data = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
-            {"role": "system", "content": "Eres un asistente académico estricto. Tu tarea es generar informes en español. La sección de conclusiones se llama 'CONCLUSIONES' (nunca 'Conclusions'). Siempre incluyes tablas de datos realistas. Siempre usas un lenguaje formal y específico al tema del café y el clima."},
+            {"role": "system", "content": "Eres un asistente académico estricto. Tu tarea es generar informes en español. La sección de conclusiones se llama 'CONCLUSIONES' (nunca 'Conclusions'). La tabla de resultados aparece SOLO UNA VEZ en la sección de Desarrollo. El título es 'INFORME ACADÉMICO' (sin tilde en INFORME)."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
@@ -169,10 +173,10 @@ def generar_informe_completo_con_ia(tema, info_usuario="", modo_referencias="aut
             
             referencias_extraidas = extraer_referencias_desde_contenido(contenido)
             
-            # Validación de secciones vacías
+            # Rellenar secciones vacías
             for key in secciones:
                 if not secciones[key] or len(secciones[key]) < 150:
-                    print(f"⚠️ Sección {key} incompleta, usando contenido mejorado")
+                    print(f"⚠️ Sección {key} incompleta, usando contenido local")
                     secciones[key] = generar_contenido_local(key, tema)
             
             return secciones, referencias_extraidas
@@ -202,7 +206,10 @@ def extraer_seccion_mejorada(contenido, nombre):
 
 def extraer_referencias_desde_contenido(contenido):
     referencias = []
-    patrones_refs = [r'##\s*Referencias?\s*\n(.*?)(?=\n##|$)', r'\*\*Referencias?\*\*:?(.*?)(?=\*\*[A-Z]|$)']
+    patrones_refs = [
+        r'##\s*Referencias?\s*\n(.*?)(?=\n##|$)',
+        r'\*\*Referencias?\*\*:?(.*?)(?=\*\*[A-Z]|$)'
+    ]
     for patron in patrones_refs:
         match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
         if match:
@@ -220,11 +227,11 @@ def generar_contenido_local(tipo, tema):
     contenidos = {
         'introduccion': f"El cambio climático representa una amenaza significativa para la caficultura colombiana. Según la Federación Nacional de Cafeteros (2024), las variaciones de temperatura han reducido la producción en un 12% en los últimos años...",
         'objetivos': f"<b>Objetivo General</b><br/>Analizar el impacto del cambio climático en la productividad del café en Colombia.<br/><br/><b>Objetivos Específicos</b><br/>1. Cuantificar la pérdida de cosecha asociada al estrés hídrico.<br/>2. Identificar zonas cafeteras más vulnerables.<br/>3. Evaluar la efectividad de la sombra como medida de adaptación.<br/>4. Proponer un plan de asistencia técnica para pequeños productores.",
-        'marco_teorico': f"<b>Antecedentes</b><br/>Estudios de Jaramillo (2022) en Caldas demostraron que el aumento de 1°C reduce el rendimiento en un 8%. Echeverri (2023) relacionó los picos de floración con las lluvias atípicas...",
-        'metodologia': f"<b>Enfoque</b><br/>Estudio mixto.<br/><b>Muestra</b><br/>150 caficultores en Caldas, Quindío y Risaralda.<br/><b>Fechas</b><br/>Enero - Marzo 2025.",
-        'desarrollo': f"<b>Tabla 1. Resultados de la investigación</b><br/>| Indicador | Porcentaje |<br/>|-----------|---|---|<br/>| Afectación por sequía | 68% |<br/>| Pérdida de cosecha | 15% |",
+        'marco_teorico': f"<b>Antecedentes</b><br/>Estudios de Jaramillo (2022) en Caldas demostraron que el aumento de 1°C reduce el rendimiento en un 8%. Echeverri (2023) relacionó los picos de floración con las lluvias atípicas. El IPCC (2020) advierte que los eventos climáticos extremos serán más frecuentes.<br/><br/><b>Bases Teóricas</b><br/>El cultivo de café es sensible a la temperatura y precipitación. La altitud y la sombra son factores moduladores clave.<br/><br/><b>Estado del Arte</b><br/>Cenicafé ha desarrollado variedades resistentes a la roya, pero el estrés hídrico sigue siendo un desafío.",
+        'metodologia': f"<b>Enfoque</b><br/>Estudio mixto.<br/><br/><b>Población y muestra</b><br/>150 caficultores en Caldas, Quindío y Risaralda.<br/><br/><b>Instrumentos</b><br/>Encuesta estructurada de 25 preguntas.<br/><br/><b>Procedimiento</b><br/>Recolección de datos: febrero-marzo de 2025.",
+        'desarrollo': f"<b>Resultados obtenidos</b><br/>El 75% de los productores reportó afectaciones por sequía.<br/><br/><b>Tabla 1. Resultados de la investigación</b><br/>| Indicador | Porcentaje | Fuente |<br/>|-----------|------------|--------|<br/>| Productores afectados | 75% | Encuesta propia |<br/>| Reducción de producción | 15% | MADR (2024) |<br/><br/><b>Análisis por dimensiones</b><br/>La falta de acceso al riego tecnificado agrava la vulnerabilidad.<br/><br/><b>Discusión</b><br/>Estos datos coinciden con los reportes nacionales de la FNC.",
         'conclusiones': f"1. El cambio climático afecta directamente la fenología del café.<br/>2. Las zonas de baja altitud son las más vulnerables.<br/>3. Se requiere inversión en sistemas de riego.<br/>4. La asociatividad fortalece la resiliencia.<br/>5. La trazabilidad climática es clave para la comercialización.",
-        'recomendaciones': f"<b>Recomendaciones</b><br/>1. Crear un seguro paramétrico para caficultores.<br/>2. Implementar sistemas agroforestales.<br/>3. Monitorear las variables climáticas en tiempo real."
+        'recomendaciones': f"<b>Recomendaciones</b><br/>1. Crear un seguro paramétrico para caficultores.<br/>2. Implementar sistemas agroforestales de sombra.<br/>3. Monitorear las variables climáticas en tiempo real."
     }
     return contenidos.get(tipo, "Contenido en desarrollo.")
 
@@ -240,7 +247,7 @@ def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, mo
             refs.extend(referencias_ia)
         return list(dict.fromkeys(refs))[:10]
     else:
-        return referencias_ia if referencias_ia else ["Jaramillo, A. (2022). Impacto del cambio climático. Univ. Nacional.", "Federación Nacional de Cafeteros. (2024). Informe de Sostenibilidad."]
+        return referencias_ia if referencias_ia else ["Jaramillo, A. (2022). Impacto del cambio climático. Univ. Nacional.", "Federación Nacional de Cafeteros. (2024). Informe de Sostenibilidad.", "IPCC. (2020). Cambio climático y la tierra."]
 
 # ========== GENERADOR DE PDF ==========
 class GeneradorPDF:
@@ -308,7 +315,7 @@ class GeneradorPDF:
         
         story = []
         
-        # PORTADA
+        # PORTADA (corregida)
         story.append(Spacer(1, 1.5*inch))
         story.append(Paragraph("INFORME ACADÉMICO", styles['TituloPortada']))
         story.append(Spacer(1, 0.2*inch))
@@ -348,8 +355,19 @@ class GeneradorPDF:
         story.append(Paragraph(metodologia, styles['TextoJustificado']))
         story.append(PageBreak())
         
+        # DESARROLLO (aquí va la tabla)
         story.append(Paragraph("5. DESARROLLO", styles['Titulo1']))
-        story.append(Paragraph(desarrollo, styles['TextoJustificado']))
+        # Extraer tabla del desarrollo y formatearla
+        tabla_html = convertir_tabla_texto_a_reportlab(desarrollo)
+        # Limpiar desarrollo para quitar la tabla en texto plano
+        desarrollo_limpio = re.sub(r'\|.*\|.*\|.*\|\s*\|.*\|.*\|.*\|', '', desarrollo)
+        desarrollo_limpio = re.sub(r'Tabla 1\. .*?\n', '', desarrollo_limpio)
+        story.append(Paragraph(desarrollo_limpio, styles['TextoJustificado']))
+        if tabla_html:
+            story.append(Spacer(1, 0.2*inch))
+            story.append(tabla_html)
+            story.append(Spacer(1, 0.2*inch))
+            story.append(Paragraph("<b>Tabla 1.</b> Resultados de la investigación.", styles['TextoJustificado']))
         story.append(PageBreak())
         
         story.append(Paragraph("6. CONCLUSIONES", styles['Titulo1']))
@@ -424,5 +442,5 @@ def descargar(filename):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Servidor iniciado en puerto {port}")
     app.run(debug=False, host='0.0.0.0', port=port)
-    
