@@ -24,7 +24,7 @@ print(f"🔑 Groq API Key cargada: {'SÍ ✅' if GROQ_API_KEY else 'NO ❌'}")
 print("=" * 50)
 
 def generar_informe_completo_con_ia(tema, info_usuario=""):
-    """Genera TODO el informe en UNA sola llamada a Groq (rápido y gratis)"""
+    """Genera TODO el informe en UNA sola llamada a Groq"""
     
     if not GROQ_API_KEY:
         print("❌ No hay API key de Groq configurada")
@@ -34,26 +34,26 @@ def generar_informe_completo_con_ia(tema, info_usuario=""):
     
     prompt = f"""Genera un INFORME ACADÉMICO COMPLETO sobre el tema: "{tema}".
 
-Información adicional del usuario: {info_usuario if info_usuario else 'No hay información adicional'}
+Información adicional: {info_usuario if info_usuario else 'No hay información adicional'}
 
-El informe debe tener EXACTAMENTE estas secciones con subtítulos en negrita:
+El informe debe tener estas secciones con **negritas**:
 
 **INTRODUCCIÓN**
-(Contexto del tema, por qué es importante hoy, planteamiento del problema, justificación del estudio - 300-400 palabras)
+(Contexto, problema, justificación - 300-400 palabras)
 
 **OBJETIVOS**
-**Objetivo General:** (1 objetivo general)
-**Objetivos Específicos:** (4 objetivos específicos numerados)
+**Objetivo General:** (1)
+**Objetivos Específicos:** (4 numerados)
 
 **MARCO TEÓRICO**
-**Antecedentes:** (qué se ha investigado antes, con autores reales)
-**Bases Teóricas:** (conceptos clave, autores relevantes)
-**Estado del Arte:** (investigaciones recientes con autores y años reales)
+**Antecedentes:** (autores reales)
+**Bases Teóricas:** (conceptos clave)
+**Estado del Arte:** (investigaciones recientes)
 
 **METODOLOGÍA**
-**Enfoque y tipo de investigación:** 
+**Enfoque:** 
 **Población y muestra:** 
-**Instrumentos de recolección:** 
+**Instrumentos:** 
 **Procedimiento:** 
 
 **DESARROLLO**
@@ -62,12 +62,12 @@ El informe debe tener EXACTAMENTE estas secciones con subtítulos en negrita:
 **Discusión:** 
 
 **CONCLUSIONES**
-(Hallazgos principales, limitaciones, aportaciones - 5 puntos clave)
+(5 puntos principales)
 
 **RECOMENDACIONES**
-(Recomendaciones para institución, docentes y futuros estudios)
+(Para institución, docentes, futuros estudios)
 
-Escribe en español, tono académico profesional. Usa el formato exacto con **texto en negrita** para los subtítulos. EXTENSIÓN TOTAL: 2000-3000 palabras."""
+Escribe en español, tono académico profesional. Usa **texto** para subtítulos."""
     
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -75,16 +75,10 @@ Escribe en español, tono académico profesional. Usa el formato exacto con **te
     }
     
     data = {
-        "model": "llama-3.3-70b-versatile",  # Modelo gratuito y rápido de Groq
+        "model": "llama-3.3-70b-versatile",
         "messages": [
-            {
-                "role": "system",
-                "content": "Eres un asistente académico profesional. Generas informes universitarios completos y detallados en español. Usas formato claro con **negritas** para subtítulos. Cada sección es extensa y bien desarrollada."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
+            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos en español."},
+            {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
         "max_tokens": 4000
@@ -93,164 +87,81 @@ Escribe en español, tono académico profesional. Usa el formato exacto con **te
     try:
         print(f"📡 Enviando petición a Groq...")
         response = requests.post(GROQ_URL, headers=headers, json=data, timeout=120)
-        
         print(f"📡 Respuesta código: {response.status_code}")
         
         if response.status_code == 200:
             resultado = response.json()
-            contenido_completo = resultado['choices'][0]['message']['content']
-            print(f"✅ Groq generó {len(contenido_completo)} caracteres")
+            contenido = resultado['choices'][0]['message']['content']
+            print(f"✅ Groq generó {len(contenido)} caracteres")
             
-            # Extraer secciones del contenido generado
-            secciones = extraer_secciones_desde_ia(contenido_completo, tema)
+            # Extraer secciones
+            secciones = {}
+            secciones['introduccion'] = extraer_seccion(contenido, 'INTRODUCCIÓN')
+            secciones['objetivos'] = extraer_seccion(contenido, 'OBJETIVOS')
+            secciones['marco_teorico'] = extraer_seccion(contenido, 'MARCO TEÓRICO')
+            secciones['metodologia'] = extraer_seccion(contenido, 'METODOLOGÍA')
+            secciones['desarrollo'] = extraer_seccion(contenido, 'DESARROLLO')
+            secciones['conclusiones'] = extraer_seccion(contenido, 'CONCLUSIONES')
+            secciones['recomendaciones'] = extraer_seccion(contenido, 'RECOMENDACIONES')
+            
+            # Rellenar secciones vacías con contenido local
+            for key in secciones:
+                if not secciones[key] or len(secciones[key]) < 50:
+                    secciones[key] = generar_contenido_local(key, tema)
+            
             return secciones
         else:
-            print(f"❌ Error HTTP {response.status_code}: {response.text[:200]}")
+            print(f"❌ Error: {response.status_code}")
             return None
-            
     except Exception as e:
-        print(f"❌ Error conectando con Groq: {str(e)}")
+        print(f"❌ Error: {str(e)}")
         return None
 
-def extraer_secciones_desde_ia(contenido, tema):
-    """Extrae las secciones del contenido generado por IA"""
-    
-    secciones = {
-        'introduccion': '',
-        'objetivos': '',
-        'marco_teorico': '',
-        'metodologia': '',
-        'desarrollo': '',
-        'conclusiones': '',
-        'recomendaciones': ''
-    }
-    
-    # Buscar cada sección en el contenido
-    patrones = {
-        'introduccion': r'\*\*INTRODUCCIÓN\*\*(.*?)(?=\*\*OBJETIVOS\*\*|$)',
-        'objetivos': r'\*\*OBJETIVOS\*\*(.*?)(?=\*\*MARCO TEÓRICO\*\*|$)',
-        'marco_teorico': r'\*\*MARCO TEÓRICO\*\*(.*?)(?=\*\*METODOLOGÍA\*\*|$)',
-        'metodologia': r'\*\*METODOLOGÍA\*\*(.*?)(?=\*\*DESARROLLO\*\*|$)',
-        'desarrollo': r'\*\*DESARROLLO\*\*(.*?)(?=\*\*CONCLUSIONES\*\*|$)',
-        'conclusiones': r'\*\*CONCLUSIONES\*\*(.*?)(?=\*\*RECOMENDACIONES\*\*|$)',
-        'recomendaciones': r'\*\*RECOMENDACIONES\*\*(.*?)(?=$)'
-    }
-    
-    for key, patron in patrones.items():
-        match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
-        if match:
-            texto = match.group(1).strip()
-            # Convertir **negritas** a <b>negritas</b> para ReportLab
-            texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
-            secciones[key] = texto.replace('\n', '<br/>')
-            print(f"✅ Sección {key} extraída ({len(secciones[key])} caracteres)")
-    
-    # Si alguna sección está vacía, usar contenido local
-    for key in secciones:
-        if not secciones[key] or len(secciones[key]) < 50:
-            print(f"⚠️ Sección {key} vacía, usando contenido local")
-            secciones[key] = generar_contenido_local(key, tema)
-    
-    return secciones
+def extraer_seccion(contenido, nombre):
+    patron = rf'\*\*{nombre}\*\*(.*?)(?=\*\*|$)'
+    match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
+    if match:
+        texto = match.group(1).strip()
+        texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
+        return texto.replace('\n', '<br/>')
+    return ""
 
-def generar_contenido_local(tipo, tema, info_usuario=""):
-    """Contenido de respaldo"""
+def generar_contenido_local(tipo, tema):
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
-        'introduccion': f"""El presente informe académico aborda el estudio de {tema_limpio}, una temática de creciente relevancia en el contexto educativo actual.<br/><br/>
-
-<b>Contextualización</b><br/>
-En las instituciones educativas, se ha observado que los estudiantes presentan dificultades significativas en la comprensión de los conceptos fundamentales relacionados con {tema_limpio}.<br/><br/>
-
-<b>Planteamiento del problema</b><br/>
-¿Cuál es el nivel de comprensión y aplicación de los conceptos fundamentales de {tema_limpio} en los estudiantes?<br/><br/>
-
-<b>Justificación</b><br/>
-Este trabajo se justifica desde el punto de vista teórico, práctico e institucional.<br/><br/>
-
-<b>Estructura del informe</b><br/>
-El documento se organiza en introducción, objetivos, marco teórico, metodología, desarrollo, conclusiones y recomendaciones.""",
+        'introduccion': f"""El presente informe académico aborda el estudio de {tema_limpio}, una temática de creciente relevancia.<br/><br/>
+<b>Contextualización</b><br/>En las instituciones educativas, se observan dificultades en la comprensión de {tema_limpio}.<br/><br/>
+<b>Planteamiento del problema</b><br/>¿Cuál es el nivel de comprensión de {tema_limpio}?<br/><br/>
+<b>Justificación</b><br/>Este estudio aporta al conocimiento existente.""",
         
-        'objetivos': f"""<b>Objetivo General</b><br/><br/>
-Analizar la comprensión y aplicación de los conceptos fundamentales de {tema_limpio} en estudiantes de educación superior.<br/><br/><br/>
-
-<b>Objetivos Específicos</b><br/><br/>
-1. Identificar los conceptos teóricos básicos relacionados con {tema_limpio}.<br/><br/>
-2. Describir las dificultades más comunes que enfrentan los estudiantes.<br/><br/>
-3. Analizar la relación entre el dominio de {tema_limpio} y el rendimiento académico.<br/><br/>
-4. Proponer estrategias didácticas específicas para mejorar el aprendizaje.""",
+        'objetivos': f"""<b>Objetivo General</b><br/><br/>Analizar la comprensión de {tema_limpio}.<br/><br/><br/>
+<b>Objetivos Específicos</b><br/><br/>1. Identificar conceptos teóricos.<br/><br/>2. Describir dificultades.<br/><br/>3. Analizar relación con rendimiento.<br/><br/>4. Proponer estrategias.""",
         
-        'marco_teorico': f"""<b>Antecedentes</b><br/><br/>
-El estudio de {tema_limpio} ha sido abordado por diversos autores en las últimas décadas.<br/><br/>
-
-<b>Bases teóricas</b><br/><br/>
-La teoría constructivista del aprendizaje proporciona el marco pedagógico fundamental.<br/><br/>
-
-<b>Conceptos clave</b><br/><br/>
-• Aprendizaje significativo<br/>
-• Competencia digital<br/>
-• Metacognición<br/><br/>
-
-<b>Estado del arte</b><br/><br/>
-Investigaciones recientes demuestran que existe una correlación positiva entre el dominio de {tema_limpio} y el éxito académico.""",
+        'marco_teorico': f"""<b>Antecedentes</b><br/><br/>El estudio de {tema_limpio} ha sido abordado por diversos autores.<br/><br/>
+<b>Bases teóricas</b><br/>La teoría constructivista del aprendizaje es fundamental.<br/><br/>
+<b>Conceptos clave</b><br/>• Aprendizaje significativo<br/>• Competencia digital<br/>• Metacognición""",
         
-        'metodologia': f"""<b>Enfoque y tipo de investigación</b><br/><br/>
-Enfoque mixto (cualitativo-cuantitativo), diseño no experimental transversal.<br/><br/>
-
-<b>Población y muestra</b><br/><br/>
-Estudiantes de educación superior, muestra representativa.<br/><br/>
-
-<b>Instrumentos</b><br/><br/>
-• Cuestionario estructurado<br/>
-• Prueba de conocimientos<br/>
-• Entrevistas semiestructuradas<br/><br/>
-
-<b>Procedimiento</b><br/><br/>
-Fase 1: Diseño y validación de instrumentos<br/>
-Fase 2: Recolección de datos<br/>
-Fase 3: Análisis e interpretación""",
+        'metodologia': f"""<b>Enfoque</b><br/>Enfoque mixto.<br/><br/>
+<b>Población y muestra</b><br/>Estudiantes de educación superior.<br/><br/>
+<b>Instrumentos</b><br/>Cuestionario, prueba de conocimientos, entrevistas.""",
         
-        'desarrollo': f"""<b>Análisis de resultados</b><br/><br/>
-Los hallazgos indican que el dominio de {tema_limpio} presenta variaciones significativas entre los estudiantes evaluados.<br/><br/>
-
-<b>Dimensiones analizadas</b><br/><br/>
-• <b>Conocimientos teóricos:</b> Los estudiantes demuestran un dominio básico.<br/><br/>
-• <b>Habilidades prácticas:</b> El rendimiento práctico muestra correlación positiva con la teoría.<br/><br/>
-• <b>Actitudes:</b> La mayoría considera {tema_limpio} relevante para su formación.<br/><br/>
-
-<b>Discusión</b><br/><br/>
-Los resultados coinciden con lo reportado en la literatura especializada.""",
+        'desarrollo': f"""<b>Análisis de resultados</b><br/>Los hallazgos indican variaciones significativas.<br/><br/>
+<b>Dimensiones analizadas</b><br/>• Conocimientos teóricos<br/>• Habilidades prácticas<br/>• Actitudes""",
         
-        'conclusiones': f"""1. Se ha logrado cumplir con los objetivos planteados.<br/><br/>
-2. Las metodologías prácticas demostraron ser más efectivas.<br/><br/>
-3. La experiencia previa es un factor determinante.<br/><br/>
-4. No existen diferencias significativas por género.<br/><br/>
-5. Se requiere investigación adicional para generalizar los hallazgos.""",
+        'conclusiones': f"""1. Se cumplieron los objetivos.<br/><br/>2. Metodologías prácticas son más efectivas.<br/><br/>3. La experiencia previa influye.<br/><br/>4. No hay diferencias por género.<br/><br/>5. Se requiere más investigación.""",
         
-        'recomendaciones': f"""<b>Para la institución educativa</b><br/><br/>
-1. Fortalecer los programas de formación en {tema_limpio}.<br/><br/>
-2. Invertir en infraestructura tecnológica.<br/><br/>
-
-<b>Para los docentes</b><br/><br/>
-3. Implementar metodologías activas.<br/><br/>
-4. Diseñar materiales contextualizados.<br/><br/>
-
-<b>Para futuras investigaciones</b><br/><br/>
-5. Realizar estudios longitudinales.<br/><br/>
-6. Ampliar la muestra a diferentes contextos."""
+        'recomendaciones': f"""<b>Para la institución</b><br/>1. Fortalecer programas.<br/><br/>
+<b>Para los docentes</b><br/>2. Implementar metodologías activas.<br/><br/>
+<b>Para futuros estudios</b><br/>3. Ampliar la muestra."""
     }
-    
     return contenidos.get(tipo, "Contenido en desarrollo.")
 
 # ========== REFERENCIAS ==========
 REFERENCIAS = {
     'default': [
-        "Hernández Sampieri, R., Fernández Collado, C., & Baptista Lucio, P. (2021). Metodología de la Investigación (7ª ed.). McGraw-Hill.",
-        "Bisquerra Alzina, R. (2016). Metodología de la investigación educativa (6ª ed.). La Muralla.",
-        "Sabino, C. A. (2014). El proceso de investigación (4ª ed.). Episteme.",
-        "Flick, U. (2015). El diseño de la investigación cualitativa. Morata.",
-        "Taylor, S. J., & Bogdan, R. (2016). Introducción a los métodos cualitativos de investigación. Paidós."
+        "Hernández Sampieri, R. (2021). Metodología de la Investigación. McGraw-Hill.",
+        "Bisquerra Alzina, R. (2016). Metodología de la investigación educativa. La Muralla."
     ]
 }
 
@@ -280,17 +191,14 @@ class GeneradorPDF:
         institucion = datos_usuario.get('institucion', 'Institución Educativa') or "Institución Educativa"
         fecha_entrega = datos_usuario.get('fecha_entrega', datetime.now().strftime('%d/%m/%Y'))
         
-        print(f"\n📄 Generando informe para tema: {tema}")
-        
-        # Usar secciones de IA si existen
         if secciones_ia:
-            introduccion = secciones_ia.get('introduccion', '')
-            objetivos = secciones_ia.get('objetivos', '')
-            marco_teorico = secciones_ia.get('marco_teorico', '')
-            metodologia = secciones_ia.get('metodologia', '')
-            desarrollo = secciones_ia.get('desarrollo', '')
-            conclusiones = secciones_ia.get('conclusiones', '')
-            recomendaciones = secciones_ia.get('recomendaciones', '')
+            introduccion = secciones_ia.get('introduccion', generar_contenido_local('introduccion', tema))
+            objetivos = secciones_ia.get('objetivos', generar_contenido_local('objetivos', tema))
+            marco_teorico = secciones_ia.get('marco_teorico', generar_contenido_local('marco_teorico', tema))
+            metodologia = secciones_ia.get('metodologia', generar_contenido_local('metodologia', tema))
+            desarrollo = secciones_ia.get('desarrollo', generar_contenido_local('desarrollo', tema))
+            conclusiones = secciones_ia.get('conclusiones', generar_contenido_local('conclusiones', tema))
+            recomendaciones = secciones_ia.get('recomendaciones', generar_contenido_local('recomendaciones', tema))
             print("✅ Usando secciones generadas por Groq")
         else:
             introduccion = generar_contenido_local('introduccion', tema)
@@ -336,57 +244,39 @@ class GeneradorPDF:
         
         # SECCIONES
         contador = 1
-        
-        story.append(Paragraph(f"{contador}. INTRODUCCIÓN", self.estilos['Titulo1']))
-        story.append(Paragraph(introduccion.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
-        story.append(PageBreak())
-        contador += 1
-        
-        story.append(Paragraph(f"{contador}. OBJETIVOS", self.estilos['Titulo1']))
-        story.append(Paragraph(objetivos.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
-        story.append(PageBreak())
-        contador += 1
-        
-        story.append(Paragraph(f"{contador}. MARCO TEÓRICO", self.estilos['Titulo1']))
-        story.append(Paragraph(marco_teorico.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
-        story.append(PageBreak())
-        contador += 1
-        
-        story.append(Paragraph(f"{contador}. METODOLOGÍA", self.estilos['Titulo1']))
-        story.append(Paragraph(metodologia.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
-        story.append(PageBreak())
-        contador += 1
-        
-        story.append(Paragraph(f"{contador}. DESARROLLO", self.estilos['Titulo1']))
-        story.append(Paragraph(desarrollo.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
-        story.append(PageBreak())
-        contador += 1
-        
-        story.append(Paragraph(f"{contador}. CONCLUSIONES", self.estilos['Titulo1']))
-        story.append(Paragraph(conclusiones.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
-        story.append(PageBreak())
-        contador += 1
-        
-        if opciones.get('incluir_recomendaciones', True):
-            story.append(Paragraph(f"{contador}. RECOMENDACIONES", self.estilos['Titulo1']))
-            story.append(Paragraph(recomendaciones.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
-            story.append(PageBreak())
-            contador += 1
-        
-        story.append(Paragraph(f"{contador}. REFERENCIAS", self.estilos['Titulo1']))
-        for i, ref in enumerate(referencias, 1):
-            story.append(Paragraph(f"{i}. {ref}", self.estilos['TextoJustificado']))
-            story.append(Spacer(1, 0.1*inch))
+        for titulo, contenido in [
+            (f"{contador}. INTRODUCCIÓN", introduccion),
+            (f"{contador+1}. OBJETIVOS", objetivos),
+            (f"{contador+2}. MARCO TEÓRICO", marco_teorico),
+            (f"{contador+3}. METODOLOGÍA", metodologia),
+            (f"{contador+4}. DESARROLLO", desarrollo),
+            (f"{contador+5}. CONCLUSIONES", conclusiones),
+            (f"{contador+6}. RECOMENDACIONES", recomendaciones) if opciones.get('incluir_recomendaciones', True) else None,
+            (f"{contador+7}. REFERENCIAS", None)
+        ]:
+            if titulo and "RECOMENDACIONES" in titulo:
+                story.append(Paragraph(titulo, self.estilos['Titulo1']))
+                story.append(Paragraph(contenido.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
+                story.append(PageBreak())
+                contador += 1
+            elif titulo and "REFERENCIAS" in titulo:
+                story.append(Paragraph(titulo, self.estilos['Titulo1']))
+                for i, ref in enumerate(referencias, 1):
+                    story.append(Paragraph(f"{i}. {ref}", self.estilos['TextoJustificado']))
+                    story.append(Spacer(1, 0.1*inch))
+            elif titulo:
+                story.append(Paragraph(titulo, self.estilos['Titulo1']))
+                story.append(Paragraph(contenido.replace('\n', '<br/>'), self.estilos['TextoJustificado']))
+                story.append(PageBreak())
+                contador += 1
         
         doc.build(story)
-        print(f"✅ PDF generado: {filename}")
         return filename, filepath
 
 generador = GeneradorPDF()
 
 @app.route('/')
 def index():
-    print("📄 Página principal solicitada")
     return render_template('index.html')
 
 @app.route('/generar', methods=['POST'])
@@ -397,63 +287,40 @@ def generar():
         tema = datos.get('tema', '')
         texto_auto = datos.get('texto_completo', '') if modo in ['auto', 'rapido'] else ''
         
-        # Si es modo rápido y hay tema, usarlo
         if modo == 'rapido' and texto_auto:
             tema = texto_auto
         
-        print(f"\n📨 Solicitud de generación recibida")
-        print(f"   Modo: {modo}")
-        print(f"   Tema: {tema[:50] if tema else 'No especificado'}...")
+        print(f"📨 Solicitud recibida - Modo: {modo}, Tema: {tema[:50] if tema else 'VACIO'}")
         
         opciones = {
-            'incluir_resumen': datos.get('incluir_resumen', False),
-            'incluir_resultados': datos.get('incluir_resultados', True),
             'incluir_recomendaciones': datos.get('incluir_recomendaciones', True)
         }
         
-        # Intentar generar con Groq (una sola llamada para todo el informe)
         secciones_ia = None
         if tema and len(tema) > 5:
             secciones_ia = generar_informe_completo_con_ia(tema, texto_auto)
         
         datos_usuario = {
             'nombre': datos.get('nombre', ''),
-            'tema': tema,
+            'tema': tema if tema else 'Tema de Investigación',
             'asignatura': datos.get('asignatura', ''),
             'profesor': datos.get('profesor', ''),
             'institucion': datos.get('institucion', ''),
-            'fecha_entrega': datos.get('fecha_entrega', ''),
-            'introduccion': datos.get('introduccion', ''),
-            'objetivos': datos.get('objetivos', ''),
-            'marco_teorico': datos.get('marco_teorico', ''),
-            'metodologia': datos.get('metodologia', ''),
-            'desarrollo': datos.get('desarrollo', ''),
-            'conclusiones': datos.get('conclusiones', ''),
-            'recomendaciones': datos.get('recomendaciones', '')
+            'fecha_entrega': datos.get('fecha_entrega', '')
         }
         
         filename, filepath = generador.generar_pdf(datos_usuario, opciones, secciones_ia)
         
-        return jsonify({
-            'success': True,
-            'filename': filename,
-            'download_url': f'/descargar/{filename}'
-        })
+        return jsonify({'success': True, 'filename': filename, 'download_url': f'/descargar/{filename}'})
     
     except Exception as e:
-        print(f"❌ Error en generación: {str(e)}")
+        print(f"❌ Error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/descargar/<filename>')
 def descargar(filename):
-    print(f"📥 Descargando: {filename}")
-    return send_file(
-        os.path.join('informes_generados', filename),
-        as_attachment=True,
-        download_name=filename
-    )
+    return send_file(os.path.join('informes_generados', filename), as_attachment=True, download_name=filename)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f"🚀 Servidor iniciado en puerto {port}")
     app.run(debug=False, host='0.0.0.0', port=port)
