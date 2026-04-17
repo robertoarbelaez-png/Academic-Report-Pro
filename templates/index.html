@@ -32,6 +32,8 @@
         .input-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #cbd5e1; }
         .checkbox-group { display: flex; gap: 20px; flex-wrap: wrap; margin: 15px 0; }
         .checkbox-group label { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+        .text-xs { font-size: 12px; margin-top: 5px; }
+        .text-gray-400 { color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -84,6 +86,27 @@
                 </select>
             </div>
             
+            <!-- SELECTOR DE MODO DE REFERENCIAS (NUEVO) -->
+            <div class="input-group">
+                <label><i class="fas fa-cog"></i> Modo de referencias</label>
+                <select id="modoReferencias">
+                    <option value="auto">🤖 Automático (IA genera referencias)</option>
+                    <option value="manual">📝 Manual (Tú escribes tus referencias)</option>
+                    <option value="mixto">🔄 Mixto (Tus referencias + IA complementa)</option>
+                </select>
+                <p class="text-xs text-gray-400">💡 En modo Manual o Mixto, aparecerá un campo para escribir tus propias referencias</p>
+            </div>
+            
+            <!-- CAMPO PARA REFERENCIAS MANUALES (se muestra solo en modo Manual o Mixto) -->
+            <div id="campoReferenciasManual" style="display: none;">
+                <div class="input-group">
+                    <label><i class="fas fa-list-alt"></i> Tus referencias bibliográficas</label>
+                    <textarea id="referenciasManual" rows="5" 
+                        placeholder="Ejemplo:&#10;Pérez, J. (2022). Título del libro. Editorial.&#10;García, M. (2021). Título del artículo. Revista, 12(3), 45-67.&#10;&#10;Escribe una referencia por línea, en el formato que prefieras (APA, ICONTEC, etc.)"></textarea>
+                    <p class="text-xs text-gray-400">💡 El sistema respetará tus referencias tal cual las escribas.</p>
+                </div>
+            </div>
+            
             <!-- SECCIONES OPCIONALES -->
             <div class="checkbox-group">
                 <label><input type="checkbox" id="incluirRecomendaciones" checked> Incluir Recomendaciones</label>
@@ -125,6 +148,21 @@
             event.target.classList.add('active');
         }
         
+        // Mostrar/ocultar campo de referencias manuales según modo seleccionado
+        const modoReferencias = document.getElementById('modoReferencias');
+        const campoReferenciasManual = document.getElementById('campoReferenciasManual');
+        
+        function toggleCampoReferencias() {
+            if (modoReferencias.value === 'manual' || modoReferencias.value === 'mixto') {
+                campoReferenciasManual.style.display = 'block';
+            } else {
+                campoReferenciasManual.style.display = 'none';
+            }
+        }
+        
+        modoReferencias.addEventListener('change', toggleCampoReferencias);
+        toggleCampoReferencias();
+        
         async function generarInforme() {
             let tema = document.getElementById('tema').value;
             let temaRapido = document.getElementById('temaRapido').value;
@@ -154,6 +192,8 @@
                 institucion: document.getElementById('institucion').value || '',
                 fecha_entrega: document.getElementById('fechaEntrega').value || '',
                 norma: document.getElementById('norma').value || 'apa7',
+                modo_referencias: document.getElementById('modoReferencias').value,
+                referencias_manuales: document.getElementById('referenciasManual').value || '',
                 incluir_recomendaciones: document.getElementById('incluirRecomendaciones').checked
             };
             
