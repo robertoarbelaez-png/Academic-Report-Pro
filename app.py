@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.units import inch, mm
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -23,6 +23,76 @@ print("🚀 INICIANDO APLICACIÓN")
 print(f"🔑 Groq API Key cargada: {'SÍ ✅' if GROQ_API_KEY else 'NO ❌'}")
 print("=" * 50)
 
+# ========== NORMAS ACADÉMICAS ==========
+NORMAS_CONFIG = {
+    'apa7': {
+        'nombre': 'APA 7ª Edición',
+        'margen_superior': 72, 'margen_inferior': 72,
+        'margen_izquierdo': 72, 'margen_derecho': 72,
+        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 24,
+        'sangria': 36
+    },
+    'apa6': {
+        'nombre': 'APA 6ª Edición',
+        'margen_superior': 72, 'margen_inferior': 72,
+        'margen_izquierdo': 72, 'margen_derecho': 72,
+        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 24,
+        'sangria': 36
+    },
+    'icontec': {
+        'nombre': 'ICONTEC (Colombia)',
+        'margen_superior': 85, 'margen_inferior': 85,
+        'margen_izquierdo': 113, 'margen_derecho': 85,
+        'fuente': 'Helvetica', 'tamaño': 12, 'interlineado': 18,
+        'sangria': 0
+    },
+    'vancouver': {
+        'nombre': 'Vancouver',
+        'margen_superior': 72, 'margen_inferior': 72,
+        'margen_izquierdo': 72, 'margen_derecho': 72,
+        'fuente': 'Times-Roman', 'tamaño': 11, 'interlineado': 16,
+        'sangria': 0
+    },
+    'chicago': {
+        'nombre': 'Chicago',
+        'margen_superior': 72, 'margen_inferior': 72,
+        'margen_izquierdo': 72, 'margen_derecho': 72,
+        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 18,
+        'sangria': 36
+    },
+    'harvard': {
+        'nombre': 'Harvard',
+        'margen_superior': 72, 'margen_inferior': 72,
+        'margen_izquierdo': 72, 'margen_derecho': 72,
+        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 18,
+        'sangria': 36
+    },
+    'mla': {
+        'nombre': 'MLA 9ª Edición',
+        'margen_superior': 72, 'margen_inferior': 72,
+        'margen_izquierdo': 72, 'margen_derecho': 72,
+        'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 24,
+        'sangria': 36
+    },
+    'ieee': {
+        'nombre': 'IEEE',
+        'margen_superior': 72, 'margen_inferior': 72,
+        'margen_izquierdo': 72, 'margen_derecho': 72,
+        'fuente': 'Times-Roman', 'tamaño': 10, 'interlineado': 12,
+        'sangria': 0
+    }
+}
+
+def limpiar_texto(texto):
+    """Limpia caracteres extraños del texto"""
+    if not texto:
+        return ""
+    # Eliminar caracteres no imprimibles (excepto letras, números, espacios, puntuación básica)
+    texto = re.sub(r'[^\x20-\x7E\xA0-\xFF\u00C0-\u00FF\u0100-\u017F\n\r]', '', texto)
+    # Reemplazar múltiples saltos de línea
+    texto = re.sub(r'\n{3,}', '<br/><br/>', texto)
+    return texto
+
 def generar_informe_completo_con_ia(tema, info_usuario=""):
     """Genera TODO el informe en UNA sola llamada a Groq"""
     
@@ -36,35 +106,38 @@ def generar_informe_completo_con_ia(tema, info_usuario=""):
 
 Información adicional: {info_usuario if info_usuario else 'No hay información adicional'}
 
-El informe debe tener estas secciones:
+El informe debe tener EXACTAMENTE estas secciones. Usa SOLO español. Escribe CONCLUSIONES (no Conclusions) y RECOMENDACIONES (no Recommendations):
 
-INTRODUCCION: (Contexto, problema, justificación - 300-400 palabras)
+**INTRODUCCIÓN**
+(Contexto del tema, por qué es importante, planteamiento del problema, justificación - 300-400 palabras)
 
-OBJETIVOS: 
-- Objetivo General: (1)
-- Objetivos Específicos: (4 numerados)
+**OBJETIVOS**
+**Objetivo General:** (1 objetivo)
+**Objetivos Específicos:** (4 objetivos numerados)
 
-MARCO TEORICO:
-- Antecedentes:
-- Bases Teóricas:
-- Estado del Arte:
+**MARCO TEÓRICO**
+**Antecedentes:** (qué se ha investigado antes)
+**Bases Teóricas:** (conceptos clave, autores)
+**Estado del Arte:** (investigaciones recientes)
 
-METODOLOGIA:
-- Enfoque:
-- Población y muestra:
-- Instrumentos:
-- Procedimiento:
+**METODOLOGÍA**
+**Enfoque:** 
+**Población y muestra:** 
+**Instrumentos:** 
+**Procedimiento:** 
 
-DESARROLLO:
-- Análisis de resultados:
-- Dimensiones analizadas:
-- Discusión:
+**DESARROLLO**
+**Análisis de resultados:** 
+**Dimensiones analizadas:** 
+**Discusión:** 
 
-CONCLUSIONES: (5 puntos principales)
+**CONCLUSIONES**
+(5 puntos principales)
 
-RECOMENDACIONES: (Para institución, docentes, futuros estudios)
+**RECOMENDACIONES**
+(Para institución, docentes, futuros estudios)
 
-Escribe en español, tono académico profesional. Cada sección debe ser detallada."""
+Escribe en español, tono académico profesional. NO uses caracteres especiales raros."""
     
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -74,7 +147,7 @@ Escribe en español, tono académico profesional. Cada sección debe ser detalla
     data = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
-            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos y detallados en español."},
+            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos y detallados en español. Usas CONCLUSIONES (no Conclusions) y RECOMENDACIONES (no Recommendations). NO usas caracteres extraños."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
@@ -91,18 +164,21 @@ Escribe en español, tono académico profesional. Cada sección debe ser detalla
             contenido = resultado['choices'][0]['message']['content']
             print(f"✅ Groq generó {len(contenido)} caracteres")
             
+            # Limpiar contenido
+            contenido = limpiar_texto(contenido)
+            
             # Extraer secciones
             secciones = {
-                'introduccion': extraer_seccion_simple(contenido, 'INTRODUCCION'),
-                'objetivos': extraer_seccion_simple(contenido, 'OBJETIVOS'),
-                'marco_teorico': extraer_seccion_simple(contenido, 'MARCO TEORICO'),
-                'metodologia': extraer_seccion_simple(contenido, 'METODOLOGIA'),
-                'desarrollo': extraer_seccion_simple(contenido, 'DESARROLLO'),
-                'conclusiones': extraer_seccion_simple(contenido, 'CONCLUSIONES'),
-                'recomendaciones': extraer_seccion_simple(contenido, 'RECOMENDACIONES')
+                'introduccion': extraer_seccion(contenido, 'INTRODUCCIÓN'),
+                'objetivos': extraer_seccion(contenido, 'OBJETIVOS'),
+                'marco_teorico': extraer_seccion(contenido, 'MARCO TEÓRICO'),
+                'metodologia': extraer_seccion(contenido, 'METODOLOGÍA'),
+                'desarrollo': extraer_seccion(contenido, 'DESARROLLO'),
+                'conclusiones': extraer_seccion(contenido, 'CONCLUSIONES'),
+                'recomendaciones': extraer_seccion(contenido, 'RECOMENDACIONES')
             }
             
-            # Verificar que todas las secciones tengan contenido
+            # Rellenar secciones vacías
             for key in secciones:
                 if not secciones[key] or len(secciones[key]) < 50:
                     print(f"⚠️ Sección {key} vacía, usando contenido local")
@@ -117,38 +193,29 @@ Escribe en español, tono académico profesional. Cada sección debe ser detalla
         print(f"❌ Error conectando con Groq: {str(e)}")
         return None
 
-def extraer_seccion_simple(contenido, nombre):
+def extraer_seccion(contenido, nombre):
     """Extrae una sección del contenido generado por IA"""
-    # Buscar patrones como "INTRODUCCION:" o "INTRODUCCION\n"
     patrones = [
-        rf'{nombre}[:\\s]*(.*?)(?={{"|$|\\n\\n[A-Z]|\\n[A-Z]+:)',
-        rf'{nombre}\\s*\\n(.*?)(?=\\n\\n[A-Z]|\\n[A-Z]+:)',
+        rf'\*\*{nombre}\*\*:?(.*?)(?=\*\*[A-Z]|$)',
+        rf'{nombre}:?(.*?)(?=\n\n\*\*[A-Z]|$)',
+        rf'{nombre}\s*\n(.*?)(?=\n\n\*\*[A-Z]|\n\n[A-Z]|$)'
     ]
     
     for patron in patrones:
         match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
         if match:
             texto = match.group(1).strip()
-            # Limpiar y formatear
             texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
             texto = texto.replace('\n', '<br/>')
             # Limitar longitud
-            if len(texto) > 3000:
-                texto = texto[:3000] + "..."
+            if len(texto) > 3500:
+                texto = texto[:3500] + "..."
             return texto
-    
-    # Si no encuentra la sección, buscar por palabras clave
-    if nombre == 'INTRODUCCION':
-        match = re.search(r'(?i)(INTRODUCCIÓN|INTRODUCCION)[:\\s]*(.*?)(?=\\n\\n[A-Z]|$)', contenido, re.DOTALL)
-        if match:
-            texto = match.group(2).strip()
-            texto = texto.replace('\n', '<br/>')
-            return texto[:2000]
     
     return ""
 
 def generar_contenido_local(tipo, tema):
-    """Contenido de respaldo (cuando no hay IA o falla)"""
+    """Contenido de respaldo"""
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
@@ -183,7 +250,8 @@ def generar_contenido_local(tipo, tema):
 REFERENCIAS = {
     'default': [
         "Hernández Sampieri, R. (2021). Metodología de la Investigación. McGraw-Hill.",
-        "Bisquerra Alzina, R. (2016). Metodología de la investigación educativa. La Muralla."
+        "Bisquerra Alzina, R. (2016). Metodología de la investigación educativa. La Muralla.",
+        "Sabino, C. A. (2014). El proceso de investigación. Episteme."
     ]
 }
 
@@ -193,16 +261,25 @@ def obtener_referencias(tema):
 # ========== GENERADOR DE PDF ==========
 class GeneradorPDF:
     def __init__(self):
-        self.estilos = self._crear_estilos()
+        pass
     
-    def _crear_estilos(self):
+    def crear_estilos(self, config_norma):
         styles = getSampleStyleSheet()
+        
         styles.add(ParagraphStyle(name='TextoJustificado', parent=styles['Normal'],
-            alignment=TA_JUSTIFY, fontSize=11, fontName='Times-Roman', spaceAfter=12, leading=16))
+            alignment=TA_JUSTIFY, fontSize=config_norma['tamaño'],
+            fontName=config_norma['fuente'], spaceAfter=12, 
+            leading=config_norma['interlineado'],
+            leftIndent=config_norma['sangria']))
+        
         styles.add(ParagraphStyle(name='Titulo1', parent=styles['Heading1'],
-            fontSize=16, fontName='Helvetica-Bold', textColor=colors.HexColor('#1a365d'), spaceBefore=24, spaceAfter=16))
+            fontSize=config_norma['tamaño'] + 2, fontName='Helvetica-Bold',
+            textColor=colors.HexColor('#1a365d'), spaceBefore=24, spaceAfter=16))
+        
         styles.add(ParagraphStyle(name='TituloPortada', parent=styles['Title'],
-            fontSize=24, alignment=TA_CENTER, spaceAfter=20, textColor=colors.HexColor('#1a365d')))
+            fontSize=22, alignment=TA_CENTER, spaceAfter=20,
+            textColor=colors.HexColor('#1a365d')))
+        
         return styles
     
     def generar_pdf(self, datos_usuario, opciones, secciones_ia=None):
@@ -212,16 +289,21 @@ class GeneradorPDF:
         profesor = datos_usuario.get('profesor', 'Docente') or "Docente"
         institucion = datos_usuario.get('institucion', 'Institución Educativa') or "Institución Educativa"
         fecha_entrega = datos_usuario.get('fecha_entrega', datetime.now().strftime('%d/%m/%Y'))
+        norma = datos_usuario.get('norma', 'apa7')
+        
+        # Obtener configuración de la norma
+        config_norma = NORMAS_CONFIG.get(norma, NORMAS_CONFIG['apa7'])
+        print(f"📏 Aplicando norma: {config_norma['nombre']}")
         
         # Usar secciones de IA si existen
         if secciones_ia and isinstance(secciones_ia, dict):
-            introduccion = secciones_ia.get('introduccion', '')
-            objetivos = secciones_ia.get('objetivos', '')
-            marco_teorico = secciones_ia.get('marco_teorico', '')
-            metodologia = secciones_ia.get('metodologia', '')
-            desarrollo = secciones_ia.get('desarrollo', '')
-            conclusiones = secciones_ia.get('conclusiones', '')
-            recomendaciones = secciones_ia.get('recomendaciones', '')
+            introduccion = limpiar_texto(secciones_ia.get('introduccion', ''))
+            objetivos = limpiar_texto(secciones_ia.get('objetivos', ''))
+            marco_teorico = limpiar_texto(secciones_ia.get('marco_teorico', ''))
+            metodologia = limpiar_texto(secciones_ia.get('metodologia', ''))
+            desarrollo = limpiar_texto(secciones_ia.get('desarrollo', ''))
+            conclusiones = limpiar_texto(secciones_ia.get('conclusiones', ''))
+            recomendaciones = limpiar_texto(secciones_ia.get('recomendaciones', ''))
             print("✅ Usando secciones generadas por IA")
         else:
             introduccion = generar_contenido_local('introduccion', tema)
@@ -238,73 +320,92 @@ class GeneradorPDF:
         filename = f"informe_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:4]}.pdf"
         filepath = os.path.join('informes_generados', filename)
         
-        doc = SimpleDocTemplate(filepath, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
+        # Crear estilos según la norma
+        styles = self.crear_estilos(config_norma)
+        
+        doc = SimpleDocTemplate(filepath, 
+            pagesize=letter,
+            rightMargin=config_norma['margen_derecho'],
+            leftMargin=config_norma['margen_izquierdo'],
+            topMargin=config_norma['margen_superior'],
+            bottomMargin=config_norma['margen_inferior'])
+        
         story = []
         
         # PORTADA
         story.append(Spacer(1, 1.5*inch))
-        story.append(Paragraph("INFORME ACADÉMICO", self.estilos['TituloPortada']))
+        story.append(Paragraph("INFORME ACADÉMICO", styles['TituloPortada']))
         story.append(Spacer(1, 0.2*inch))
-        story.append(Paragraph(tema.upper(), self.estilos['TextoJustificado']))
+        story.append(Paragraph(tema.upper(), styles['TextoJustificado']))
         story.append(Spacer(1, 1.2*inch))
-        story.append(Paragraph(f"<b>Presentado por:</b> {nombre}", self.estilos['TextoJustificado']))
-        story.append(Paragraph(f"<b>Asignatura:</b> {asignatura}", self.estilos['TextoJustificado']))
-        story.append(Paragraph(f"<b>Docente:</b> {profesor}", self.estilos['TextoJustificado']))
-        story.append(Paragraph(f"<b>Institución:</b> {institucion}", self.estilos['TextoJustificado']))
+        story.append(Paragraph(f"<b>Presentado por:</b> {nombre}", styles['TextoJustificado']))
+        story.append(Paragraph(f"<b>Asignatura:</b> {asignatura}", styles['TextoJustificado']))
+        story.append(Paragraph(f"<b>Docente:</b> {profesor}", styles['TextoJustificado']))
+        story.append(Paragraph(f"<b>Institución:</b> {institucion}", styles['TextoJustificado']))
         story.append(Spacer(1, 0.3*inch))
-        story.append(Paragraph(f"<b>Fecha de entrega:</b> {fecha_entrega}", self.estilos['TextoJustificado']))
+        story.append(Paragraph(f"<b>Fecha de entrega:</b> {fecha_entrega}", styles['TextoJustificado']))
+        story.append(Paragraph(f"<b>Norma aplicada:</b> {config_norma['nombre']}", styles['TextoJustificado']))
         story.append(PageBreak())
         
         # ÍNDICE
-        story.append(Paragraph("ÍNDICE", self.estilos['Titulo1']))
+        story.append(Paragraph("ÍNDICE", styles['Titulo1']))
         indices = ["1. INTRODUCCIÓN", "2. OBJETIVOS", "3. MARCO TEÓRICO", "4. METODOLOGÍA",
                    "5. DESARROLLO", "6. CONCLUSIONES", "7. REFERENCIAS"]
         if opciones.get('incluir_recomendaciones', True):
             indices.insert(-1, "RECOMENDACIONES")
         
         for idx in indices:
-            story.append(Paragraph(f"• {idx}", self.estilos['TextoJustificado']))
+            story.append(Paragraph(f"• {idx}", styles['TextoJustificado']))
         story.append(PageBreak())
         
-        # SECCIONES
-        story.append(Paragraph("1. INTRODUCCIÓN", self.estilos['Titulo1']))
-        story.append(Paragraph(introduccion, self.estilos['TextoJustificado']))
+        # ===== SECCIONES (CADA UNA UNA SOLA VEZ) =====
+        
+        # 1. INTRODUCCIÓN
+        story.append(Paragraph("1. INTRODUCCIÓN", styles['Titulo1']))
+        story.append(Paragraph(introduccion, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        story.append(Paragraph("2. OBJETIVOS", self.estilos['Titulo1']))
-        story.append(Paragraph(objetivos, self.estilos['TextoJustificado']))
+        # 2. OBJETIVOS
+        story.append(Paragraph("2. OBJETIVOS", styles['Titulo1']))
+        story.append(Paragraph(objetivos, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        story.append(Paragraph("3. MARCO TEÓRICO", self.estilos['Titulo1']))
-        story.append(Paragraph(marco_teorico, self.estilos['TextoJustificado']))
+        # 3. MARCO TEÓRICO
+        story.append(Paragraph("3. MARCO TEÓRICO", styles['Titulo1']))
+        story.append(Paragraph(marco_teorico, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        story.append(Paragraph("4. METODOLOGÍA", self.estilos['Titulo1']))
-        story.append(Paragraph(metodologia, self.estilos['TextoJustificado']))
+        # 4. METODOLOGÍA
+        story.append(Paragraph("4. METODOLOGÍA", styles['Titulo1']))
+        story.append(Paragraph(metodologia, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        story.append(Paragraph("5. DESARROLLO", self.estilos['Titulo1']))
-        story.append(Paragraph(desarrollo, self.estilos['TextoJustificado']))
+        # 5. DESARROLLO
+        story.append(Paragraph("5. DESARROLLO", styles['Titulo1']))
+        story.append(Paragraph(desarrollo, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        story.append(Paragraph("6. CONCLUSIONES", self.estilos['Titulo1']))
-        story.append(Paragraph(conclusiones, self.estilos['TextoJustificado']))
+        # 6. CONCLUSIONES
+        story.append(Paragraph("6. CONCLUSIONES", styles['Titulo1']))
+        story.append(Paragraph(conclusiones, styles['TextoJustificado']))
         story.append(PageBreak())
         
+        # 7. RECOMENDACIONES (opcional)
         if opciones.get('incluir_recomendaciones', True):
-            story.append(Paragraph("7. RECOMENDACIONES", self.estilos['Titulo1']))
-            story.append(Paragraph(recomendaciones, self.estilos['TextoJustificado']))
+            story.append(Paragraph("7. RECOMENDACIONES", styles['Titulo1']))
+            story.append(Paragraph(recomendaciones, styles['TextoJustificado']))
             story.append(PageBreak())
-            story.append(Paragraph("8. REFERENCIAS", self.estilos['Titulo1']))
+            story.append(Paragraph("8. REFERENCIAS", styles['Titulo1']))
         else:
-            story.append(Paragraph("7. REFERENCIAS", self.estilos['Titulo1']))
+            story.append(Paragraph("7. REFERENCIAS", styles['Titulo1']))
         
+        # REFERENCIAS
         for i, ref in enumerate(referencias, 1):
-            story.append(Paragraph(f"{i}. {ref}", self.estilos['TextoJustificado']))
+            story.append(Paragraph(f"{i}. {ref}", styles['TextoJustificado']))
             story.append(Spacer(1, 0.1*inch))
         
         doc.build(story)
-        print(f"✅ PDF generado: {filename}")
+        print(f"✅ PDF generado: {filename} (Norma: {config_norma['nombre']})")
         return filename, filepath
 
 generador = GeneradorPDF()
@@ -326,21 +427,23 @@ def generar():
         
         print(f"📨 Solicitud recibida - Modo: {modo}, Tema: {tema[:50] if tema else 'VACIO'}")
         
+        if not tema or len(tema) < 3:
+            return jsonify({'success': False, 'error': 'Por favor ingresa un tema válido'}), 400
+        
         opciones = {
             'incluir_recomendaciones': datos.get('incluir_recomendaciones', True)
         }
         
-        secciones_ia = None
-        if tema and len(tema) > 5:
-            secciones_ia = generar_informe_completo_con_ia(tema, texto_auto)
+        secciones_ia = generar_informe_completo_con_ia(tema, texto_auto)
         
         datos_usuario = {
             'nombre': datos.get('nombre', ''),
-            'tema': tema if tema else 'Tema de Investigación',
+            'tema': tema,
             'asignatura': datos.get('asignatura', ''),
             'profesor': datos.get('profesor', ''),
             'institucion': datos.get('institucion', ''),
-            'fecha_entrega': datos.get('fecha_entrega', '')
+            'fecha_entrega': datos.get('fecha_entrega', ''),
+            'norma': datos.get('norma', 'apa7')
         }
         
         filename, filepath = generador.generar_pdf(datos_usuario, opciones, secciones_ia)
