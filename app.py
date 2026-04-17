@@ -30,56 +30,64 @@ NORMAS_CONFIG = {
         'margen_superior': 72, 'margen_inferior': 72,
         'margen_izquierdo': 72, 'margen_derecho': 72,
         'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 24,
-        'sangria': 36
+        'sangria': 36,
+        'formato_cita': 'ap7'
     },
     'apa6': {
         'nombre': 'APA 6ª Edición',
         'margen_superior': 72, 'margen_inferior': 72,
         'margen_izquierdo': 72, 'margen_derecho': 72,
         'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 24,
-        'sangria': 36
+        'sangria': 36,
+        'formato_cita': 'apa6'
     },
     'icontec': {
         'nombre': 'ICONTEC (Colombia)',
         'margen_superior': 85, 'margen_inferior': 85,
         'margen_izquierdo': 113, 'margen_derecho': 85,
         'fuente': 'Helvetica', 'tamaño': 12, 'interlineado': 18,
-        'sangria': 0
+        'sangria': 0,
+        'formato_cita': 'icontec'
     },
     'vancouver': {
         'nombre': 'Vancouver',
         'margen_superior': 72, 'margen_inferior': 72,
         'margen_izquierdo': 72, 'margen_derecho': 72,
         'fuente': 'Times-Roman', 'tamaño': 11, 'interlineado': 16,
-        'sangria': 0
+        'sangria': 0,
+        'formato_cita': 'vancouver'
     },
     'chicago': {
         'nombre': 'Chicago',
         'margen_superior': 72, 'margen_inferior': 72,
         'margen_izquierdo': 72, 'margen_derecho': 72,
         'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 18,
-        'sangria': 36
+        'sangria': 36,
+        'formato_cita': 'chicago'
     },
     'harvard': {
         'nombre': 'Harvard',
         'margen_superior': 72, 'margen_inferior': 72,
         'margen_izquierdo': 72, 'margen_derecho': 72,
         'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 18,
-        'sangria': 36
+        'sangria': 36,
+        'formato_cita': 'harvard'
     },
     'mla': {
         'nombre': 'MLA 9ª Edición',
         'margen_superior': 72, 'margen_inferior': 72,
         'margen_izquierdo': 72, 'margen_derecho': 72,
         'fuente': 'Times-Roman', 'tamaño': 12, 'interlineado': 24,
-        'sangria': 36
+        'sangria': 36,
+        'formato_cita': 'mla'
     },
     'ieee': {
         'nombre': 'IEEE',
         'margen_superior': 72, 'margen_inferior': 72,
         'margen_izquierdo': 72, 'margen_derecho': 72,
         'fuente': 'Times-Roman', 'tamaño': 10, 'interlineado': 12,
-        'sangria': 0
+        'sangria': 0,
+        'formato_cita': 'ieee'
     }
 }
 
@@ -87,11 +95,11 @@ def limpiar_texto(texto):
     """Limpia caracteres extraños del texto"""
     if not texto:
         return ""
-    texto = re.sub(r'[^\x20-\x7E\xA0-\xFF\u00C0-\u00FF\u0100-\u017F\n\r]', '', texto)
+    texto = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', texto)
     texto = re.sub(r'\n{3,}', '<br/><br/>', texto)
     return texto
 
-def generar_informe_completo_con_ia(tema, info_usuario=""):
+def generar_informe_completo_con_ia(tema, info_usuario="", modo_referencias="auto", referencias_manuales=""):
     """Genera TODO el informe en UNA sola llamada a Groq"""
     
     if not GROQ_API_KEY:
@@ -100,16 +108,38 @@ def generar_informe_completo_con_ia(tema, info_usuario=""):
     
     print(f"🤖 Generando informe COMPLETO con Groq para: {tema[:50]}...")
     
+    # Configurar instrucción de referencias según el modo
+    if modo_referencias == "manual" and referencias_manuales:
+        instruccion_referencias = f"""⚠️ IMPORTANTE SOBRE REFERENCIAS:
+        NO generes referencias bibliográficas. El usuario proporcionará SUS PROPIAS referencias al final.
+        Estas son las referencias que el usuario proporciona (ÚSALAS para citar en el texto):
+        {referencias_manuales}
+        
+        Debes citar estos autores dentro del texto cuando corresponda, usando el formato adecuado."""
+    elif modo_referencias == "mixto":
+        instruccion_referencias = f"""⚠️ IMPORTANTE SOBRE REFERENCIAS:
+        El usuario ha proporcionado estas referencias: {referencias_manuales if referencias_manuales else 'Ninguna'}
+        Debes usarlas y citarlas en el texto. Además, puedes complementar con 3-5 referencias adicionales relevantes al tema.
+        Al final del marco teórico, incluye una sección de referencias con TODAS las fuentes usadas."""
+    else:  # modo automático
+        instruccion_referencias = """⚠️ IMPORTANTE SOBRE REFERENCIAS:
+        Genera 5-8 referencias bibliográficas REALES y ESPECÍFICAS sobre el tema.
+        Las referencias deben ser de libros, artículos académicos o investigaciones reales.
+        Cita estos autores dentro del texto usando el formato (Autor, año).
+        Al final del marco teórico, incluye una sección de referencias con todas las fuentes."""
+    
     prompt = f"""Genera un INFORME ACADÉMICO COMPLETO sobre el tema: "{tema}".
 
 Información adicional: {info_usuario if info_usuario else 'No hay información adicional'}
 
-⚠️ IMPORTANTE: Cada sección debe tener contenido ESPECÍFICO relacionado directamente con "{tema}". NO uses plantillas genéricas como "aprendizaje significativo" o "teoría constructivista" a menos que estén directamente relacionadas con el tema.
+{instruccion_referencias}
+
+⚠️ IMPORTANTE: El INFORME debe ser COMPLETO y PROFESIONAL. NO uses frases como "coincide parcialmente con la literatura" o "los hallazgos indican aspectos relevantes". En su lugar, usa DATOS ESPECÍFICOS y ANÁLISIS CONCRETOS.
 
 Escribe EXACTAMENTE estas secciones con el siguiente formato:
 
 **INTRODUCCIÓN**
-(Escribe aquí 300-400 palabras específicas sobre el tema, explicando contexto, problema y justificación)
+(Escribe aquí 400-500 palabras específicas sobre el tema, explicando contexto, problema y justificación)
 
 **OBJETIVOS**
 **Objetivo General:** (1 objetivo específico relacionado con el tema)
@@ -117,27 +147,27 @@ Escribe EXACTAMENTE estas secciones con el siguiente formato:
 
 **MARCO TEÓRICO**
 **Antecedentes:** (investigaciones previas específicas sobre el tema, con autores y años reales)
-**Bases Teóricas:** (conceptos clave específicos del tema, no genéricos)
+**Bases Teóricas:** (conceptos clave específicos del tema)
 **Estado del Arte:** (investigaciones recientes específicas sobre el tema)
 
 **METODOLOGÍA**
 **Enfoque:** (tipo de investigación apropiado para el tema)
-**Población y muestra:** (específica al tema, ej: productores de café, estudiantes, etc.)
+**Población y muestra:** (específica al tema, con números concretos)
 **Instrumentos:** (encuestas, entrevistas, análisis de datos - específicos al tema)
 **Procedimiento:** (pasos concretos para investigar el tema)
 
 **DESARROLLO**
-**Análisis de resultados:** (hallazgos específicos sobre el tema)
-**Dimensiones analizadas:** (aspectos concretos del tema)
-**Discusión:** (relación de hallazgos con la literatura)
+**Resultados obtenidos:** (presenta datos específicos, porcentajes, tendencias. Ej: "El 65% de los encuestados manifestó...", "Se observó un aumento del 20% en...")
+**Análisis por dimensiones:** (analiza 3-4 dimensiones específicas del tema con datos concretos)
+**Discusión de hallazgos:** (compara tus resultados con la literatura, explica similitudes y diferencias de manera específica)
 
 **CONCLUSIONES**
-(5 puntos específicos sobre el tema)
+(5 puntos específicos y concretos basados en los resultados presentados)
 
 **RECOMENDACIONES**
 (Para institución, para profesionales del área, para futuros estudios)
 
-Escribe TODO en español. Usa CONCLUSIONES (no Conclusions). Usa RECOMENDACIONES (no Recommendations). Cada sección debe ser detallada y específica al tema "{tema}"."""
+Escribe TODO en español. Usa CONCLUSIONES (no Conclusions). Usa RECOMENDACIONES (no Recommendations). Cada sección debe ser detallada y específica al tema "{tema}". NO uses frases genéricas como "coincide parcialmente" o "los hallazgos indican aspectos relevantes"."""
     
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -147,11 +177,11 @@ Escribe TODO en español. Usa CONCLUSIONES (no Conclusions). Usa RECOMENDACIONES
     data = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
-            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos y detallados. SIEMPRE generas contenido ESPECÍFICO al tema solicitado. NUNCA usas plantillas genéricas como 'aprendizaje significativo' o 'teoría constructivista' a menos que el tema lo requiera. Usas CONCLUSIONES (no Conclusions) y RECOMENDACIONES (no Recommendations)."},
+            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos y detallados. SIEMPRE generas contenido ESPECÍFICO al tema solicitado con DATOS CONCRETOS. NUNCA usas frases genéricas como 'coincide parcialmente con la literatura' o 'los hallazgos indican aspectos relevantes'. Usas CONCLUSIONES (no Conclusions) y RECOMENDACIONES (no Recommendations)."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
-        "max_tokens": 5000
+        "max_tokens": 6000
     }
     
     try:
@@ -176,52 +206,35 @@ Escribe TODO en español. Usa CONCLUSIONES (no Conclusions). Usa RECOMENDACIONES
                 'recomendaciones': extraer_seccion(contenido, 'RECOMENDACIONES')
             }
             
-            # Verificar que todas las secciones tengan contenido específico
-            for key in secciones:
-                if not secciones[key] or len(secciones[key]) < 100:
-                    print(f"⚠️ Sección {key} incompleta, regenerando...")
-                    secciones[key] = generar_seccion_individual(key, tema)
+            # Extraer referencias del contenido si están en el marco teórico
+            referencias_extraidas = extraer_referencias_desde_contenido(contenido)
             
-            return secciones
+            return secciones, referencias_extraidas
         else:
             print(f"❌ Error HTTP {response.status_code}: {response.text[:200]}")
-            return None
+            return None, None
             
     except Exception as e:
         print(f"❌ Error conectando con Groq: {str(e)}")
-        return None
+        return None, None
 
-def generar_seccion_individual(seccion, tema):
-    """Genera una sección específica si la principal falló"""
-    prompts = {
-        'objetivos': f"Genera solo los OBJETIVOS para un informe sobre '{tema}'. Incluye 1 Objetivo General y 4 Objetivos Específicos directamente relacionados con el tema. Usa **negritas**.",
-        'marco_teorico': f"Genera solo el MARCO TEÓRICO para un informe sobre '{tema}'. Incluye Antecedentes (con autores reales), Bases Teóricas y Estado del Arte. Específico al tema.",
-        'metodologia': f"Genera solo la METODOLOGÍA para un informe sobre '{tema}'. Incluye Enfoque, Población y muestra, Instrumentos y Procedimiento. Específico al tema.",
-        'desarrollo': f"Genera solo el DESARROLLO para un informe sobre '{tema}'. Incluye Análisis de resultados, Dimensiones analizadas y Discusión."
-    }
+def extraer_referencias_desde_contenido(contenido):
+    """Extrae referencias bibliográficas del contenido generado"""
+    referencias = []
     
-    if seccion not in prompts:
-        return generar_contenido_local(seccion, tema)
+    # Buscar sección de referencias
+    patron_refs = r'##\s*Referencias?\s*\n(.*?)(?=\n##|$)'
+    match = re.search(patron_refs, contenido, re.DOTALL | re.IGNORECASE)
     
-    if not GROQ_API_KEY:
-        return generar_contenido_local(seccion, tema)
+    if match:
+        texto_refs = match.group(1)
+        lineas = texto_refs.split('\n')
+        for linea in lineas:
+            linea = linea.strip()
+            if linea and len(linea) > 10 and any(x in linea for x in ['(', ')', 'et al', 'vol', 'pp', 'pág']):
+                referencias.append(linea)
     
-    try:
-        headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-        data = {
-            "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "user", "content": prompts[seccion]}],
-            "max_tokens": 1500
-        }
-        response = requests.post(GROQ_URL, headers=headers, json=data, timeout=60)
-        if response.status_code == 200:
-            contenido = response.json()['choices'][0]['message']['content']
-            contenido = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', contenido)
-            return contenido.replace('\n', '<br/>')
-    except Exception as e:
-        print(f"Error generando sección {seccion}: {e}")
-    
-    return generar_contenido_local(seccion, tema)
+    return referencias[:8]
 
 def extraer_seccion(contenido, nombre):
     """Extrae una sección del contenido generado por IA"""
@@ -237,8 +250,9 @@ def extraer_seccion(contenido, nombre):
             texto = match.group(1).strip()
             texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
             texto = texto.replace('\n', '<br/>')
-            if len(texto) > 4000:
-                texto = texto[:4000] + "..."
+            # Limitar longitud para evitar desbordes
+            if len(texto) > 6000:
+                texto = texto[:6000] + "..."
             return texto
     
     return ""
@@ -269,15 +283,17 @@ def generar_contenido_local(tipo, tema):
 <b>Instrumentos</b><br/>Cuestionarios, entrevistas, revisión documental.<br/><br/>
 <b>Procedimiento</b><br/>Fase 1: Recolección de datos<br/>Fase 2: Análisis e interpretación<br/>Fase 3: Elaboración de conclusiones""",
         
-        'desarrollo': f"""<b>Análisis de resultados</b><br/>Los hallazgos indican aspectos relevantes sobre {tema_limpio}.<br/><br/>
-<b>Dimensiones analizadas</b><br/>• Dimensión 1<br/>• Dimensión 2<br/>• Dimensión 3<br/><br/>
-<b>Discusión</b><br/>Los resultados coinciden parcialmente con lo reportado en la literatura.""",
+        'desarrollo': f"""<b>Resultados obtenidos</b><br/>El análisis de los datos muestra tendencias significativas relacionadas con {tema_limpio}.<br/><br/>
+<b>Análisis por dimensiones</b><br/>• Dimensión 1: Se observa una correlación positiva entre variables.<br/>
+• Dimensión 2: Los participantes manifestaron percepciones favorables.<br/>
+• Dimensión 3: Los resultados indican áreas de oportunidad para mejora.<br/><br/>
+<b>Discusión de hallazgos</b><br/>Los resultados encontrados se alinean con investigaciones previas en el campo, confirmando la importancia de abordar {tema_limpio} desde una perspectiva integral.""",
         
         'conclusiones': f"""1. Se han identificado los aspectos fundamentales de {tema_limpio}.<br/><br/>
-2. El análisis realizado aporta al conocimiento existente.<br/><br/>
-3. Se requiere mayor investigación en áreas específicas.<br/><br/>
-4. Las recomendaciones propuestas son viables.<br/><br/>
-5. Este estudio sienta bases para futuras investigaciones.""",
+2. El análisis realizado aporta al conocimiento existente en el área.<br/><br/>
+3. Se requiere mayor investigación en aspectos específicos del tema.<br/><br/>
+4. Las recomendaciones propuestas son viables y pertinentes.<br/><br/>
+5. Este estudio sienta bases para futuras investigaciones en el campo.""",
         
         'recomendaciones': f"""<b>Para la institución</b><br/>1. Fortalecer líneas de investigación relacionadas.<br/><br/>
 <b>Para los profesionales</b><br/>2. Aplicar los hallazgos en contextos prácticos.<br/><br/>
@@ -294,8 +310,31 @@ REFERENCIAS = {
     ]
 }
 
-def obtener_referencias(tema):
-    return REFERENCIAS['default']
+def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, modo_referencias="auto"):
+    """Obtiene referencias según el modo seleccionado"""
+    
+    if modo_referencias == "manual" and referencias_manuales:
+        # Dividir por líneas y limpiar
+        refs = [r.strip() for r in referencias_manuales.split('\n') if r.strip()]
+        return refs if refs else REFERENCIAS['default']
+    
+    elif modo_referencias == "mixto":
+        refs = []
+        if referencias_manuales:
+            refs.extend([r.strip() for r in referencias_manuales.split('\n') if r.strip()])
+        if referencias_ia:
+            refs.extend(referencias_ia)
+        # Eliminar duplicados
+        refs_unicas = []
+        for r in refs:
+            if r not in refs_unicas:
+                refs_unicas.append(r)
+        return refs_unicas[:10] if refs_unicas else REFERENCIAS['default']
+    
+    else:  # modo automático
+        if referencias_ia:
+            return referencias_ia[:8]
+        return REFERENCIAS['default']
 
 # ========== GENERADOR DE PDF ==========
 class GeneradorPDF:
@@ -321,7 +360,7 @@ class GeneradorPDF:
         
         return styles
     
-    def generar_pdf(self, datos_usuario, opciones, secciones_ia=None):
+    def generar_pdf(self, datos_usuario, opciones, secciones_ia=None, referencias_ia=None):
         nombre = datos_usuario.get('nombre', 'Estudiante') or "Estudiante"
         tema = datos_usuario.get('tema', 'Tema de Investigación') or "Tema de Investigación"
         asignatura = datos_usuario.get('asignatura', 'Asignatura') or "Asignatura"
@@ -329,9 +368,12 @@ class GeneradorPDF:
         institucion = datos_usuario.get('institucion', 'Institución Educativa') or "Institución Educativa"
         fecha_entrega = datos_usuario.get('fecha_entrega', datetime.now().strftime('%d/%m/%Y'))
         norma = datos_usuario.get('norma', 'apa7')
+        modo_referencias = datos_usuario.get('modo_referencias', 'auto')
+        referencias_manuales = datos_usuario.get('referencias_manuales', '')
         
         config_norma = NORMAS_CONFIG.get(norma, NORMAS_CONFIG['apa7'])
         print(f"📏 Aplicando norma: {config_norma['nombre']}")
+        print(f"📚 Modo referencias: {modo_referencias}")
         
         if secciones_ia and isinstance(secciones_ia, dict):
             introduccion = limpiar_texto(secciones_ia.get('introduccion', ''))
@@ -352,7 +394,8 @@ class GeneradorPDF:
             recomendaciones = generar_contenido_local('recomendaciones', tema)
             print("⚠️ Usando contenido local")
         
-        referencias = obtener_referencias(tema)
+        # Obtener referencias según el modo
+        referencias = obtener_referencias(tema, referencias_ia, referencias_manuales, modo_referencias)
         
         filename = f"informe_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:4]}.pdf"
         filepath = os.path.join('informes_generados', filename)
@@ -381,6 +424,10 @@ class GeneradorPDF:
         story.append(Spacer(1, 0.3*inch))
         story.append(Paragraph(f"<b>Fecha de entrega:</b> {fecha_entrega}", styles['TextoJustificado']))
         story.append(Paragraph(f"<b>Norma aplicada:</b> {config_norma['nombre']}", styles['TextoJustificado']))
+        
+        # Indicar modo de referencias en portada
+        modo_texto = {"auto": "Automático", "manual": "Manual", "mixto": "Mixto"}
+        story.append(Paragraph(f"<b>Modo referencias:</b> {modo_texto.get(modo_referencias, 'Automático')}", styles['TextoJustificado']))
         story.append(PageBreak())
         
         # ÍNDICE
@@ -448,11 +495,14 @@ def generar():
         modo = datos.get('modo', 'auto')
         tema = datos.get('tema', '')
         texto_auto = datos.get('texto_completo', '') if modo in ['auto', 'rapido'] else ''
+        modo_referencias = datos.get('modo_referencias', 'auto')
+        referencias_manuales = datos.get('referencias_manuales', '')
         
         if modo == 'rapido' and texto_auto:
             tema = texto_auto
         
         print(f"📨 Solicitud recibida - Modo: {modo}, Tema: {tema[:50] if tema else 'VACIO'}")
+        print(f"📚 Modo referencias: {modo_referencias}")
         
         if not tema or len(tema) < 3:
             return jsonify({'success': False, 'error': 'Por favor ingresa un tema válido'}), 400
@@ -461,7 +511,12 @@ def generar():
             'incluir_recomendaciones': datos.get('incluir_recomendaciones', True)
         }
         
-        secciones_ia = generar_informe_completo_con_ia(tema, texto_auto)
+        secciones_ia = None
+        referencias_ia = None
+        
+        # Solo llamar a IA si hay tema y no estamos en modo manual con todo escrito
+        if tema and len(tema) > 3 and (modo != 'manual' or not datos.get('introduccion')):
+            secciones_ia, referencias_ia = generar_informe_completo_con_ia(tema, texto_auto, modo_referencias, referencias_manuales)
         
         datos_usuario = {
             'nombre': datos.get('nombre', ''),
@@ -470,10 +525,12 @@ def generar():
             'profesor': datos.get('profesor', ''),
             'institucion': datos.get('institucion', ''),
             'fecha_entrega': datos.get('fecha_entrega', ''),
-            'norma': datos.get('norma', 'apa7')
+            'norma': datos.get('norma', 'apa7'),
+            'modo_referencias': modo_referencias,
+            'referencias_manuales': referencias_manuales
         }
         
-        filename, filepath = generador.generar_pdf(datos_usuario, opciones, secciones_ia)
+        filename, filepath = generador.generar_pdf(datos_usuario, opciones, secciones_ia, referencias_ia)
         
         return jsonify({
             'success': True,
