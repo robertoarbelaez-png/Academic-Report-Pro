@@ -5,12 +5,15 @@ from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 import os
 import uuid
 from datetime import datetime
 import re
 import requests
 import time
+import html
 
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
@@ -53,13 +56,43 @@ NORMAS_CONFIG = {
 }
 
 def limpiar_texto(texto):
+    """Limpia caracteres especiales y prepara texto para ReportLab"""
     if not texto:
         return ""
-    texto = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', texto)
+    
+    # Decodificar secuencias de escape Unicode (como \xf3 -> ó)
+    try:
+        # Convertir bytes a string con codificación correcta
+        if isinstance(texto, bytes):
+            texto = texto.decode('utf-8')
+        # Escapar caracteres HTML
+        texto = html.escape(texto)
+    except:
+        pass
+    
+    # Reemplazar caracteres problemáticos
+    reemplazos = {
+        '\xa0': ' ',  # espacio no rompible
+        '\xad': '-',  # guión suave
+        '\u2013': '-',  # guión largo
+        '\u2014': '-',  # guión más largo
+        '\u2018': "'",  # comilla simple izquierda
+        '\u2019': "'",  # comilla simple derecha
+        '\u201c': '"',  # comilla doble izquierda
+        '\u201d': '"',  # comilla doble derecha
+        '\u2026': '...',  # puntos suspensivos
+    }
+    for viejo, nuevo in reemplazos.items():
+        texto = texto.replace(viejo, nuevo)
+    
+    # Reemplazar múltiples saltos de línea
     texto = re.sub(r'\n{3,}', '<br/><br/>', texto)
+    
+    # Corregir títulos y secciones
     texto = texto.replace('INFORMÉ', 'INFORME')
     texto = texto.replace('Conclusions', 'CONCLUSIONES')
     texto = texto.replace('CONCLUSIONS', 'CONCLUSIONES')
+    
     return texto
 
 def convertir_tabla_texto_a_reportlab(texto):
@@ -94,53 +127,33 @@ def generar_informe_completo_con_ia(tema, info_usuario="", modo_referencias="aut
     
     prompt = f"""Tema: "{tema}"
 
-⚠️ INSTRUCCIONES ESTRICTAS PARA UN INFORME DE NIVEL 10/10:
+⚠️ INSTRUCCIONES ESTRICTAS PARA UN INFORME PROFESIONAL:
 
-1. **PENSAMIENTO CRÍTICO (MUY IMPORTANTE)**:
-   - No solo describas los resultados. Cuestiona: ¿Por qué ocurren? ¿Qué implicaciones tienen?
-   - Interpreta los datos más allá de lo evidente
-   - Propone explicaciones alternativas cuando corresponda
-
-2. **CONCLUSIONES (NO deben ser un resumen)**:
-   - NO repitas los resultados
-   - Deben REFLEXIONAR sobre el significado de los hallazgos
-   - Muestra el IMPACTO que tienen en la sociedad, economía o medio ambiente
-   - Propone líneas de investigación futura
-
-3. **DESARROLLO**: Mínimo 1200 palabras. Incluye:
-   - Resultados detallados (con porcentajes)
-   - Comparación con al menos 3 estudios previos
-   - Discusión profunda con interpretación crítica
-   - Implicaciones prácticas y teóricas
-
-4. **MARCO TEÓRICO**: Mínimo 800 palabras. Incluye:
-   - Definición de conceptos clave
-   - Al menos 5 autores diferentes (con citas dentro del texto)
-   - Teorías relevantes
-
-5. **REFERENCIAS**: Mínimo 8 referencias. Incluye:
-   - Al menos 4 de los últimos 5 años (2021-2026)
-   - Formato exacto según la norma seleccionada
+1. **PENSAMIENTO CRÍTICO**: No solo describas los resultados. Cuestiona: ¿Por qué ocurren? ¿Qué implicaciones tienen?
+2. **CONCLUSIONES**: NO deben repetir los resultados. Deben REFLEXIONAR y mostrar el IMPACTO.
+3. **DESARROLLO**: Mínimo 800 palabras. Incluye resultados, comparación con estudios previos y análisis crítico.
+4. **MARCO TEÓRICO**: Mínimo 600 palabras con citas de autores reales.
+5. **REFERENCIAS**: Mínimo 6-8 referencias específicas sobre el tema.
 
 **ESTRUCTURA OBLIGATORIA:**
 
-**INTRODUCCIÓN** (600 palabras)
+**INTRODUCCIÓN**
 **OBJETIVOS** (1 general + 4 específicos)
-**MARCO TEÓRICO** (800 palabras mínimo, 5+ autores)
-**METODOLOGÍA** (con números concretos)
-**DESARROLLO** (1200 palabras mínimo, con análisis crítico)
-**CONCLUSIONES** (5 puntos, cada uno con reflexión e impacto)
-**RECOMENDACIONES** (4 puntos accionables)"""
+**MARCO TEÓRICO**
+**METODOLOGÍA**
+**DESARROLLO**
+**CONCLUSIONES** (5 puntos)
+**RECOMENDACIONES** (3-4 puntos)"""
     
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
     data = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
-            {"role": "system", "content": "Eres un asistente académico de nivel experto. Generas informes universitarios con pensamiento crítico profundo. Las conclusiones interpretan y reflexionan, no repiten resultados. El desarrollo es extenso (1200+ palabras) y analítico. Usas referencias recientes (2021-2026) y formato exacto según la norma."},
+            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos en español. Usas CONCLUSIONES (nunca Conclusions)."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
-        "max_tokens": 12000
+        "max_tokens": 8000
     }
     
     try:
@@ -167,8 +180,8 @@ def generar_informe_completo_con_ia(tema, info_usuario="", modo_referencias="aut
             referencias_extraidas = extraer_referencias_desde_contenido(contenido)
             
             for key in secciones:
-                if not secciones[key] or len(secciones[key]) < 300:
-                    print(f"⚠️ Sección {key} incompleta, usando contenido local experto")
+                if not secciones[key] or len(secciones[key]) < 100:
+                    print(f"⚠️ Sección {key} incompleta, usando contenido local")
                     secciones[key] = generar_contenido_local_experto(key, tema)
             
             return secciones, referencias_extraidas
@@ -191,8 +204,8 @@ def extraer_seccion_mejorada(contenido, nombre):
             texto = match.group(1).strip()
             texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
             texto = texto.replace('\n', '<br/>')
-            if len(texto) > 10000:
-                texto = texto[:10000] + "..."
+            if len(texto) > 6000:
+                texto = texto[:6000] + "..."
             return texto
     return ""
 
@@ -209,73 +222,70 @@ def extraer_referencias_desde_contenido(contenido):
             lineas = texto_refs.split('\n')
             for linea in lineas:
                 linea = linea.strip()
-                if linea and len(linea) > 10 and any(x in linea for x in ['(', ')', 'et al', 'vol', 'pp']):
+                if linea and len(linea) > 10:
                     referencias.append(linea)
             break
-    return referencias[:10]
+    return referencias[:8]
 
 def generar_contenido_local_experto(tipo, tema):
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
-        'introduccion': f"""El cambio climático es una de las crisis más apremiantes del siglo XXI, y sus efectos sobre la agricultura son particularmente severos. Colombia, siendo uno de los principales productores de café a nivel mundial, enfrenta una amenaza existencial para su caficultura. Este estudio aborda la problemática desde una perspectiva crítica, analizando no solo los datos productivos sino las implicaciones socioeconómicas y ambientales.<br/><br/>
-La región del Eje Cafetero, históricamente óptima para el cultivo de café, ha experimentado un aumento de 0.8°C en su temperatura promedio en las últimas dos décadas (Jaramillo, 2022), desplazando el cultivo hacia altitudes superiores y reduciendo las áreas aptas. Este fenómeno no es meramente climático; es un catalizador de desigualdad, ya que los pequeños productores son los más vulnerables y los que tienen menos capacidad de adaptación.<br/><br/>
-El presente estudio se justifica en la urgencia de generar evidencia empírica que oriente políticas públicas efectivas. Preguntas centrales guían esta investigación: ¿Cuál es el impacto cuantitativo del cambio climático en la productividad del café? ¿Qué estrategias de adaptación son más efectivas según el tamaño del productor? ¿Cuáles son las implicaciones a largo plazo para la seguridad alimentaria y la estabilidad rural?""",
+        'introduccion': f"""El presente informe aborda el estudio de {tema_limpio}, una temática de gran relevancia en el contexto actual. El cambio climático representa uno de los desafíos más significativos del siglo XXI, y sus efectos sobre la agricultura son particularmente severos.<br/><br/>
+Colombia, siendo uno de los principales productores de café a nivel mundial, enfrenta una amenaza existencial para su caficultura. Este estudio analiza el impacto del cambio climático en la productividad del café, identificando las zonas más vulnerables y proponiendo estrategias de adaptación.<br/><br/>
+La pregunta central que guía esta investigación es: ¿Cuál es el impacto cuantitativo del cambio climático en la productividad del café en Colombia y qué estrategias de adaptación son más efectivas?""",
         
-        'objetivos': f"""<b>Objetivo General</b><br/><br/>Analizar el impacto del cambio climático en la productividad del café en Colombia, identificando las zonas más vulnerables y proponiendo estrategias de adaptación diferenciadas.<br/><br/><br/>
+        'objetivos': f"""<b>Objetivo General</b><br/><br/>Analizar el impacto del cambio climático en la productividad del café en Colombia.<br/><br/><br/>
 <b>Objetivos Específicos</b><br/><br/>
-1. Cuantificar la pérdida de cosecha asociada al estrés hídrico en las principales zonas cafeteras del país, segmentando por tamaño de productor.<br/><br/>
-2. Identificar las regiones cafeteras con mayor vulnerabilidad climática mediante análisis espacial multicriterio.<br/><br/>
-3. Evaluar la efectividad de los sistemas agroforestales como medida de adaptación al cambio climático, diferenciando por altitud.<br/><br/>
-4. Proponer un plan de asistencia técnica diferenciado por niveles de vulnerabilidad y capacidad económica de los productores.""",
+1. Cuantificar la pérdida de cosecha asociada al estrés hídrico en las zonas cafeteras.<br/><br/>
+2. Identificar las regiones cafeteras con mayor vulnerabilidad climática.<br/><br/>
+3. Evaluar la efectividad de los sistemas agroforestales como medida de adaptación.<br/><br/>
+4. Proponer estrategias de adaptación diferenciadas por nivel de vulnerabilidad.""",
         
         'marco_teorico': f"""<b>Conceptos clave</b><br/><br/>
 El cambio climático se define como la variación significativa de los patrones climáticos durante un período prolongado (IPCC, 2023). Para la agricultura, este fenómeno implica alteraciones en temperatura, precipitación y frecuencia de eventos extremos.<br/><br/>
 <b>Teorías relevantes</b><br/><br/>
-La teoría de la vulnerabilidad climática (Adger, 2006) establece que la susceptibilidad de un sistema depende de su exposición, sensibilidad y capacidad adaptativa. En el contexto cafetero, Jaramillo (2022) demostró que la exposición a temperaturas superiores a 23°C reduce significativamente la fotosíntesis y la floración. Echeverri (2024) complementa este enfoque al estudiar la resiliencia de los sistemas agroforestales, encontrando que la sombra reduce la temperatura ambiente entre 2 y 4°C.<br/><br/>
+La teoría de la vulnerabilidad climática establece que la susceptibilidad de un sistema depende de su exposición, sensibilidad y capacidad adaptativa. En el contexto cafetero, diversos autores han documentado el impacto del aumento de temperatura en la productividad.<br/><br/>
 <b>Autores clave</b><br/><br/>
-• IPCC (2023): Cambio climático global y sus impactos en la agricultura<br/>
-• Jaramillo (2022): Impacto del cambio climático en café colombiano<br/>
-• Echeverri (2024): Adaptación en caficultura mediante sistemas agroforestales<br/>
-• Federación Nacional de Cafeteros (2025): Datos productivos y tendencias<br/>
-• Cenicafé (2024): Desarrollo de variedades resistentes al estrés hídrico<br/>
-• Schroth et al. (2021): Meta-análisis sobre agricultura de café en América Latina""",
+• IPCC (2023): Cambio climático global y sus impactos<br/>
+• Jaramillo (2022): Impacto en café colombiano<br/>
+• Echeverri (2024): Adaptación mediante sistemas agroforestales<br/>
+• Federación Nacional de Cafeteros (2025): Datos productivos<br/>
+• Cenicafé (2024): Desarrollo de variedades resistentes""",
         
-        'metodologia': f"""<b>Enfoque</b><br/><br/>Estudio mixto con componente cuantitativo (encuestas estructuradas a 150 productores) y cualitativo (entrevistas semiestructuradas a 15 líderes gremiales).<br/><br/>
-<b>Población y muestra</b><br/><br/>Se encuestó a 150 caficultores en los departamentos de Caldas, Quindío y Risaralda durante febrero-marzo de 2025. La selección fue estratificada por altitud (1200-1800 m s.n.m.), tamaño de finca (pequeño, mediano, grande) y acceso a riego.<br/><br/>
-<b>Instrumentos</b><br/><br/>Cuestionario de 35 preguntas validado por expertos de Cenicafé (α de Cronbach = 0.89), entrevistas semiestructuradas a profundidad y análisis de datos climáticos del IDEAM (2015-2025).<br/><br/>
-<b>Procedimiento</b><br/><br/>Fase 1 (enero 2025): Diseño y validación de instrumentos.<br/>Fase 2 (febrero-marzo 2025): Trabajo de campo y recolección de datos.<br/>Fase 3 (abril 2025): Análisis estadístico (SPSS v28) e interpretación de resultados mediante triangulación metodológica.""",
+        'metodologia': f"""<b>Enfoque</b><br/><br/>Estudio mixto con componente cuantitativo (encuestas) y cualitativo (entrevistas).<br/><br/>
+<b>Población y muestra</b><br/><br/>Se encuestó a 150 caficultores en los departamentos de Caldas, Quindío y Risaralda durante febrero-marzo de 2025.<br/><br/>
+<b>Instrumentos</b><br/><br/>Cuestionario estructurado de 35 preguntas, entrevistas semiestructuradas y análisis de datos climáticos.<br/><br/>
+<b>Procedimiento</b><br/><br/>Fase 1: Diseño y validación de instrumentos.<br/>Fase 2: Trabajo de campo y recolección de datos.<br/>Fase 3: Análisis estadístico e interpretación de resultados.""",
         
         'desarrollo': f"""<b>Resultados obtenidos</b><br/><br/>
-El 75% de los productores reportó afectaciones por sequía en los últimos cinco años (IC 95%: 68-82%). Esta cifra es particularmente alarmante en productores de pequeña escala (82%) versus grandes (58%), revelando una brecha significativa (p < 0.01). Los registros del IDEAM corroboran estos hallazgos, mostrando una disminución del 15% en la precipitación acumulada anual en la región del Eje Cafetero entre 2015 y 2025.<br/><br/>
-<b>Comparación con otros estudios</b><br/><br/>
-Nuestros hallazgos coinciden con Jaramillo (2022), quien encontró que el 68% de los caficultores en Caldas habían experimentado pérdidas por estrés hídrico. Sin embargo, nuestra investigación revela una novedad importante: la adopción de sistemas agroforestales reduce la percepción de vulnerabilidad en un 40% (OR = 0.6; p < 0.05), un efecto más pronunciado que el documentado por Echeverri (2024) quien reportó un 25% de reducción. Esta discrepancia podría explicarse por las condiciones específicas de altitud de nuestra muestra.<br/><br/>
-<b>Análisis crítico</b><br/><br/>
-La falta de acceso al riego tecnificado emerge como el factor más determinante de la vulnerabilidad. Los productores con sistemas de riego por goteo reportaron pérdidas 30% menores que los que dependen exclusivamente de la lluvia (t = 4.32; p < 0.001). Esta diferencia plantea una cuestión ética relevante: ¿están las políticas públicas actuales profundizando la desigualdad al no priorizar la inversión en infraestructura hídrica para pequeños productores?<br/><br/>
-<b>Implicaciones</b><br/><br/>
-Los resultados sugieren que las políticas de adaptación al cambio climático deben ser territorialmente diferenciadas. Las zonas de baja altitud (1200-1400 m s.n.m.) requieren intervención prioritaria, incluyendo reconversión productiva hacia variedades resistentes. En contraste, las zonas de alta altitud (1600-1800 m s.n.m.) podrían beneficiarse principalmente de sistemas agroforestales que preserven las condiciones microclimáticas.<br/><br/>
+El 75% de los productores reportó afectaciones por sequía en los últimos cinco años. Esta cifra es particularmente alarmante en productores de pequeña escala (82%) versus grandes (58%), revelando una brecha significativa.<br/><br/>
 <b>Tabla 1. Resultados de la investigación</b><br/>
-| Indicador | Porcentaje | IC 95% | Fuente |
-|-----------|------------|--------|--------|
-| Productores afectados por sequía | 75% | 68-82% | Encuesta propia (2025) |
-| Reducción de producción estimada | 15% | 12-18% | MADR (2024) |
-| Adopción de sistemas agroforestales | 32% | 25-39% | Encuesta propia (2025) |
-| Percepción de vulnerabilidad alta | 68% | 60-76% | Encuesta propia (2025) |""",
+| Indicador | Porcentaje | Fuente |
+|-----------|------------|--------|
+| Productores afectados por sequía | 75% | Encuesta propia (2025) |
+| Reducción de producción estimada | 15% | MADR (2024) |
+| Adopción de sistemas agroforestales | 32% | Encuesta propia (2025) |
+| Percepción de vulnerabilidad alta | 68% | Encuesta propia (2025) |<br/><br/>
+<b>Análisis crítico</b><br/><br/>
+La falta de acceso al riego tecnificado emerge como el factor más determinante de la vulnerabilidad. Los productores con sistemas de riego por goteo reportaron pérdidas 30% menores que los que dependen exclusivamente de la lluvia.<br/><br/>
+<b>Implicaciones</b><br/><br/>
+Las políticas de adaptación al cambio climático deben ser territorialmente diferenciadas. Las zonas de baja altitud requieren intervención prioritaria, mientras que las zonas de alta altitud podrían beneficiarse de sistemas agroforestales.""",
         
-        'conclusiones': f"""1. <b>Impacto diferenciado por escala productiva</b>: La brecha del 24% en afectación entre pequeños y grandes productores evidencia que el cambio climático actúa como un multiplicador de desigualdades preexistentes. Esta conclusión trasciende lo meramente productivo: implica que la política climática debe incorporarse explícitamente en las estrategias de reducción de pobreza rural.<br/><br/>
-2. <b>Efectividad de sistemas agroforestales</b>: La reducción del 40% en vulnerabilidad asociada a estos sistemas no solo confirma su potencial adaptativo, sino que sugiere externalidades positivas no cuantificadas (biodiversidad, captura de carbono). Esto abre líneas de investigación sobre mecanismos de pago por servicios ecosistémicos para caficultores.<br/><br/>
-3. <b>Cuestión ética del acceso al riego</b>: La marcada diferencia en pérdidas entre productores con y sin riego tecnificado (30% menos) plantea un dilema de justicia distributiva. ¿Puede considerarse ético que la capacidad de adaptación dependa del poder adquisitivo? Esta reflexión debe guiar el diseño de subsidios focalizados.<br/><br/>
-4. <b>Necesidad de políticas territoriales</b>: La heterogeneidad de impactos por altitud exige abandonar enfoques uniformes. Las zonas bajas requieren reconversión productiva; las altas, preservación de condiciones microclimáticas. Ignorar esta diferenciación podría resultar en inversiones públicas ineficaces.<br/><br/>
-5. <b>Implicaciones para la seguridad alimentaria</b>: La proyección del IPCC (2023) de una reducción del 20% en producción para 2050 no es solo una cifra económica. Detrás de ella hay familias rurales cuya canasta básica depende del café. La adaptación climática es, fundamentalmente, una cuestión de derechos humanos.""",
+        'conclusiones': f"""1. El cambio climático afecta significativamente la productividad del café en Colombia, con una reducción estimada del 15% en la última década.<br/><br/>
+2. Existe una brecha significativa entre pequeños y grandes productores, evidenciando que el cambio climático actúa como un multiplicador de desigualdades.<br/><br/>
+3. Los sistemas agroforestales reducen la vulnerabilidad en un 40%, confirmando su potencial como estrategia de adaptación.<br/><br/>
+4. La falta de acceso a riego tecnificado es el factor más determinante de la vulnerabilidad, planteando cuestiones de justicia distributiva.<br/><br/>
+5. Se requiere una política de adaptación territorialmente diferenciada, con intervenciones específicas según altitud y escala productiva.""",
         
-        'recomendaciones': f"""<b>Para el gobierno nacional (recomendación prioritaria)</b><br/><br/>
-1. Implementar un seguro paramétrico para caficultores basado en índices de estrés hídrico, con primas subsidiadas en un 80% para pequeños productores. El costo estimado sería del 0.5% del presupuesto del MADR, una inversión menor comparada con las pérdidas evitadas.<br/><br/>
-2. Lanzar un programa de reconversión productiva hacia variedades resistentes (como Castillo o Cenicafé 1) en zonas de alta vulnerabilidad, con asistencia técnica durante 3 años.<br/><br/>
+        'recomendaciones': f"""<b>Para el gobierno nacional</b><br/><br/>
+1. Implementar un seguro paramétrico para caficultores basado en índices de estrés hídrico.<br/><br/>
+2. Lanzar un programa de reconversión productiva hacia variedades resistentes.<br/><br/>
 <b>Para los gremios (FNC, Cenicafé)</b><br/><br/>
-3. Fortalecer la extensión rural con enfoque en sistemas agroforestales, priorizando municipios con niveles críticos de afectación. Se sugiere una meta de 10,000 hectáreas reconvertidas en 2026.<br/><br/>
-4. Crear un observatorio de vulnerabilidad climática que integre datos del IDEAM, MADR y encuestas de productores, con actualización trimestral y acceso público.<br/><br/>
-<b>Para la comunidad internacional</b><br/><br/>
-5. Establecer un fondo de compensación por pérdidas y daños específico para caficultura, reconociendo que los países desarrollados tienen responsabilidad histórica en las emisiones que causan el cambio climático que afecta a productores colombianos."""
+3. Fortalecer la extensión rural con enfoque en sistemas agroforestales.<br/><br/>
+4. Crear un observatorio de vulnerabilidad climática de acceso público.<br/><br/>
+<b>Para futuras investigaciones</b><br/><br/>
+5. Evaluar el impacto económico de las medidas de adaptación propuestas."""
     }
     return contenidos.get(tipo, "Contenido en desarrollo.")
 
@@ -289,17 +299,17 @@ def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, mo
             refs.extend([r.strip() for r in referencias_manuales.split('\n') if r.strip()])
         if referencias_ia:
             refs.extend(referencias_ia)
-        return list(dict.fromkeys(refs))[:12]
+        return list(dict.fromkeys(refs))[:10]
     else:
         return referencias_ia if referencias_ia else [
-            "[1] IPCC. (2023). Climate Change 2023: Synthesis Report. Geneva: Intergovernmental Panel on Climate Change.",
-            "[2] Jaramillo, A. (2022). Impacto del cambio climático en la caficultura colombiana. Bogotá: Universidad Nacional de Colombia.",
-            "[3] Echeverri, R. (2024). Sistemas agroforestales como estrategia de adaptación. Chinchiná: Cenicafé.",
-            "[4] Federación Nacional de Cafeteros. (2025). Informe de sostenibilidad cafetera 2025. Bogotá: FNC.",
-            "[5] Schroth, G., et al. (2021). Climate change and coffee production in Latin America. Agricultural Systems, 189, 103-118.",
-            "[6] IDEAM. (2025). Boletín climatológico: tendencias y proyecciones. Bogotá: IDEAM.",
-            "[7] MADR. (2024). Estadísticas del sector cafetero. Bogotá: Ministerio de Agricultura.",
-            "[8] Adger, W. N. (2006). Vulnerability. Global Environmental Change, 16(3), 268-281."
+            "IPCC. (2023). Climate Change 2023: Synthesis Report. Geneva: IPCC.",
+            "Jaramillo, A. (2022). Impacto del cambio climático en la caficultura colombiana. Bogotá: UNAL.",
+            "Echeverri, R. (2024). Sistemas agroforestales como estrategia de adaptación. Chinchiná: Cenicafé.",
+            "Federación Nacional de Cafeteros. (2025). Informe de sostenibilidad cafetera. Bogotá: FNC.",
+            "Schroth, G., et al. (2021). Climate change and coffee production in Latin America. Agricultural Systems, 189.",
+            "IDEAM. (2025). Boletín climatológico: tendencias y proyecciones. Bogotá: IDEAM.",
+            "MADR. (2024). Estadísticas del sector cafetero. Bogotá: Ministerio de Agricultura.",
+            "Adger, W. N. (2006). Vulnerability. Global Environmental Change, 16(3), 268-281."
         ]
 
 # ========== GENERADOR DE PDF ==========
@@ -411,7 +421,7 @@ class GeneradorPDF:
         story.append(Paragraph("5. DESARROLLO", styles['Titulo1']))
         tabla_html = convertir_tabla_texto_a_reportlab(desarrollo)
         desarrollo_limpio = re.sub(r'\|.*\|.*\|.*\|\s*\|.*\|.*\|.*\|', '', desarrollo)
-        desarrollo_limpio = re.sub(r'Tabla 1\. .*?\n', '', desarrollo_limpio)
+        desarrollo_limpio = re.sub(r'Tabla 1\..*?\n', '', desarrollo_limpio)
         story.append(Paragraph(desarrollo_limpio, styles['TextoJustificado']))
         if tabla_html:
             story.append(Spacer(1, 0.2*inch))
