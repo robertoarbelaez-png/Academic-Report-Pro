@@ -2,342 +2,52 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academic Report Pro | Generador de Informes Académicos con IA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Academic Report Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' }
-    </script>
-    <style>
-        html { scroll-behavior: smooth; }
-        .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.03) 1px, transparent 0); background-size: 32px 32px; }
-        .dark .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0); }
-    </style>
 </head>
-<body class="bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans">
-    
-    <!-- Header -->
-    <header class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-md dark:border-slate-800/70 dark:bg-slate-950/80">
-        <div class="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
-            <a href="#" class="flex items-center gap-2 font-semibold">
-                <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg">AR</span>
-                <span class="tracking-tight font-bold">Academic Report Pro</span>
-                <span class="hidden rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300 sm:inline">Beta</span>
-            </a>
-            <nav class="hidden items-center gap-6 text-sm md:flex">
-                <a class="hover:text-blue-600 transition" href="#beneficios">Beneficios</a>
-                <a class="hover:text-blue-600 transition" href="#caracteristicas">Características</a>
-                <a class="hover:text-blue-600 transition" href="#modos">Modos</a>
-                <a class="hover:text-blue-600 transition" href="#generador">Generador</a>
-                <a class="hover:text-blue-600 transition" href="#faq">FAQ</a>
-            </nav>
-            <div class="flex items-center gap-2">
-                <button id="themeToggle" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900 transition">
-                    <i id="themeIcon" class="fas fa-moon text-slate-700 dark:text-slate-300"></i>
-                    <span class="hidden sm:inline">Tema</span>
-                </button>
-                <a href="#generador" class="hidden items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all md:inline-flex">
-                    <i class="fas fa-rocket mr-2"></i> Probar ahora
-                </a>
-            </div>
-        </div>
-    </header>
-    
-    <!-- Hero -->
-    <section class="relative overflow-hidden">
-        <div class="bg-grid absolute inset-0 opacity-30"></div>
-        <div class="relative mx-auto max-w-6xl px-4 py-16 md:py-20">
-            <div class="grid items-center gap-12 md:grid-cols-2">
-                <div>
-                    <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-xs font-medium backdrop-blur dark:border-slate-800 dark:bg-slate-950/60">
-                        <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        IA lista para informes académicos
-                    </div>
-                    <h1 class="mt-5 text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
-                        Informes académicos <span class="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">profesionales</span>, en minutos
-                    </h1>
-                    <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">
-                        <strong>Academic Report Pro</strong> genera informes completos con formato académico, referencias reales y IA integrada.
-                    </p>
-                    <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                        <a href="#generador" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-md hover:shadow-lg transition-all">
-                            <i class="fas fa-file-pdf mr-2"></i> Empezar ahora
-                        </a>
-                    </div>
-                    <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                        <div class="rounded-2xl border border-slate-200 bg-white/60 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/50">
-                            <div class="text-xs text-slate-500">Normas</div>
-                            <div class="mt-1 text-2xl font-extrabold text-blue-600">8</div>
-                        </div>
-                        <div class="rounded-2xl border border-slate-200 bg-white/60 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/50">
-                            <div class="text-xs text-slate-500">Modos</div>
-                            <div class="mt-1 text-2xl font-extrabold text-blue-600">3</div>
-                        </div>
-                        <div class="rounded-2xl border border-slate-200 bg-white/60 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/50">
-                            <div class="text-xs text-slate-500">Referencias</div>
-                            <div class="mt-1 text-2xl font-extrabold text-blue-600">3</div>
-                        </div>
-                        <div class="rounded-2xl border border-slate-200 bg-white/60 p-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/50">
-                            <div class="text-xs text-slate-500">Salida</div>
-                            <div class="mt-1 text-2xl font-extrabold text-blue-600">PDF</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="relative">
-                    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-950">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="text-xs text-slate-500">Vista previa</div>
-                                <div class="mt-1 text-sm font-semibold">Informe generado</div>
-                            </div>
-                            <div class="rounded-full border border-slate-200 px-3 py-1 text-xs">PDF</div>
-                        </div>
-                        <div class="mt-5 space-y-2">
-                            <div class="h-3 w-3/4 rounded bg-slate-200 dark:bg-slate-800"></div>
-                            <div class="h-2 w-full rounded bg-slate-200 dark:bg-slate-800"></div>
-                            <div class="h-2 w-11/12 rounded bg-slate-200 dark:bg-slate-800"></div>
-                        </div>
-                        <div class="mt-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white">
-                            <div class="flex items-center justify-between">
-                                <div class="text-sm font-semibold">Generar PDF</div>
-                                <div class="text-xs opacity-80">Listo para entregar</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Beneficios -->
-    <section id="beneficios" class="border-t border-slate-200 py-16 dark:border-slate-800">
-        <div class="mx-auto max-w-6xl px-4">
-            <h2 class="text-2xl font-bold">Beneficios</h2>
-            <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                <div class="rounded-2xl border border-slate-200 p-6 hover:shadow-md transition dark:border-slate-800">
-                    <i class="fas fa-graduation-cap text-2xl text-blue-600"></i>
-                    <h3 class="mt-4 font-semibold">Calidad académica</h3>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Redacción enfocada en estructura académica completa.</p>
-                </div>
-                <div class="rounded-2xl border border-slate-200 p-6 hover:shadow-md transition dark:border-slate-800">
-                    <i class="fas fa-book text-2xl text-blue-600"></i>
-                    <h3 class="mt-4 font-semibold">Normas en un clic</h3>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Cambia de norma sin rehacer todo el formato.</p>
-                </div>
-                <div class="rounded-2xl border border-slate-200 p-6 hover:shadow-md transition dark:border-slate-800">
-                    <i class="fas fa-file-pdf text-2xl text-blue-600"></i>
-                    <h3 class="mt-4 font-semibold">PDF listo para entregar</h3>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Márgenes, fuente e interlineado según norma.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Generador -->
-    <section id="generador" class="py-16 bg-slate-50 dark:bg-slate-900/30">
-        <div class="mx-auto max-w-4xl px-4">
-            <h2 class="text-2xl font-bold text-center">Genera tu informe ahora</h2>
-            <p class="mt-2 text-center text-slate-600 dark:text-slate-400">Completa los campos y obtén tu PDF profesional</p>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-8 max-w-2xl">
+        <h1 class="text-3xl font-bold text-center mb-8">📄 Academic Report Pro</h1>
+        
+        <div class="bg-gray-800 rounded-lg p-6">
+            <input type="text" id="tema" placeholder="Tema del informe" class="w-full p-3 rounded bg-gray-700 mb-4">
             
-            <div class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-800 dark:bg-slate-950">
-                
-                <!-- Tabs de modo -->
-                <div class="flex gap-3 mb-6">
-                    <button id="btnManual" class="tab-btn flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-blue-600 text-white">✍️ Manual</button>
-                    <button id="btnAuto" class="tab-btn flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">🤖 Automático</button>
-                    <button id="btnRapido" class="tab-btn flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300">⚡ Rápido</button>
-                </div>
-                
-                <input type="text" id="tema" placeholder="Tema del informe" class="w-full p-3 border rounded-xl mb-4 dark:bg-slate-900 dark:border-slate-700">
-                
-                <div class="grid md:grid-cols-2 gap-3 mb-4">
-                    <input type="text" id="nombre" placeholder="Nombre del estudiante" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                    <input type="text" id="profesor" placeholder="Profesor" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                    <input type="text" id="asignatura" placeholder="Asignatura" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                    <input type="text" id="institucion" placeholder="Institución" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                    <input type="text" id="fechaEntrega" placeholder="Fecha (DD/MM/AAAA)" class="p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700">
-                </div>
-                
-                <select id="norma" class="w-full p-3 border rounded-xl mb-4 dark:bg-slate-900 dark:border-slate-700">
-                    <option value="apa7">📘 APA 7ª Edición</option>
-                    <option value="apa6">📗 APA 6ª Edición</option>
-                    <option value="icontec">🇨🇴 ICONTEC (Colombia)</option>
-                    <option value="vancouver">🩺 Vancouver</option>
-                    <option value="chicago">📖 Chicago</option>
-                    <option value="harvard">💼 Harvard</option>
-                    <option value="mla">✍️ MLA</option>
-                    <option value="ieee">⚡ IEEE</option>
-                </select>
-                
-                <select id="modoReferencias" class="w-full p-3 border rounded-xl mb-4 dark:bg-slate-900 dark:border-slate-700">
-                    <option value="auto">🤖 Automático (IA genera referencias)</option>
-                    <option value="manual">📝 Manual (Tú escribes tus referencias)</option>
-                    <option value="mixto">🔄 Mixto (Tus referencias + IA)</option>
-                </select>
-                
-                <div id="campoReferenciasManual" style="display:none;" class="mb-4">
-                    <textarea id="referenciasManual" rows="3" placeholder="Escribe una referencia por línea..." class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                </div>
-                
-                <div id="modoManual" class="space-y-3">
-                    <textarea id="introManual" rows="3" placeholder="1. INTRODUCCIÓN" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                    <textarea id="objetivosManual" rows="3" placeholder="2. OBJETIVOS" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                    <textarea id="marcoManual" rows="4" placeholder="3. MARCO TEÓRICO" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                    <textarea id="metodologiaManual" rows="3" placeholder="4. METODOLOGÍA" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                    <textarea id="desarrolloManual" rows="4" placeholder="5. DESARROLLO" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                    <textarea id="conclusionesManual" rows="3" placeholder="6. CONCLUSIONES" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                    <textarea id="recomendacionesManual" rows="3" placeholder="7. RECOMENDACIONES" class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                </div>
-                
-                <div id="modoAuto" style="display:none;" class="mb-4">
-                    <textarea id="textoCompleto" rows="8" placeholder="Escribe aquí TODO lo que sabes sobre el tema..." class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                </div>
-                
-                <div id="modoRapido" style="display:none;" class="mb-4">
-                    <textarea id="temaRapido" rows="4" placeholder="Describe tu tema de investigación..." class="w-full p-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700"></textarea>
-                </div>
-                
-                <button id="btnGenerar" class="w-full mt-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg transition-all">
-                    <i class="fas fa-file-pdf mr-2"></i> Generar Informe PDF
-                </button>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <input type="text" id="nombre" placeholder="Nombre" class="p-3 rounded bg-gray-700">
+                <input type="text" id="asignatura" placeholder="Asignatura" class="p-3 rounded bg-gray-700">
             </div>
+            
+            <button onclick="generar()" class="w-full bg-blue-600 py-3 rounded-lg font-bold hover:bg-blue-700">
+                🚀 Generar Informe PDF
+            </button>
         </div>
-    </section>
-    
-    <!-- FAQ -->
-    <section id="faq" class="border-t border-slate-200 py-16 dark:border-slate-800">
-        <div class="mx-auto max-w-4xl px-4">
-            <h2 class="text-2xl font-bold text-center">Preguntas frecuentes</h2>
-            <div class="mt-8 space-y-3">
-                <details class="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
-                    <summary class="font-semibold cursor-pointer">¿Puedo elegir la norma académica?</summary>
-                    <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Sí. Incluye APA 7ª, APA 6ª, ICONTEC, Vancouver, Chicago, Harvard, MLA e IEEE.</p>
-                </details>
-                <details class="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
-                    <summary class="font-semibold cursor-pointer">¿Genera referencias automáticamente?</summary>
-                    <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Tienes 3 modos: automático (IA), manual (usuario) y mixto (ambos).</p>
-                </details>
-                <details class="rounded-xl border border-slate-200 p-5 dark:border-slate-800">
-                    <summary class="font-semibold cursor-pointer">¿Es gratis?</summary>
-                    <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">Sí, actualmente es completamente gratuito.</p>
-                </details>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Footer -->
-    <footer class="border-t border-slate-200 py-8 dark:border-slate-800">
-        <div class="mx-auto max-w-6xl px-4 text-center text-sm text-slate-500 dark:text-slate-400">
-            <p>© 2025 Academic Report Pro — Generador de informes académicos con IA</p>
-            <p class="mt-2 text-xs">"De la idea al informe académico profesional en segundos"</p>
-        </div>
-    </footer>
+    </div>
     
     <script>
-        let modoActual = 'manual';
-        
-        function actualizarModo(modo) {
-            modoActual = modo;
-            document.getElementById('modoManual').style.display = modo === 'manual' ? 'block' : 'none';
-            document.getElementById('modoAuto').style.display = modo === 'auto' ? 'block' : 'none';
-            document.getElementById('modoRapido').style.display = modo === 'rapido' ? 'block' : 'none';
-            
-            const btns = { btnManual: 'manual', btnAuto: 'auto', btnRapido: 'rapido' };
-            for (const [btnId, modoId] of Object.entries(btns)) {
-                const btn = document.getElementById(btnId);
-                if (modoId === modo) {
-                    btn.className = 'flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-blue-600 text-white';
-                } else {
-                    btn.className = 'flex-1 py-2 px-4 rounded-xl font-semibold transition-all bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
-                }
-            }
-        }
-        
-        document.getElementById('btnManual').onclick = () => actualizarModo('manual');
-        document.getElementById('btnAuto').onclick = () => actualizarModo('auto');
-        document.getElementById('btnRapido').onclick = () => actualizarModo('rapido');
-        
-        const modoReferencias = document.getElementById('modoReferencias');
-        const campoReferenciasManual = document.getElementById('campoReferenciasManual');
-        
-        function toggleCampoReferencias() {
-            campoReferenciasManual.style.display = (modoReferencias.value === 'manual' || modoReferencias.value === 'mixto') ? 'block' : 'none';
-        }
-        modoReferencias.addEventListener('change', toggleCampoReferencias);
-        toggleCampoReferencias();
-        
-        // Tema oscuro/claro
-        const themeToggle = document.getElementById('themeToggle');
-        const themeIcon = document.getElementById('themeIcon');
-        
-        function setTheme(theme) {
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-                themeIcon.className = 'fas fa-sun';
-            } else {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-                themeIcon.className = 'fas fa-moon';
-            }
-        }
-        
-        if (localStorage.getItem('theme') === 'dark') setTheme('dark');
-        
-        themeToggle.addEventListener('click', () => {
-            const isDark = document.documentElement.classList.contains('dark');
-            setTheme(isDark ? 'light' : 'dark');
-        });
-        
-        // Generar informe
-        document.getElementById('btnGenerar').onclick = async () => {
-            let tema = document.getElementById('tema').value;
-            let temaRapido = document.getElementById('temaRapido').value;
-            if (modoActual === 'rapido') tema = temaRapido;
-            
-            if (!tema || tema.trim() === '') {
-                Swal.fire('Error', 'Por favor ingresa un tema', 'error');
+        async function generar() {
+            const tema = document.getElementById('tema').value;
+            if (!tema) {
+                Swal.fire('Error', 'Ingresa un tema', 'error');
                 return;
             }
             
-            Swal.fire({ title: 'Generando informe...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            
-            const datos = {
-                modo: modoActual,
-                nombre: document.getElementById('nombre').value || '',
-                tema: tema,
-                profesor: document.getElementById('profesor').value || '',
-                asignatura: document.getElementById('asignatura').value || '',
-                institucion: document.getElementById('institucion').value || '',
-                fecha_entrega: document.getElementById('fechaEntrega').value || '',
-                norma: document.getElementById('norma').value || 'apa7',
-                modo_referencias: document.getElementById('modoReferencias').value,
-                referencias_manuales: document.getElementById('referenciasManual').value || '',
-                incluir_recomendaciones: true
-            };
-            
-            if (modoActual === 'manual') {
-                datos.introduccion = document.getElementById('introManual').value;
-                datos.objetivos = document.getElementById('objetivosManual').value;
-                datos.marco_teorico = document.getElementById('marcoManual').value;
-                datos.metodologia = document.getElementById('metodologiaManual').value;
-                datos.desarrollo = document.getElementById('desarrolloManual').value;
-                datos.conclusiones = document.getElementById('conclusionesManual').value;
-                datos.recomendaciones = document.getElementById('recomendacionesManual').value;
-            } else if (modoActual === 'auto') {
-                datos.texto_completo = document.getElementById('textoCompleto').value;
-            } else {
-                datos.texto_completo = document.getElementById('temaRapido').value;
-            }
+            Swal.fire({ title: 'Generando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             
             try {
-                const response = await fetch('/generar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(datos) });
+                const response = await fetch('/generar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        modo: 'rapido',
+                        tema: tema,
+                        nombre: document.getElementById('nombre').value,
+                        asignatura: document.getElementById('asignatura').value
+                    })
+                });
                 const result = await response.json();
                 if (result.success) {
-                    Swal.fire({ title: '¡Informe listo!', icon: 'success', confirmButtonText: '<i class="fas fa-download"></i> Descargar PDF' }).then(() => {
+                    Swal.fire('¡Listo!', 'Informe generado', 'success').then(() => {
                         window.location.href = result.download_url;
                     });
                 } else {
@@ -346,7 +56,7 @@
             } catch (error) {
                 Swal.fire('Error', 'No se pudo generar', 'error');
             }
-        };
+        }
     </script>
 </body>
 </html>
