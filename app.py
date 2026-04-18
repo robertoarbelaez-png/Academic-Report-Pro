@@ -68,7 +68,7 @@ def limpiar_texto(texto):
     reemplazos = {
         '\xa0': ' ', '\xad': '-', '\u2013': '-', '\u2014': '-',
         '\u2018': "'", '\u2019': "'", '\u201c': '"', '\u201d': '"', '\u2026': '...',
-        '$<br/>': '', '<br/>2': '',  # Limpiar caracteres extraños de conclusiones
+        '$<br/>': '', '<br/>2': '',
     }
     for viejo, nuevo in reemplazos.items():
         texto = texto.replace(viejo, nuevo)
@@ -83,9 +83,8 @@ def limpiar_texto(texto):
     return texto
 
 def generar_contenido_local_generico(tipo, tema):
-    """Contenido de respaldo GENÉRICO (no específico de ningún tema anterior)"""
+    """Contenido de respaldo GENÉRICO (se adapta al tema del usuario)"""
     
-    # Usar el tema del usuario, no temas predefinidos
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
@@ -135,7 +134,7 @@ Los resultados se alinean parcialmente con lo reportado en la literatura especia
     return contenidos.get(tipo, "Contenido en desarrollo.")
 
 def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, modo_referencias="auto", norma="apa7"):
-    """Obtiene referencias según el modo seleccionado y la norma"""
+    """Obtiene referencias según el modo seleccionado y el tema del usuario"""
     
     if modo_referencias == "manual" and referencias_manuales:
         refs = [r.strip() for r in referencias_manuales.split('\n') if r.strip()]
@@ -151,13 +150,43 @@ def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, mo
         if referencias_ia:
             return referencias_ia[:8]
         
-        # Referencias genéricas de respaldo
-        return [
-            "Hernández Sampieri, R. (2021). Metodología de la Investigación. McGraw-Hill.",
-            "Bisquerra Alzina, R. (2016). Metodología de la investigación educativa. La Muralla.",
-            "Sabino, C. A. (2014). El proceso de investigación. Episteme.",
-            "Taylor, S. J., & Bogdan, R. (2016). Introducción a los métodos cualitativos. Paidós."
-        ]
+        # REFERENCIAS ESPECÍFICAS POR CATEGORÍA DE TEMA
+        tema_lower = tema.lower() if tema else ""
+        
+        # Tecnología / Digital / Agro
+        if "tecnología" in tema_lower or "digital" in tema_lower or "agro" in tema_lower or "transformación" in tema_lower:
+            return [
+                "Bharadwaj, A. (2000). A resource-based perspective on information technology capability and firm performance. MIS Quarterly, 24(1), 169-196.",
+                "Kamilaris, A., et al. (2019). A review on the practice of big data analysis in agriculture. Computers and Electronics in Agriculture, 143, 23-37.",
+                "Wolfert, S., et al. (2017). Big data in smart farming. Agricultural Systems, 153, 69-80.",
+                "Rogers, E. M. (2003). Diffusion of innovations (5th ed.). Free Press.",
+                "Castells, M. (2010). The rise of the network society (2nd ed.). Wiley-Blackwell."
+            ]
+        # Educación
+        elif "educación" in tema_lower or "aprendizaje" in tema_lower or "pedagogía" in tema_lower:
+            return [
+                "Siemens, G. (2005). Connectivism: A learning theory for the digital age. International Journal of Instructional Technology and Distance Learning, 2(1), 3-10.",
+                "Coll, C. (2018). Psicología de la educación virtual. UOC.",
+                "García Aretio, L. (2022). Educación a distancia y virtual. UNED.",
+                "Area Moreira, M. (2021). La integración de las TIC en educación. Octaedro.",
+                "Pérez Gómez, Á. I. (2021). La educación en la sociedad digital. Morata."
+            ]
+        # Salud / Medicina
+        elif "salud" in tema_lower or "medicina" in tema_lower or "médico" in tema_lower:
+            return [
+                "Topol, E. J. (2019). Deep medicine: How artificial intelligence can make healthcare human again. Basic Books.",
+                "Mesko, B. (2017). The role of artificial intelligence in precision medicine. Expert Review of Precision Medicine and Drug Development, 2(5), 239-241.",
+                "Jiang, F., et al. (2017). Artificial intelligence in healthcare: past, present and future. Stroke and Vascular Neurology, 2(4), 230-243.",
+                "Esteva, A., et al. (2019). A guide to deep learning in healthcare. Nature Medicine, 25(1), 24-29."
+            ]
+        # Referencias genéricas (cuando no se detecta categoría)
+        else:
+            return [
+                "Hernández Sampieri, R. (2021). Metodología de la Investigación. McGraw-Hill.",
+                "Bisquerra Alzina, R. (2016). Metodología de la investigación educativa. La Muralla.",
+                "Sabino, C. A. (2014). El proceso de investigación. Episteme.",
+                "Taylor, S. J., & Bogdan, R. (2016). Introducción a los métodos cualitativos. Paidós."
+            ]
 
 # ========== GENERADOR DE PDF ==========
 class GeneradorPDF:
@@ -193,7 +222,6 @@ class GeneradorPDF:
         config_norma = NORMAS_CONFIG.get(norma, NORMAS_CONFIG['apa7'])
         print(f"📏 Aplicando norma: {config_norma['nombre']}")
         
-        # Usar secciones de IA si existen, si no usar contenido genérico
         if secciones_ia and isinstance(secciones_ia, dict):
             introduccion = limpiar_texto(secciones_ia.get('introduccion', ''))
             objetivos = limpiar_texto(secciones_ia.get('objetivos', ''))
@@ -204,7 +232,6 @@ class GeneradorPDF:
             recomendaciones = limpiar_texto(secciones_ia.get('recomendaciones', ''))
             print("✅ Usando secciones generadas por IA")
         else:
-            # Usar contenido genérico basado en el tema del usuario
             introduccion = generar_contenido_local_generico('introduccion', tema)
             objetivos = generar_contenido_local_generico('objetivos', tema)
             marco_teorico = generar_contenido_local_generico('marco_teorico', tema)
@@ -229,7 +256,7 @@ class GeneradorPDF:
         
         story = []
         
-        # PORTADA (corregida: INFORME sin tilde)
+        # PORTADA
         story.append(Spacer(1, 1.5*inch))
         story.append(Paragraph("INFORME ACADÉMICO", styles['TituloPortada']))
         story.append(Spacer(1, 0.2*inch))
@@ -318,10 +345,8 @@ def generar():
         secciones_ia = None
         referencias_ia = None
         
-        # Solo llamar a IA si hay API key y el tema es específico
         if GROQ_API_KEY and tema:
             try:
-                # Prompt simplificado para generar informe
                 prompt = f"""Genera un informe académico completo sobre: "{tema}"
 
 Escribe estas secciones:
@@ -356,7 +381,6 @@ Usa español. Usa CONCLUSIONES (nunca Conclusions)."""
                     contenido = resultado['choices'][0]['message']['content']
                     contenido = limpiar_texto(contenido)
                     
-                    # Extraer secciones básicas
                     secciones_ia = {
                         'introduccion': re.search(r'\*\*INTRODUCCIÓN\*\*:?(.*?)(?=\*\*OBJETIVOS|\*\*MARCO|\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*INTRODUCCIÓN\*\*:?(.*?)(?=\*\*OBJETIVOS|\*\*MARCO|\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE) else None,
                         'objetivos': re.search(r'\*\*OBJETIVOS\*\*:?(.*?)(?=\*\*MARCO|\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*OBJETIVOS\*\*:?(.*?)(?=\*\*MARCO|\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE) else None,
@@ -366,7 +390,6 @@ Usa español. Usa CONCLUSIONES (nunca Conclusions)."""
                         'conclusiones': re.search(r'\*\*CONCLUSIONES\*\*:?(.*?)(?=\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*CONCLUSIONES\*\*:?(.*?)(?=\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE) else None,
                         'recomendaciones': re.search(r'\*\*RECOMENDACIONES\*\*:?(.*?)$', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*RECOMENDACIONES\*\*:?(.*?)$', contenido, re.DOTALL | re.IGNORECASE) else None
                     }
-                    # Limpiar None values
                     for key in secciones_ia:
                         if secciones_ia[key]:
                             secciones_ia[key] = secciones_ia[key].strip().replace('\n', '<br/>')
