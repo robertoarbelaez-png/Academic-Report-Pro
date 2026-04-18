@@ -20,7 +20,7 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 print("=" * 50)
-print("🚀 INICIANDO APLICACIÓN (VERSIÓN FINAL CORREGIDA)")
+print("🚀 INICIANDO APLICACIÓN (VERSIÓN PROFESIONAL)")
 print(f"🔑 Groq API Key cargada: {'SÍ ✅' if GROQ_API_KEY else 'NO ❌'}")
 print("=" * 50)
 
@@ -53,36 +53,26 @@ NORMAS_CONFIG = {
 }
 
 def limpiar_texto(texto):
-    """Limpia caracteres extraños y corrige errores comunes"""
     if not texto:
         return ""
     texto = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', texto)
     texto = re.sub(r'\n{3,}', '<br/><br/>', texto)
-    # CORRECCIÓN 1: Título "INFORMÉ" -> "INFORME"
     texto = texto.replace('INFORMÉ', 'INFORME')
-    texto = texto.replace('Informé', 'Informe')
-    # CORRECCIÓN 2: "Conclusions" -> "CONCLUSIONES"
     texto = texto.replace('Conclusions', 'CONCLUSIONES')
     texto = texto.replace('CONCLUSIONS', 'CONCLUSIONES')
     return texto
 
 def convertir_tabla_texto_a_reportlab(texto):
-    """Convierte una tabla en formato texto plano a una tabla de ReportLab"""
     if not texto:
         return None
-    
-    # Buscar patrón de tabla: | algo | algo | algo |
     lineas = texto.split('<br/>')
     datos_tabla = []
-    
     for linea in lineas:
         if '|' in linea and '---' not in linea:
             celdas = [c.strip() for c in linea.split('|') if c.strip()]
             if len(celdas) >= 2:
                 datos_tabla.append(celdas)
-    
     if len(datos_tabla) >= 2:
-        # Crear tabla de ReportLab
         tabla = Table(datos_tabla, colWidths=[2*inch, 1.5*inch, 1.5*inch])
         tabla.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a365d')),
@@ -96,63 +86,73 @@ def convertir_tabla_texto_a_reportlab(texto):
     return None
 
 def generar_informe_completo_con_ia(tema, info_usuario="", modo_referencias="auto", referencias_manuales=""):
-    """Genera TODO el informe en UNA sola llamada a Groq"""
-    
     if not GROQ_API_KEY:
         print("❌ No hay API key de Groq configurada")
         return None, None
     
     print(f"🤖 Generando informe COMPLETO con Groq para: {tema[:50]}...")
     
-    # PROMPT CORREGIDO: tabla SOLO en Desarrollo, NO duplicada
+    # PROMPT PROFESIONAL DE ALTA CALIDAD
     prompt = f"""Tema: "{tema}"
 
-⚠️ INSTRUCCIONES ESTRICTAS (OBEDECE SIN EXCEPCIÓN):
+⚠️ INSTRUCCIONES ESTRICTAS PARA UN INFORME PROFESIONAL DE ALTA CALIDAD:
 
-1. **TÍTULO**: El título del informe debe ser "INFORME ACADÉMICO" (sin tilde en INFORME).
-2. **IDIOMA**: Todo en español. Usa "CONCLUSIONES" (nunca "Conclusions").
-3. **TABLA**: La tabla DEBE aparecer SOLO UNA VEZ en la sección de DESARROLLO. NO la repitas en otras secciones.
+1. **DESARROLLO (MUY IMPORTANTE)**: Debe tener MÍNIMO 800 palabras. Incluye:
+   - Explicación detallada de los resultados
+   - Comparación con otros estudios similares
+   - Análisis propio con pensamiento crítico
+   - Implicaciones y consecuencias de los hallazgos
+
+2. **CONCLUSIONES**: NO deben repetir los resultados. Deben:
+   - Interpretar los hallazgos
+   - Cerrar las ideas principales
+   - Mostrar análisis propio
+   - Mínimo 5 puntos, cada uno con desarrollo de 2-3 líneas
+
+3. **MARCO TEÓRICO**: Mínimo 600 palabras. Incluye:
+   - Conceptos clave definidos
+   - Teorías relevantes
+   - Citas de al menos 5 autores diferentes
+
+4. **REFERENCIAS**: Mínimo 6-8 referencias específicas sobre el tema (libros, artículos académicos, informes oficiales)
+
+5. **PENSAMIENTO CRÍTICO**: En cada sección, no solo describas. Pregúntate:
+   - ¿Por qué ocurre esto?
+   - ¿Qué implica?
+   - ¿Qué consecuencias tiene?
 
 **ESTRUCTURA OBLIGATORIA:**
 
-**INTRODUCCIÓN** (400 palabras con contexto y citas)
+**INTRODUCCIÓN** (500 palabras con contexto, problema, justificación)
 
 **OBJETIVOS**
-**Objetivo General:** (1 específico sobre el tema)
+**Objetivo General:** (1 específico)
 **Objetivos Específicos:** (4 específicos)
 
-**MARCO TEÓRICO** (Mínimo 400 palabras. Cita autores reales como Jaramillo, Echeverri, IPCC)
+**MARCO TEÓRICO** (600 palabras mínimo. Define conceptos clave, presenta teorías relevantes, cita al menos 5 autores)
 
-**METODOLOGÍA** (Incluye números concretos: cantidad de encuestados, lugares específicos, fechas)
+**METODOLOGÍA** (Incluye: enfoque, población y muestra con números concretos, instrumentos, procedimiento con fechas)
 
-**DESARROLLO**
-**Resultados obtenidos:** (texto descriptivo)
-**Tabla 1. Resultados de la investigación**
-| Indicador | Porcentaje | Fuente |
-|-----------|------------|--------|
-| Productores afectados | 75% | Encuesta propia |
-| Reducción de producción | 15% | MADR (2024) |
-**Análisis por dimensiones:** (texto)
-**Discusión:** (texto)
+**DESARROLLO** (800 palabras mínimo. Incluye: resultados, comparación con otros estudios, análisis crítico, implicaciones, consecuencias)
 
-**CONCLUSIONES** (5 puntos numerados)
+**CONCLUSIONES** (5 puntos con análisis e interpretación, no solo repetición de resultados)
 
-**RECOMENDACIONES** (3 puntos)"""
+**RECOMENDACIONES** (3-4 puntos accionables basados en el análisis)"""
     
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
     data = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
-            {"role": "system", "content": "Eres un asistente académico estricto. Tu tarea es generar informes en español. La sección de conclusiones se llama 'CONCLUSIONES' (nunca 'Conclusions'). La tabla de resultados aparece SOLO UNA VEZ en la sección de Desarrollo. El título es 'INFORME ACADÉMICO' (sin tilde en INFORME)."},
+            {"role": "system", "content": "Eres un asistente académico profesional de alta calidad. Generas informes universitarios profundos, con pensamiento crítico, análisis propio y extensos. Las conclusiones interpretan los hallazgos, no los repiten. El desarrollo es analítico y extenso (800+ palabras). El marco teórico es robusto (600+ palabras con 5+ autores)."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
-        "max_tokens": 7000
+        "max_tokens": 10000
     }
     
     try:
         print(f"📡 Enviando petición a Groq...")
-        response = requests.post(GROQ_URL, headers=headers, json=data, timeout=150)
+        response = requests.post(GROQ_URL, headers=headers, json=data, timeout=180)
         print(f"📡 Respuesta código: {response.status_code}")
         
         if response.status_code == 200:
@@ -173,11 +173,10 @@ def generar_informe_completo_con_ia(tema, info_usuario="", modo_referencias="aut
             
             referencias_extraidas = extraer_referencias_desde_contenido(contenido)
             
-            # Rellenar secciones vacías
             for key in secciones:
-                if not secciones[key] or len(secciones[key]) < 150:
-                    print(f"⚠️ Sección {key} incompleta, usando contenido local")
-                    secciones[key] = generar_contenido_local(key, tema)
+                if not secciones[key] or len(secciones[key]) < 200:
+                    print(f"⚠️ Sección {key} incompleta, usando contenido local mejorado")
+                    secciones[key] = generar_contenido_local_profesional(key, tema)
             
             return secciones, referencias_extraidas
         else:
@@ -199,8 +198,8 @@ def extraer_seccion_mejorada(contenido, nombre):
             texto = match.group(1).strip()
             texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
             texto = texto.replace('\n', '<br/>')
-            if len(texto) > 6000:
-                texto = texto[:6000] + "..."
+            if len(texto) > 8000:
+                texto = texto[:8000] + "..."
             return texto
     return ""
 
@@ -222,16 +221,69 @@ def extraer_referencias_desde_contenido(contenido):
             break
     return referencias[:8]
 
-def generar_contenido_local(tipo, tema):
+def generar_contenido_local_profesional(tipo, tema):
+    """Contenido de respaldo profesional (profundo y analítico)"""
     tema_limpio = tema if tema else "el tema de investigación"
+    
     contenidos = {
-        'introduccion': f"El cambio climático representa una amenaza significativa para la caficultura colombiana. Según la Federación Nacional de Cafeteros (2024), las variaciones de temperatura han reducido la producción en un 12% en los últimos años...",
-        'objetivos': f"<b>Objetivo General</b><br/>Analizar el impacto del cambio climático en la productividad del café en Colombia.<br/><br/><b>Objetivos Específicos</b><br/>1. Cuantificar la pérdida de cosecha asociada al estrés hídrico.<br/>2. Identificar zonas cafeteras más vulnerables.<br/>3. Evaluar la efectividad de la sombra como medida de adaptación.<br/>4. Proponer un plan de asistencia técnica para pequeños productores.",
-        'marco_teorico': f"<b>Antecedentes</b><br/>Estudios de Jaramillo (2022) en Caldas demostraron que el aumento de 1°C reduce el rendimiento en un 8%. Echeverri (2023) relacionó los picos de floración con las lluvias atípicas. El IPCC (2020) advierte que los eventos climáticos extremos serán más frecuentes.<br/><br/><b>Bases Teóricas</b><br/>El cultivo de café es sensible a la temperatura y precipitación. La altitud y la sombra son factores moduladores clave.<br/><br/><b>Estado del Arte</b><br/>Cenicafé ha desarrollado variedades resistentes a la roya, pero el estrés hídrico sigue siendo un desafío.",
-        'metodologia': f"<b>Enfoque</b><br/>Estudio mixto.<br/><br/><b>Población y muestra</b><br/>150 caficultores en Caldas, Quindío y Risaralda.<br/><br/><b>Instrumentos</b><br/>Encuesta estructurada de 25 preguntas.<br/><br/><b>Procedimiento</b><br/>Recolección de datos: febrero-marzo de 2025.",
-        'desarrollo': f"<b>Resultados obtenidos</b><br/>El 75% de los productores reportó afectaciones por sequía.<br/><br/><b>Tabla 1. Resultados de la investigación</b><br/>| Indicador | Porcentaje | Fuente |<br/>|-----------|------------|--------|<br/>| Productores afectados | 75% | Encuesta propia |<br/>| Reducción de producción | 15% | MADR (2024) |<br/><br/><b>Análisis por dimensiones</b><br/>La falta de acceso al riego tecnificado agrava la vulnerabilidad.<br/><br/><b>Discusión</b><br/>Estos datos coinciden con los reportes nacionales de la FNC.",
-        'conclusiones': f"1. El cambio climático afecta directamente la fenología del café.<br/>2. Las zonas de baja altitud son las más vulnerables.<br/>3. Se requiere inversión en sistemas de riego.<br/>4. La asociatividad fortalece la resiliencia.<br/>5. La trazabilidad climática es clave para la comercialización.",
-        'recomendaciones': f"<b>Recomendaciones</b><br/>1. Crear un seguro paramétrico para caficultores.<br/>2. Implementar sistemas agroforestales de sombra.<br/>3. Monitorear las variables climáticas en tiempo real."
+        'introduccion': f"""El cambio climático representa una amenaza existencial para la caficultura colombiana. Según la Federación Nacional de Cafeteros (2024), las variaciones de temperatura han reducido la producción en un 12% en los últimos años. Este fenómeno no solo afecta la productividad, sino que también incrementa la vulnerabilidad socioeconómica de los pequeños productores.<br/><br/>
+La región del Eje Cafetero, tradicionalmente óptima para el cultivo de café, ha experimentado cambios significativos en sus patrones de precipitación y temperatura. Jaramillo (2022) documentó un aumento de 0.8°C en la temperatura promedio de la región en las últimas dos décadas, lo que ha desplazado el cultivo hacia altitudes superiores.<br/><br/>
+El presente estudio busca analizar el impacto del cambio climático en la productividad del café en Colombia, identificar las zonas más vulnerables y proponer estrategias de adaptación basadas en evidencia empírica.""",
+        
+        'objetivos': f"""<b>Objetivo General</b><br/><br/>Analizar el impacto del cambio climático en la productividad del café en Colombia, identificando las zonas más vulnerables y proponiendo estrategias de adaptación.<br/><br/><br/>
+<b>Objetivos Específicos</b><br/><br/>
+1. Cuantificar la pérdida de cosecha asociada al estrés hídrico en las principales zonas cafeteras del país.<br/><br/>
+2. Identificar las regiones cafeteras con mayor vulnerabilidad climática mediante análisis espacial.<br/><br/>
+3. Evaluar la efectividad de los sistemas agroforestales como medida de adaptación al cambio climático.<br/><br/>
+4. Proponer un plan de asistencia técnica diferenciado por niveles de vulnerabilidad para pequeños productores.""",
+        
+        'marco_teorico': f"""<b>Conceptos clave</b><br/><br/>
+El cambio climático se define como la variación significativa de los patrones climáticos durante un período prolongado (IPCC, 2020). Para la agricultura, este fenómeno implica alteraciones en temperatura, precipitación y frecuencia de eventos extremos.<br/><br/>
+<b>Teorías relevantes</b><br/><br/>
+La teoría de la vulnerabilidad climática (Adger, 2006) establece que la susceptibilidad de un sistema depende de su exposición, sensibilidad y capacidad adaptativa. En el contexto cafetero, Jaramillo (2022) demostró que la exposición a temperaturas superiores a 23°C reduce significativamente la fotosíntesis y la floración.<br/><br/>
+Echeverri (2021) complementa este enfoque al estudiar la resiliencia de los sistemas agroforestales, encontrando que la sombra reduce la temperatura ambiente entre 2 y 4°C.<br/><br/>
+<b>Autores clave</b><br/><br/>
+• IPCC (2020): Cambio climático global<br/>
+• Jaramillo (2022): Impacto en café colombiano<br/>
+• Echeverri (2021): Adaptación en caficultura<br/>
+• Federación Nacional de Cafeteros (2024): Datos productivos<br/>
+• Cenicafé (2023): Variedades resistentes""",
+        
+        'metodologia': f"""<b>Enfoque</b><br/><br/>Estudio mixto con componente cuantitativo (encuestas estructuradas) y cualitativo (entrevistas semiestructuradas).<br/><br/>
+<b>Población y muestra</b><br/><br/>Se encuestó a 150 caficultores en los departamentos de Caldas, Quindío y Risaralda durante febrero-marzo de 2025. La selección fue estratificada por altitud (1200-1800 m s.n.m.) y tamaño de finca.<br/><br/>
+<b>Instrumentos</b><br/><br/>Cuestionario de 32 preguntas validado por expertos de Cenicafé, entrevistas a 15 líderes gremiales y análisis de datos climáticos del IDEAM (2015-2025).<br/><br/>
+<b>Procedimiento</b><br/><br/>Fase 1 (enero 2025): Diseño y validación de instrumentos.<br/>Fase 2 (febrero-marzo 2025): Trabajo de campo y recolección de datos.<br/>Fase 3 (abril 2025): Análisis estadístico e interpretación de resultados.""",
+        
+        'desarrollo': f"""<b>Resultados obtenidos</b><br/><br/>
+El 75% de los productores reportó afectaciones por sequía en los últimos cinco años. Esta cifra es consistente con los registros del IDEAM, que muestran una disminución del 15% en la precipitación acumulada anual en la región del Eje Cafetero.<br/><br/>
+<b>Comparación con otros estudios</b><br/><br/>
+Los hallazgos coinciden con Jaramillo (2022), quien encontró que el 68% de los caficultores en Caldas habían experimentado pérdidas por estrés hídrico. Sin embargo, nuestra investigación revela que la adopción de sistemas agroforestales reduce la percepción de vulnerabilidad en un 40%.<br/><br/>
+<b>Análisis crítico</b><br/><br/>
+La falta de acceso al riego tecnificado agrava significativamente la vulnerabilidad de los pequeños productores. Aquellos con sistemas de riego por goteo reportaron pérdidas 30% menores que los que dependen exclusivamente de la lluvia.<br/><br/>
+<b>Implicaciones</b><br/><br/>
+Estos resultados sugieren que las políticas públicas deberían priorizar la inversión en infraestructura de riego y la promoción de sistemas agroforestales como estrategias de adaptación. La ausencia de estas medidas podría profundizar la desigualdad entre productores grandes y pequeños.<br/><br/>
+<b>Tabla 1. Resultados de la investigación</b><br/>
+| Indicador | Porcentaje | Fuente |
+|-----------|------------|--------|
+| Productores afectados por sequía | 75% | Encuesta propia (2025) |
+| Reducción de producción estimada | 15% | MADR (2024) |
+| Adopción de sistemas agroforestales | 32% | Encuesta propia (2025) |
+| Percepción de vulnerabilidad alta | 68% | Encuesta propia (2025) |""",
+        
+        'conclusiones': f"""1. <b>Impacto significativo del cambio climático</b>: Se evidencia que la variabilidad climática no solo reduce la productividad, sino que incrementa la vulnerabilidad socioeconómica de los pequeños caficultores. La correlación entre altitud y afectación sugiere que las zonas bajas requieren intervención prioritaria.<br/><br/>
+2. <b>Brecha en adopción tecnológica</b>: La marcada diferencia en pérdidas entre productores con y sin riego tecnificado (30% menos) indica que la inversión en infraestructura hídrica es la estrategia de adaptación más efectiva a corto plazo.<br/><br/>
+3. <b>Potencial de los sistemas agroforestales</b>: La reducción del 40% en percepción de vulnerabilidad entre usuarios de sombra demuestra que estas prácticas no solo mitigan el impacto climático, sino que generan beneficios ecológicos adicionales.<br/><br/>
+4. <b>Necesidad de políticas diferenciadas</b>: La heterogeneidad en los niveles de afectación por altitud y tamaño de finca exige intervenciones territoriales específicas, no soluciones uniformes.<br/><br/>
+5. <b>Implicaciones para la seguridad alimentaria</b>: La posible reducción del 20% en la producción para 2050 (IPCC, 2020) no solo afectaría la economía cafetera, sino que pondría en riesgo la seguridad alimentaria de las familias rurales que dependen del café como principal fuente de ingresos.""",
+        
+        'recomendaciones': f"""<b>Para el gobierno nacional</b><br/><br/>
+1. Crear un seguro paramétrico para caficultores basado en índices de estrés hídrico, financiado con recursos del presupuesto nacional.<br/><br/>
+2. Implementar un programa de reconversión productiva hacia variedades resistentes en zonas de alta vulnerabilidad.<br/><br/>
+<b>Para los gremios (FNC, Cenicafé)</b><br/><br/>
+3. Fortalecer la extensión rural con enfoque en sistemas agroforestales y manejo integral del agua, priorizando municipios con altos niveles de afectación.<br/><br/>
+<b>Para futuras investigaciones</b><br/><br/>
+4. Evaluar el impacto económico de las medidas de adaptación propuestas mediante análisis costo-beneficio a nivel de finca.<br/><br/>
+5. Desarrollar modelos predictivos de vulnerabilidad climática a escala municipal para orientar la inversión pública."""
     }
     return contenidos.get(tipo, "Contenido en desarrollo.")
 
@@ -245,9 +297,16 @@ def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, mo
             refs.extend([r.strip() for r in referencias_manuales.split('\n') if r.strip()])
         if referencias_ia:
             refs.extend(referencias_ia)
-        return list(dict.fromkeys(refs))[:10]
+        return list(dict.fromkeys(refs))[:12]
     else:
-        return referencias_ia if referencias_ia else ["Jaramillo, A. (2022). Impacto del cambio climático. Univ. Nacional.", "Federación Nacional de Cafeteros. (2024). Informe de Sostenibilidad.", "IPCC. (2020). Cambio climático y la tierra."]
+        return referencias_ia if referencias_ia else [
+            "IPCC. (2020). Cambio climático y la tierra. Grupo Intergubernamental de Expertos sobre el Cambio Climático.",
+            "Jaramillo, A. (2022). Impacto del cambio climático en la caficultura colombiana. Universidad Nacional de Colombia.",
+            "Echeverri, R. (2021). Adaptación al cambio climático en la zona cafetera. Cenicafé.",
+            "Federación Nacional de Cafeteros. (2024). Informe de sostenibilidad cafetera. FNC.",
+            "Adger, W. N. (2006). Vulnerability. Global Environmental Change, 16(3), 268-281.",
+            "IDEAM. (2025). Boletín climatológico mensual. Instituto de Hidrología, Meteorología y Estudios Ambientales."
+        ]
 
 # ========== GENERADOR DE PDF ==========
 class GeneradorPDF:
@@ -292,13 +351,13 @@ class GeneradorPDF:
             conclusiones = limpiar_texto(secciones_ia.get('conclusiones', ''))
             recomendaciones = limpiar_texto(secciones_ia.get('recomendaciones', ''))
         else:
-            introduccion = generar_contenido_local('introduccion', tema)
-            objetivos = generar_contenido_local('objetivos', tema)
-            marco_teorico = generar_contenido_local('marco_teorico', tema)
-            metodologia = generar_contenido_local('metodologia', tema)
-            desarrollo = generar_contenido_local('desarrollo', tema)
-            conclusiones = generar_contenido_local('conclusiones', tema)
-            recomendaciones = generar_contenido_local('recomendaciones', tema)
+            introduccion = generar_contenido_local_profesional('introduccion', tema)
+            objetivos = generar_contenido_local_profesional('objetivos', tema)
+            marco_teorico = generar_contenido_local_profesional('marco_teorico', tema)
+            metodologia = generar_contenido_local_profesional('metodologia', tema)
+            desarrollo = generar_contenido_local_profesional('desarrollo', tema)
+            conclusiones = generar_contenido_local_profesional('conclusiones', tema)
+            recomendaciones = generar_contenido_local_profesional('recomendaciones', tema)
         
         referencias = obtener_referencias(tema, referencias_ia, referencias_manuales, modo_referencias)
         
@@ -315,7 +374,7 @@ class GeneradorPDF:
         
         story = []
         
-        # PORTADA (corregida)
+        # PORTADA
         story.append(Spacer(1, 1.5*inch))
         story.append(Paragraph("INFORME ACADÉMICO", styles['TituloPortada']))
         story.append(Spacer(1, 0.2*inch))
@@ -355,11 +414,8 @@ class GeneradorPDF:
         story.append(Paragraph(metodologia, styles['TextoJustificado']))
         story.append(PageBreak())
         
-        # DESARROLLO (aquí va la tabla)
         story.append(Paragraph("5. DESARROLLO", styles['Titulo1']))
-        # Extraer tabla del desarrollo y formatearla
         tabla_html = convertir_tabla_texto_a_reportlab(desarrollo)
-        # Limpiar desarrollo para quitar la tabla en texto plano
         desarrollo_limpio = re.sub(r'\|.*\|.*\|.*\|\s*\|.*\|.*\|.*\|', '', desarrollo)
         desarrollo_limpio = re.sub(r'Tabla 1\. .*?\n', '', desarrollo_limpio)
         story.append(Paragraph(desarrollo_limpio, styles['TextoJustificado']))
