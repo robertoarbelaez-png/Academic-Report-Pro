@@ -92,7 +92,6 @@ def generar_informe_completo_con_ia(tema, info_usuario="", modo_referencias="aut
     
     print(f"🤖 Generando informe COMPLETO con Groq para: {tema[:50]}...")
     
-    # PROMPT DEFINITIVO 10/10
     prompt = f"""Tema: "{tema}"
 
 ⚠️ INSTRUCCIONES ESTRICTAS PARA UN INFORME DE NIVEL 10/10:
@@ -216,7 +215,6 @@ def extraer_referencias_desde_contenido(contenido):
     return referencias[:10]
 
 def generar_contenido_local_experto(tipo, tema):
-    """Contenido de respaldo de nivel experto"""
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
@@ -298,10 +296,10 @@ def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, mo
             "[2] Jaramillo, A. (2022). Impacto del cambio climático en la caficultura colombiana. Bogotá: Universidad Nacional de Colombia.",
             "[3] Echeverri, R. (2024). Sistemas agroforestales como estrategia de adaptación. Chinchiná: Cenicafé.",
             "[4] Federación Nacional de Cafeteros. (2025). Informe de sostenibilidad cafetera 2025. Bogotá: FNC.",
-            "[5] Schroth, G., et al. (2021). "Climate change and coffee production in Latin America." Agricultural Systems, 189, 103-118.",
+            "[5] Schroth, G., et al. (2021). Climate change and coffee production in Latin America. Agricultural Systems, 189, 103-118.",
             "[6] IDEAM. (2025). Boletín climatológico: tendencias y proyecciones. Bogotá: IDEAM.",
             "[7] MADR. (2024). Estadísticas del sector cafetero. Bogotá: Ministerio de Agricultura.",
-            "[8] Adger, W. N. (2006). "Vulnerability." Global Environmental Change, 16(3), 268-281."
+            "[8] Adger, W. N. (2006). Vulnerability. Global Environmental Change, 16(3), 268-281."
         ]
 
 # ========== GENERADOR DE PDF ==========
