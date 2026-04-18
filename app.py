@@ -5,14 +5,11 @@ from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 import os
 import uuid
 from datetime import datetime
 import re
 import requests
-import time
 import html
 
 app = Flask(__name__)
@@ -23,7 +20,7 @@ GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 print("=" * 50)
-print("🚀 INICIANDO APLICACIÓN (VERSIÓN DEFINITIVA 10/10)")
+print("🚀 INICIANDO APLICACIÓN (VERSIÓN CORREGIDA)")
 print(f"🔑 Groq API Key cargada: {'SÍ ✅' if GROQ_API_KEY else 'NO ❌'}")
 print("=" * 50)
 
@@ -60,236 +57,86 @@ def limpiar_texto(texto):
     if not texto:
         return ""
     
-    # Decodificar secuencias de escape Unicode (como \xf3 -> ó)
     try:
-        # Convertir bytes a string con codificación correcta
         if isinstance(texto, bytes):
             texto = texto.decode('utf-8')
-        # Escapar caracteres HTML
         texto = html.escape(texto)
     except:
         pass
     
     # Reemplazar caracteres problemáticos
     reemplazos = {
-        '\xa0': ' ',  # espacio no rompible
-        '\xad': '-',  # guión suave
-        '\u2013': '-',  # guión largo
-        '\u2014': '-',  # guión más largo
-        '\u2018': "'",  # comilla simple izquierda
-        '\u2019': "'",  # comilla simple derecha
-        '\u201c': '"',  # comilla doble izquierda
-        '\u201d': '"',  # comilla doble derecha
-        '\u2026': '...',  # puntos suspensivos
+        '\xa0': ' ', '\xad': '-', '\u2013': '-', '\u2014': '-',
+        '\u2018': "'", '\u2019': "'", '\u201c': '"', '\u201d': '"', '\u2026': '...',
+        '$<br/>': '', '<br/>2': '',  # Limpiar caracteres extraños de conclusiones
     }
     for viejo, nuevo in reemplazos.items():
         texto = texto.replace(viejo, nuevo)
     
-    # Reemplazar múltiples saltos de línea
     texto = re.sub(r'\n{3,}', '<br/><br/>', texto)
     
-    # Corregir títulos y secciones
+    # CORRECCIONES CRÍTICAS
     texto = texto.replace('INFORMÉ', 'INFORME')
     texto = texto.replace('Conclusions', 'CONCLUSIONES')
     texto = texto.replace('CONCLUSIONS', 'CONCLUSIONES')
     
     return texto
 
-def convertir_tabla_texto_a_reportlab(texto):
-    if not texto:
-        return None
-    lineas = texto.split('<br/>')
-    datos_tabla = []
-    for linea in lineas:
-        if '|' in linea and '---' not in linea:
-            celdas = [c.strip() for c in linea.split('|') if c.strip()]
-            if len(celdas) >= 2:
-                datos_tabla.append(celdas)
-    if len(datos_tabla) >= 2:
-        tabla = Table(datos_tabla, colWidths=[2*inch, 1.5*inch, 1.5*inch])
-        tabla.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a365d')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        return tabla
-    return None
-
-def generar_informe_completo_con_ia(tema, info_usuario="", modo_referencias="auto", referencias_manuales=""):
-    if not GROQ_API_KEY:
-        print("❌ No hay API key de Groq configurada")
-        return None, None
+def generar_contenido_local_generico(tipo, tema):
+    """Contenido de respaldo GENÉRICO (no específico de ningún tema anterior)"""
     
-    print(f"🤖 Generando informe COMPLETO con Groq para: {tema[:50]}...")
-    
-    prompt = f"""Tema: "{tema}"
-
-⚠️ INSTRUCCIONES ESTRICTAS PARA UN INFORME PROFESIONAL:
-
-1. **PENSAMIENTO CRÍTICO**: No solo describas los resultados. Cuestiona: ¿Por qué ocurren? ¿Qué implicaciones tienen?
-2. **CONCLUSIONES**: NO deben repetir los resultados. Deben REFLEXIONAR y mostrar el IMPACTO.
-3. **DESARROLLO**: Mínimo 800 palabras. Incluye resultados, comparación con estudios previos y análisis crítico.
-4. **MARCO TEÓRICO**: Mínimo 600 palabras con citas de autores reales.
-5. **REFERENCIAS**: Mínimo 6-8 referencias específicas sobre el tema.
-
-**ESTRUCTURA OBLIGATORIA:**
-
-**INTRODUCCIÓN**
-**OBJETIVOS** (1 general + 4 específicos)
-**MARCO TEÓRICO**
-**METODOLOGÍA**
-**DESARROLLO**
-**CONCLUSIONES** (5 puntos)
-**RECOMENDACIONES** (3-4 puntos)"""
-    
-    headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
-    data = {
-        "model": "llama-3.3-70b-versatile",
-        "messages": [
-            {"role": "system", "content": "Eres un asistente académico profesional. Generas informes universitarios completos en español. Usas CONCLUSIONES (nunca Conclusions)."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.7,
-        "max_tokens": 8000
-    }
-    
-    try:
-        print(f"📡 Enviando petición a Groq...")
-        response = requests.post(GROQ_URL, headers=headers, json=data, timeout=180)
-        print(f"📡 Respuesta código: {response.status_code}")
-        
-        if response.status_code == 200:
-            resultado = response.json()
-            contenido = resultado['choices'][0]['message']['content']
-            print(f"✅ Groq generó {len(contenido)} caracteres")
-            contenido = limpiar_texto(contenido)
-            
-            secciones = {
-                'introduccion': extraer_seccion_mejorada(contenido, 'INTRODUCCIÓN'),
-                'objetivos': extraer_seccion_mejorada(contenido, 'OBJETIVOS'),
-                'marco_teorico': extraer_seccion_mejorada(contenido, 'MARCO TEÓRICO'),
-                'metodologia': extraer_seccion_mejorada(contenido, 'METODOLOGÍA'),
-                'desarrollo': extraer_seccion_mejorada(contenido, 'DESARROLLO'),
-                'conclusiones': extraer_seccion_mejorada(contenido, 'CONCLUSIONES'),
-                'recomendaciones': extraer_seccion_mejorada(contenido, 'RECOMENDACIONES')
-            }
-            
-            referencias_extraidas = extraer_referencias_desde_contenido(contenido)
-            
-            for key in secciones:
-                if not secciones[key] or len(secciones[key]) < 100:
-                    print(f"⚠️ Sección {key} incompleta, usando contenido local")
-                    secciones[key] = generar_contenido_local_experto(key, tema)
-            
-            return secciones, referencias_extraidas
-        else:
-            print(f"❌ Error HTTP {response.status_code}")
-            return None, None
-    except Exception as e:
-        print(f"❌ Error conectando con Groq: {str(e)}")
-        return None, None
-
-def extraer_seccion_mejorada(contenido, nombre):
-    patrones = [
-        rf'\*\*{nombre}\*\*:?(.*?)(?=\*\*[A-ZÁÉÍÓÚ]|$)',
-        rf'{nombre}:?(.*?)(?=\n\n\*\*[A-Z]|\n\n[A-ZÁÉÍÓÚ]|$)',
-        rf'{nombre}\s*\n(.*?)(?=\n\n\*\*[A-Z]|\n\n[A-ZÁÉÍÓÚ]|$)'
-    ]
-    for patron in patrones:
-        match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
-        if match:
-            texto = match.group(1).strip()
-            texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
-            texto = texto.replace('\n', '<br/>')
-            if len(texto) > 6000:
-                texto = texto[:6000] + "..."
-            return texto
-    return ""
-
-def extraer_referencias_desde_contenido(contenido):
-    referencias = []
-    patrones_refs = [
-        r'##\s*Referencias?\s*\n(.*?)(?=\n##|$)',
-        r'\*\*Referencias?\*\*:?(.*?)(?=\*\*[A-Z]|$)'
-    ]
-    for patron in patrones_refs:
-        match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
-        if match:
-            texto_refs = match.group(1)
-            lineas = texto_refs.split('\n')
-            for linea in lineas:
-                linea = linea.strip()
-                if linea and len(linea) > 10:
-                    referencias.append(linea)
-            break
-    return referencias[:8]
-
-def generar_contenido_local_experto(tipo, tema):
+    # Usar el tema del usuario, no temas predefinidos
     tema_limpio = tema if tema else "el tema de investigación"
     
     contenidos = {
-        'introduccion': f"""El presente informe aborda el estudio de {tema_limpio}, una temática de gran relevancia en el contexto actual. El cambio climático representa uno de los desafíos más significativos del siglo XXI, y sus efectos sobre la agricultura son particularmente severos.<br/><br/>
-Colombia, siendo uno de los principales productores de café a nivel mundial, enfrenta una amenaza existencial para su caficultura. Este estudio analiza el impacto del cambio climático en la productividad del café, identificando las zonas más vulnerables y proponiendo estrategias de adaptación.<br/><br/>
-La pregunta central que guía esta investigación es: ¿Cuál es el impacto cuantitativo del cambio climático en la productividad del café en Colombia y qué estrategias de adaptación son más efectivas?""",
+        'introduccion': f"""El presente informe académico aborda el estudio de {tema_limpio}, una temática de creciente relevancia en el contexto actual. Este análisis busca comprender los principales factores que inciden en esta área de estudio.<br/><br/>
+La investigación se justifica por la necesidad de generar evidencia empírica que contribuya al conocimiento existente y sirva como base para futuros estudios.<br/><br/>
+Las preguntas que guían esta investigación son: ¿Cuáles son los principales aspectos relacionados con {tema_limpio}? ¿Qué implicaciones tienen estos hallazgos? ¿Qué estrategias pueden implementarse para abordar los desafíos identificados?""",
         
-        'objetivos': f"""<b>Objetivo General</b><br/><br/>Analizar el impacto del cambio climático en la productividad del café en Colombia.<br/><br/><br/>
+        'objetivos': f"""<b>Objetivo General</b><br/><br/>Analizar los principales aspectos relacionados con {tema_limpio} en el contexto actual.<br/><br/><br/>
 <b>Objetivos Específicos</b><br/><br/>
-1. Cuantificar la pérdida de cosecha asociada al estrés hídrico en las zonas cafeteras.<br/><br/>
-2. Identificar las regiones cafeteras con mayor vulnerabilidad climática.<br/><br/>
-3. Evaluar la efectividad de los sistemas agroforestales como medida de adaptación.<br/><br/>
-4. Proponer estrategias de adaptación diferenciadas por nivel de vulnerabilidad.""",
+1. Identificar los factores clave asociados a {tema_limpio}.<br/><br/>
+2. Describir las principales características y tendencias actuales.<br/><br/>
+3. Analizar las implicaciones prácticas y teóricas de los hallazgos.<br/><br/>
+4. Proponer recomendaciones basadas en el análisis realizado.""",
         
         'marco_teorico': f"""<b>Conceptos clave</b><br/><br/>
-El cambio climático se define como la variación significativa de los patrones climáticos durante un período prolongado (IPCC, 2023). Para la agricultura, este fenómeno implica alteraciones en temperatura, precipitación y frecuencia de eventos extremos.<br/><br/>
-<b>Teorías relevantes</b><br/><br/>
-La teoría de la vulnerabilidad climática establece que la susceptibilidad de un sistema depende de su exposición, sensibilidad y capacidad adaptativa. En el contexto cafetero, diversos autores han documentado el impacto del aumento de temperatura en la productividad.<br/><br/>
-<b>Autores clave</b><br/><br/>
-• IPCC (2023): Cambio climático global y sus impactos<br/>
-• Jaramillo (2022): Impacto en café colombiano<br/>
-• Echeverri (2024): Adaptación mediante sistemas agroforestales<br/>
-• Federación Nacional de Cafeteros (2025): Datos productivos<br/>
-• Cenicafé (2024): Desarrollo de variedades resistentes""",
+Para comprender adecuadamente {tema_limpio}, es necesario definir los conceptos fundamentales que lo sustentan. Diversos autores han contribuido al desarrollo teórico de esta área.<br/><br/>
+<b>Bases teóricas</b><br/><br/>
+Las teorías existentes proporcionan un marco conceptual sólido para el análisis de {tema_limpio}. La literatura especializada ofrece múltiples perspectivas que enriquecen la comprensión del fenómeno.<br/><br/>
+<b>Estado del arte</b><br/><br/>
+Investigaciones recientes han profundizado en aspectos específicos de {tema_limpio}, identificando tendencias y áreas de oportunidad para futuros estudios.""",
         
-        'metodologia': f"""<b>Enfoque</b><br/><br/>Estudio mixto con componente cuantitativo (encuestas) y cualitativo (entrevistas).<br/><br/>
-<b>Población y muestra</b><br/><br/>Se encuestó a 150 caficultores en los departamentos de Caldas, Quindío y Risaralda durante febrero-marzo de 2025.<br/><br/>
-<b>Instrumentos</b><br/><br/>Cuestionario estructurado de 35 preguntas, entrevistas semiestructuradas y análisis de datos climáticos.<br/><br/>
-<b>Procedimiento</b><br/><br/>Fase 1: Diseño y validación de instrumentos.<br/>Fase 2: Trabajo de campo y recolección de datos.<br/>Fase 3: Análisis estadístico e interpretación de resultados.""",
+        'metodologia': f"""<b>Enfoque</b><br/><br/>La investigación adopta un enfoque mixto, combinando elementos cualitativos y cuantitativos.<br/><br/>
+<b>Población y muestra</b><br/><br/>La población de estudio está conformada por actores relevantes en el área de {tema_limpio}. Se seleccionó una muestra representativa mediante técnicas de muestreo apropiadas.<br/><br/>
+<b>Instrumentos</b><br/><br/>Se utilizaron cuestionarios estructurados, entrevistas semiestructuradas y revisión documental como principales instrumentos de recolección de datos.<br/><br/>
+<b>Procedimiento</b><br/><br/>El estudio se desarrolló en tres fases: diseño y validación de instrumentos, recolección de datos, y análisis e interpretación de resultados.""",
         
         'desarrollo': f"""<b>Resultados obtenidos</b><br/><br/>
-El 75% de los productores reportó afectaciones por sequía en los últimos cinco años. Esta cifra es particularmente alarmante en productores de pequeña escala (82%) versus grandes (58%), revelando una brecha significativa.<br/><br/>
-<b>Tabla 1. Resultados de la investigación</b><br/>
-| Indicador | Porcentaje | Fuente |
-|-----------|------------|--------|
-| Productores afectados por sequía | 75% | Encuesta propia (2025) |
-| Reducción de producción estimada | 15% | MADR (2024) |
-| Adopción de sistemas agroforestales | 32% | Encuesta propia (2025) |
-| Percepción de vulnerabilidad alta | 68% | Encuesta propia (2025) |<br/><br/>
-<b>Análisis crítico</b><br/><br/>
-La falta de acceso al riego tecnificado emerge como el factor más determinante de la vulnerabilidad. Los productores con sistemas de riego por goteo reportaron pérdidas 30% menores que los que dependen exclusivamente de la lluvia.<br/><br/>
-<b>Implicaciones</b><br/><br/>
-Las políticas de adaptación al cambio climático deben ser territorialmente diferenciadas. Las zonas de baja altitud requieren intervención prioritaria, mientras que las zonas de alta altitud podrían beneficiarse de sistemas agroforestales.""",
+Los resultados del análisis muestran tendencias significativas relacionadas con {tema_limpio}. Los datos recopilados permiten identificar patrones y relaciones relevantes.<br/><br/>
+<b>Análisis de resultados</b><br/><br/>
+Los hallazgos indican que existen múltiples factores que inciden en {tema_limpio}. Se observan variaciones según el contexto y las condiciones específicas de cada caso.<br/><br/>
+<b>Discusión</b><br/><br/>
+Los resultados se alinean parcialmente con lo reportado en la literatura especializada, confirmando hallazgos previos y aportando nuevas perspectivas al conocimiento existente.""",
         
-        'conclusiones': f"""1. El cambio climático afecta significativamente la productividad del café en Colombia, con una reducción estimada del 15% en la última década.<br/><br/>
-2. Existe una brecha significativa entre pequeños y grandes productores, evidenciando que el cambio climático actúa como un multiplicador de desigualdades.<br/><br/>
-3. Los sistemas agroforestales reducen la vulnerabilidad en un 40%, confirmando su potencial como estrategia de adaptación.<br/><br/>
-4. La falta de acceso a riego tecnificado es el factor más determinante de la vulnerabilidad, planteando cuestiones de justicia distributiva.<br/><br/>
-5. Se requiere una política de adaptación territorialmente diferenciada, con intervenciones específicas según altitud y escala productiva.""",
+        'conclusiones': f"""1. El análisis realizado permite identificar los principales aspectos relacionados con {tema_limpio}.<br/><br/>
+2. Los hallazgos confirman la importancia de abordar este tema desde una perspectiva integral.<br/><br/>
+3. Se requiere mayor investigación para profundizar en aspectos específicos no cubiertos en este estudio.<br/><br/>
+4. Las recomendaciones propuestas constituyen una base para futuras intervenciones.<br/><br/>
+5. Este estudio contribuye al conocimiento existente y abre líneas de investigación adicionales.""",
         
-        'recomendaciones': f"""<b>Para el gobierno nacional</b><br/><br/>
-1. Implementar un seguro paramétrico para caficultores basado en índices de estrés hídrico.<br/><br/>
-2. Lanzar un programa de reconversión productiva hacia variedades resistentes.<br/><br/>
-<b>Para los gremios (FNC, Cenicafé)</b><br/><br/>
-3. Fortalecer la extensión rural con enfoque en sistemas agroforestales.<br/><br/>
-4. Crear un observatorio de vulnerabilidad climática de acceso público.<br/><br/>
-<b>Para futuras investigaciones</b><br/><br/>
-5. Evaluar el impacto económico de las medidas de adaptación propuestas."""
+        'recomendaciones': f"""<b>Para la institución</b><br/><br/>
+1. Fortalecer las líneas de investigación relacionadas con {tema_limpio}.<br/><br/>
+<b>Para los profesionales</b><br/><br/>
+2. Aplicar los hallazgos en contextos prácticos relevantes.<br/><br/>
+<b>Para futuros estudios</b><br/><br/>
+3. Ampliar la muestra y el alcance geográfico para generalizar los resultados."""
     }
     return contenidos.get(tipo, "Contenido en desarrollo.")
 
-def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, modo_referencias="auto"):
+def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, modo_referencias="auto", norma="apa7"):
+    """Obtiene referencias según el modo seleccionado y la norma"""
+    
     if modo_referencias == "manual" and referencias_manuales:
         refs = [r.strip() for r in referencias_manuales.split('\n') if r.strip()]
         return refs if refs else ["Referencia no especificada"]
@@ -301,15 +148,15 @@ def obtener_referencias(tema, referencias_ia=None, referencias_manuales=None, mo
             refs.extend(referencias_ia)
         return list(dict.fromkeys(refs))[:10]
     else:
-        return referencias_ia if referencias_ia else [
-            "IPCC. (2023). Climate Change 2023: Synthesis Report. Geneva: IPCC.",
-            "Jaramillo, A. (2022). Impacto del cambio climático en la caficultura colombiana. Bogotá: UNAL.",
-            "Echeverri, R. (2024). Sistemas agroforestales como estrategia de adaptación. Chinchiná: Cenicafé.",
-            "Federación Nacional de Cafeteros. (2025). Informe de sostenibilidad cafetera. Bogotá: FNC.",
-            "Schroth, G., et al. (2021). Climate change and coffee production in Latin America. Agricultural Systems, 189.",
-            "IDEAM. (2025). Boletín climatológico: tendencias y proyecciones. Bogotá: IDEAM.",
-            "MADR. (2024). Estadísticas del sector cafetero. Bogotá: Ministerio de Agricultura.",
-            "Adger, W. N. (2006). Vulnerability. Global Environmental Change, 16(3), 268-281."
+        if referencias_ia:
+            return referencias_ia[:8]
+        
+        # Referencias genéricas de respaldo
+        return [
+            "Hernández Sampieri, R. (2021). Metodología de la Investigación. McGraw-Hill.",
+            "Bisquerra Alzina, R. (2016). Metodología de la investigación educativa. La Muralla.",
+            "Sabino, C. A. (2014). El proceso de investigación. Episteme.",
+            "Taylor, S. J., & Bogdan, R. (2016). Introducción a los métodos cualitativos. Paidós."
         ]
 
 # ========== GENERADOR DE PDF ==========
@@ -346,7 +193,8 @@ class GeneradorPDF:
         config_norma = NORMAS_CONFIG.get(norma, NORMAS_CONFIG['apa7'])
         print(f"📏 Aplicando norma: {config_norma['nombre']}")
         
-        if secciones_ia:
+        # Usar secciones de IA si existen, si no usar contenido genérico
+        if secciones_ia and isinstance(secciones_ia, dict):
             introduccion = limpiar_texto(secciones_ia.get('introduccion', ''))
             objetivos = limpiar_texto(secciones_ia.get('objetivos', ''))
             marco_teorico = limpiar_texto(secciones_ia.get('marco_teorico', ''))
@@ -354,16 +202,19 @@ class GeneradorPDF:
             desarrollo = limpiar_texto(secciones_ia.get('desarrollo', ''))
             conclusiones = limpiar_texto(secciones_ia.get('conclusiones', ''))
             recomendaciones = limpiar_texto(secciones_ia.get('recomendaciones', ''))
+            print("✅ Usando secciones generadas por IA")
         else:
-            introduccion = generar_contenido_local_experto('introduccion', tema)
-            objetivos = generar_contenido_local_experto('objetivos', tema)
-            marco_teorico = generar_contenido_local_experto('marco_teorico', tema)
-            metodologia = generar_contenido_local_experto('metodologia', tema)
-            desarrollo = generar_contenido_local_experto('desarrollo', tema)
-            conclusiones = generar_contenido_local_experto('conclusiones', tema)
-            recomendaciones = generar_contenido_local_experto('recomendaciones', tema)
+            # Usar contenido genérico basado en el tema del usuario
+            introduccion = generar_contenido_local_generico('introduccion', tema)
+            objetivos = generar_contenido_local_generico('objetivos', tema)
+            marco_teorico = generar_contenido_local_generico('marco_teorico', tema)
+            metodologia = generar_contenido_local_generico('metodologia', tema)
+            desarrollo = generar_contenido_local_generico('desarrollo', tema)
+            conclusiones = generar_contenido_local_generico('conclusiones', tema)
+            recomendaciones = generar_contenido_local_generico('recomendaciones', tema)
+            print("⚠️ Usando contenido local genérico")
         
-        referencias = obtener_referencias(tema, referencias_ia, referencias_manuales, modo_referencias)
+        referencias = obtener_referencias(tema, referencias_ia, referencias_manuales, modo_referencias, norma)
         
         filename = f"informe_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:4]}.pdf"
         filepath = os.path.join('informes_generados', filename)
@@ -378,7 +229,7 @@ class GeneradorPDF:
         
         story = []
         
-        # PORTADA
+        # PORTADA (corregida: INFORME sin tilde)
         story.append(Spacer(1, 1.5*inch))
         story.append(Paragraph("INFORME ACADÉMICO", styles['TituloPortada']))
         story.append(Spacer(1, 0.2*inch))
@@ -419,15 +270,7 @@ class GeneradorPDF:
         story.append(PageBreak())
         
         story.append(Paragraph("5. DESARROLLO", styles['Titulo1']))
-        tabla_html = convertir_tabla_texto_a_reportlab(desarrollo)
-        desarrollo_limpio = re.sub(r'\|.*\|.*\|.*\|\s*\|.*\|.*\|.*\|', '', desarrollo)
-        desarrollo_limpio = re.sub(r'Tabla 1\..*?\n', '', desarrollo_limpio)
-        story.append(Paragraph(desarrollo_limpio, styles['TextoJustificado']))
-        if tabla_html:
-            story.append(Spacer(1, 0.2*inch))
-            story.append(tabla_html)
-            story.append(Spacer(1, 0.2*inch))
-            story.append(Paragraph("<b>Tabla 1.</b> Resultados de la investigación.", styles['TextoJustificado']))
+        story.append(Paragraph(desarrollo, styles['TextoJustificado']))
         story.append(PageBreak())
         
         story.append(Paragraph("6. CONCLUSIONES", styles['Titulo1']))
@@ -472,7 +315,67 @@ def generar():
         
         opciones = {'incluir_recomendaciones': True}
         
-        secciones_ia, referencias_ia = generar_informe_completo_con_ia(tema, texto_auto, modo_referencias, referencias_manuales)
+        secciones_ia = None
+        referencias_ia = None
+        
+        # Solo llamar a IA si hay API key y el tema es específico
+        if GROQ_API_KEY and tema:
+            try:
+                # Prompt simplificado para generar informe
+                prompt = f"""Genera un informe académico completo sobre: "{tema}"
+
+Escribe estas secciones:
+
+**INTRODUCCIÓN** (Contexto, problema, justificación)
+
+**OBJETIVOS**
+**Objetivo General:** (1)
+**Objetivos Específicos:** (4)
+
+**MARCO TEÓRICO** (Conceptos clave, autores, citas)
+
+**METODOLOGÍA** (Enfoque, muestra, instrumentos, procedimiento)
+
+**DESARROLLO** (Resultados, análisis, discusión)
+
+**CONCLUSIONES** (5 puntos)
+
+**RECOMENDACIONES** (3-4 puntos)
+
+Usa español. Usa CONCLUSIONES (nunca Conclusions)."""
+                
+                headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+                data = {
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "max_tokens": 6000
+                }
+                response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data, timeout=120)
+                if response.status_code == 200:
+                    resultado = response.json()
+                    contenido = resultado['choices'][0]['message']['content']
+                    contenido = limpiar_texto(contenido)
+                    
+                    # Extraer secciones básicas
+                    secciones_ia = {
+                        'introduccion': re.search(r'\*\*INTRODUCCIÓN\*\*:?(.*?)(?=\*\*OBJETIVOS|\*\*MARCO|\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*INTRODUCCIÓN\*\*:?(.*?)(?=\*\*OBJETIVOS|\*\*MARCO|\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE) else None,
+                        'objetivos': re.search(r'\*\*OBJETIVOS\*\*:?(.*?)(?=\*\*MARCO|\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*OBJETIVOS\*\*:?(.*?)(?=\*\*MARCO|\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE) else None,
+                        'marco_teorico': re.search(r'\*\*MARCO TEÓRICO\*\*:?(.*?)(?=\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*MARCO TEÓRICO\*\*:?(.*?)(?=\*\*METODOLOGÍA|\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE) else None,
+                        'metodologia': re.search(r'\*\*METODOLOGÍA\*\*:?(.*?)(?=\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*METODOLOGÍA\*\*:?(.*?)(?=\*\*DESARROLLO|\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE) else None,
+                        'desarrollo': re.search(r'\*\*DESARROLLO\*\*:?(.*?)(?=\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*DESARROLLO\*\*:?(.*?)(?=\*\*CONCLUSIONES|\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE) else None,
+                        'conclusiones': re.search(r'\*\*CONCLUSIONES\*\*:?(.*?)(?=\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*CONCLUSIONES\*\*:?(.*?)(?=\*\*RECOMENDACIONES|$)', contenido, re.DOTALL | re.IGNORECASE) else None,
+                        'recomendaciones': re.search(r'\*\*RECOMENDACIONES\*\*:?(.*?)$', contenido, re.DOTALL | re.IGNORECASE).group(1) if re.search(r'\*\*RECOMENDACIONES\*\*:?(.*?)$', contenido, re.DOTALL | re.IGNORECASE) else None
+                    }
+                    # Limpiar None values
+                    for key in secciones_ia:
+                        if secciones_ia[key]:
+                            secciones_ia[key] = secciones_ia[key].strip().replace('\n', '<br/>')
+                            secciones_ia[key] = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', secciones_ia[key])
+                        else:
+                            secciones_ia[key] = generar_contenido_local_generico(key, tema)
+            except Exception as e:
+                print(f"Error con IA: {e}")
+                secciones_ia = None
         
         datos_usuario = {
             'nombre': datos.get('nombre', ''),
