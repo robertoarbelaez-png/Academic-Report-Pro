@@ -4,48 +4,55 @@
 <meta charset="UTF-8">
 <title>Academic Report Pro</title>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
-<div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-xl">
+<div class="bg-white p-8 rounded-xl shadow w-full max-w-xl">
 
-<h1 class="text-3xl font-bold text-center mb-6">📄 Academic Report Pro</h1>
+<h1 class="text-2xl font-bold mb-4 text-center">Academic Report Pro</h1>
+
+<select id="modo" class="w-full p-3 border rounded mb-3">
+<option value="rapido">⚡ Rápido</option>
+<option value="auto" selected>🤖 Automático</option>
+<option value="manual">🛠️ Manual</option>
+</select>
 
 <input id="tema" placeholder="Tema" class="w-full p-3 border rounded mb-3">
 <input id="nombre" placeholder="Nombre" class="w-full p-3 border rounded mb-3">
 
-<button onclick="generar()" class="w-full bg-blue-600 text-white py-3 rounded">
-Generar Informe
-</button>
-
-<div id="preview" class="mt-6 hidden">
-<h2 class="font-bold mb-2">Vista previa</h2>
-<div id="contenidoPreview" class="bg-gray-100 p-3 rounded text-sm"></div>
-
-<button id="descargarBtn" class="mt-3 w-full bg-green-600 text-white py-3 rounded">
-Descargar PDF
-</button>
+<div id="manualFields" class="hidden space-y-2">
+<textarea id="intro" placeholder="Introducción" class="w-full p-2 border rounded"></textarea>
+<textarea id="obj" placeholder="Objetivos" class="w-full p-2 border rounded"></textarea>
+<textarea id="des" placeholder="Desarrollo" class="w-full p-2 border rounded"></textarea>
 </div>
+
+<button onclick="generar()" class="w-full bg-blue-600 text-white py-3 rounded">
+Generar
+</button>
 
 </div>
 
 <script>
-let url = "";
+document.getElementById('modo').onchange = function(){
+    document.getElementById('manualFields').classList.toggle('hidden', this.value !== 'manual');
+};
 
 async function generar(){
-    let tema = document.getElementById('tema').value;
-
     Swal.fire({title:"Generando...", didOpen:()=>Swal.showLoading()});
 
     const res = await fetch('/generar',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-            tema: tema,
-            nombre: document.getElementById('nombre').value
+            modo: document.getElementById('modo').value,
+            tema: document.getElementById('tema').value,
+            nombre: document.getElementById('nombre').value,
+            intro: document.getElementById('intro').value,
+            obj: document.getElementById('obj').value,
+            des: document.getElementById('des').value
         })
     });
 
@@ -53,17 +60,8 @@ async function generar(){
     Swal.close();
 
     if(data.success){
-        url = data.download_url;
-
-        document.getElementById('contenidoPreview').innerHTML =
-            "<p>Informe generado correctamente</p>";
-
-        document.getElementById('preview').classList.remove('hidden');
+        window.open(data.download_url);
     }
-}
-
-document.getElementById('descargarBtn').onclick = ()=>{
-    window.open(url);
 }
 </script>
 
