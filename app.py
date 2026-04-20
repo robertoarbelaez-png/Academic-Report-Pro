@@ -8,7 +8,6 @@ from reportlab.lib.pagesizes import letter
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
 
-# API
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -78,7 +77,7 @@ Todo en español, bien desarrollado.
         print("Error IA:", e)
         return None
 
-# -------- SEGURIDAD IA --------
+# -------- SEGURIDAD --------
 def asegurar_secciones(secciones, tema):
     fallback = contenido_local(tema)
 
@@ -88,13 +87,13 @@ def asegurar_secciones(secciones, tema):
 
     return secciones
 
-# -------- LIMPIAR TEXTO --------
+# -------- LIMPIAR --------
 def limpiar(texto):
     texto = html.escape(texto)
     texto = texto.replace("\n", "<br/>")
     return texto
 
-# -------- PDF --------
+# -------- PDF PRO --------
 def generar_pdf(datos, secciones):
     filename = f"informe_{uuid.uuid4().hex[:6]}.pdf"
     path = os.path.join('informes_generados', filename)
@@ -111,12 +110,25 @@ def generar_pdf(datos, secciones):
     story.append(Paragraph(f"Autor: {datos['nombre']}", styles['Normal']))
     story.append(PageBreak())
 
-    # SECCIONES
-    for titulo, contenido in secciones.items():
-        story.append(Paragraph(titulo.upper(), styles['Heading2']))
-        story.append(Spacer(1, 10))
+    # SECCIONES NUMERADAS
+    titulos = {
+        "introduccion": "1. INTRODUCCIÓN",
+        "objetivos": "2. OBJETIVOS",
+        "marco_teorico": "3. MARCO TEÓRICO",
+        "metodologia": "4. METODOLOGÍA",
+        "desarrollo": "5. DESARROLLO",
+        "conclusiones": "6. CONCLUSIONES",
+        "recomendaciones": "7. RECOMENDACIONES",
+        "referencias": "8. REFERENCIAS"
+    }
+
+    for key, titulo in titulos.items():
+        story.append(Paragraph(titulo, styles['Heading1']))
+        story.append(Spacer(1, 12))
+
+        contenido = secciones.get(key, "")
         story.append(Paragraph(limpiar(contenido), styles['Normal']))
-        story.append(PageBreak())
+        story.append(Spacer(1, 20))
 
     doc.build(story)
     return filename
