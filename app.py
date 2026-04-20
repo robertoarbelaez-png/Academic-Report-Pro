@@ -1,9 +1,14 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import os, uuid, requests, json, html
 from werkzeug.utils import secure_filename
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
-from reportlab.lib.styles import getSampleStyleSheet
+
+from reportlab.platypus import (
+    Paragraph, Spacer, PageBreak,
+    BaseDocTemplate, Frame, PageTemplate, TableOfContents
+)
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import mm
 
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
@@ -14,14 +19,14 @@ GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 # -------- CONTENIDO LOCAL --------
 def contenido_local(tema):
     return {
-        "introduccion": f"Este informe analiza {tema}. Se abordan sus aspectos principales.",
-        "objetivos": "Analizar el tema y comprender su impacto en el contexto actual.",
-        "marco_teorico": f"El marco teórico de {tema} se fundamenta en investigaciones previas.",
-        "metodologia": "Se emplea un enfoque descriptivo basado en revisión documental.",
-        "desarrollo": f"Se analizan los principales aspectos relacionados con {tema}.",
-        "conclusiones": "Se concluye que el tema es relevante y requiere mayor estudio.",
-        "recomendaciones": "Se recomienda profundizar en investigaciones futuras.",
-        "referencias": "Fuentes académicas consultadas."
+        "introduccion": f"Este informe analiza {tema}.",
+        "objetivos": "Analizar el tema.",
+        "marco_teorico": "Bases teóricas.",
+        "metodologia": "Enfoque descriptivo.",
+        "desarrollo": f"Análisis de {tema}.",
+        "conclusiones": "Se concluye que es relevante.",
+        "recomendaciones": "Se recomienda seguir investigando.",
+        "referencias": "Fuentes académicas."
     }
 
 # -------- IA --------
@@ -33,7 +38,7 @@ def generar_ia(tema):
         prompt = f"""
 Genera un informe académico sobre: "{tema}"
 
-Responde SOLO en JSON con esta estructura:
+Responde SOLO en JSON:
 
 {{
   "introduccion": "",
@@ -45,19 +50,13 @@ Responde SOLO en JSON con esta estructura:
   "recomendaciones": "",
   "referencias": ""
 }}
-
-Todo en español, bien desarrollado.
 """
 
-        headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
 
         data = {
             "model": "llama-3.3-70b-versatile",
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.7,
             "max_tokens": 4000
         }
 
@@ -73,44 +72,74 @@ Todo en español, bien desarrollado.
 
         return json.loads(texto)
 
-    except Exception as e:
-        print("Error IA:", e)
+    except:
         return None
 
 # -------- SEGURIDAD --------
 def asegurar_secciones(secciones, tema):
     fallback = contenido_local(tema)
-
     for key in fallback:
         if key not in secciones or not str(secciones[key]).strip():
             secciones[key] = fallback[key]
-
     return secciones
 
 # -------- LIMPIAR --------
 def limpiar(texto):
     texto = html.escape(texto)
-    texto = texto.replace("\n", "<br/>")
-    return texto
+    return texto.replace("\n", "<br/>")
+
+# -------- DOC TEMPLATE --------
+class MyDocTemplate(BaseDocTemplate):
+    def __init__(self, filename):
+        super().__init__(filename)
+        frame = Frame(self.leftMargin, self.bottomMargin, self.width, self.height)
+        template = PageTemplate(id='normal', frames=frame, onPage=self.add_page_number)
+        self.addPageTemplates([template])
+
+    def afterFlowable(self, flowable):
+        if isinstance(flowable, Paragraph):
+            if flowable.style.name == 'Heading1':
+                self.notify('TOCEntry', (0, flowable.getPlainText(), self.page))
+
+    def add_page_number(self, canvas, doc):
+        canvas.drawRightString(200*mm, 20, str(doc.page))
 
 # -------- PDF PRO --------
 def generar_pdf(datos, secciones):
     filename = f"informe_{uuid.uuid4().hex[:6]}.pdf"
     path = os.path.join('informes_generados', filename)
 
-    doc = SimpleDocTemplate(path, pagesize=letter)
+    doc = MyDocTemplate(path)
     styles = getSampleStyleSheet()
 
     story = []
 
     # PORTADA
+    story.append(Spacer(1, 200))
     story.append(Paragraph("INFORME ACADÉMICO", styles['Title']))
-    story.append(Spacer(1, 20))
-    story.append(Paragraph(f"Tema: {datos['tema']}", styles['Normal']))
+    story.append(Spacer(1, 40))
+    story.append(Paragraph(datos['tema'], styles['Heading1']))
+    story.append(Spacer(1, 40))
     story.append(Paragraph(f"Autor: {datos['nombre']}", styles['Normal']))
+    story.append(Spacer(1, 20))
+    story.append(Paragraph("Institución: ________", styles['Normal']))
+    story.append(Spacer(1, 20))
+    story.append(Paragraph("Fecha: ________", styles['Normal']))
     story.append(PageBreak())
 
-    # SECCIONES NUMERADAS
+    # ÍNDICE
+    story.append(Paragraph("ÍNDICE", styles['Title']))
+    story.append(Spacer(1, 20))
+
+    toc = TableOfContents()
+    toc.levelStyles = [
+        ParagraphStyle(name='TOCHeading1', fontSize=12, leftIndent=20)
+    ]
+
+    story.append(toc)
+    story.append(PageBreak())
+
+    # SECCIONES
     titulos = {
         "introduccion": "1. INTRODUCCIÓN",
         "objetivos": "2. OBJETIVOS",
@@ -125,9 +154,7 @@ def generar_pdf(datos, secciones):
     for key, titulo in titulos.items():
         story.append(Paragraph(titulo, styles['Heading1']))
         story.append(Spacer(1, 12))
-
-        contenido = secciones.get(key, "")
-        story.append(Paragraph(limpiar(contenido), styles['Normal']))
+        story.append(Paragraph(limpiar(secciones.get(key, "")), styles['Normal']))
         story.append(Spacer(1, 20))
 
     doc.build(story)
@@ -164,12 +191,7 @@ def generar():
 
 @app.route('/descargar/<filename>')
 def descargar(filename):
-    safe = secure_filename(filename)
-    path = os.path.join('informes_generados', safe)
-
-    if not os.path.exists(path):
-        return "No encontrado", 404
-
+    path = os.path.join('informes_generados', secure_filename(filename))
     return send_file(path, as_attachment=True)
 
 if __name__ == '__main__':
