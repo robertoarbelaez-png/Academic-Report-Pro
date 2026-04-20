@@ -12,18 +12,7 @@
 <input id="tema" placeholder="Tema"><br><br>
 <input id="nombre" placeholder="Nombre"><br><br>
 
-<select id="modo">
-<option value="auto">Automático</option>
-<option value="manual">Manual</option>
-</select>
-
-<br><br>
-
-<textarea id="intro" placeholder="Introducción (manual)"></textarea><br>
-<textarea id="obj" placeholder="Objetivos (manual)"></textarea><br>
-<textarea id="conclu" placeholder="Conclusiones (manual)"></textarea><br><br>
-
-<button onclick="generar()">Generar</button>
+<button onclick="generar()">Generar Informe</button>
 
 <script>
 async function generar(){
@@ -36,11 +25,7 @@ async function generar(){
 
     const datos = {
         tema: tema,
-        nombre: document.getElementById('nombre').value,
-        modo: document.getElementById('modo').value,
-        introduccion: document.getElementById('intro').value,
-        objetivos: document.getElementById('obj').value,
-        conclusiones: document.getElementById('conclu').value
+        nombre: document.getElementById('nombre').value
     };
 
     Swal.fire({title:"Generando...", didOpen:()=>Swal.showLoading()});
