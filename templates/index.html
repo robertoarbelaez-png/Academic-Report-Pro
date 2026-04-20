@@ -1,20 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+<meta charset="UTF-8">
 <title>Academic Report Pro</title>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
 </head>
 
-<body style="font-family: Arial; text-align:center; padding:40px;">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-<h1>📄 Academic Report Pro</h1>
+<div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-2xl">
 
-<input id="tema" placeholder="Tema"><br><br>
-<input id="nombre" placeholder="Nombre"><br><br>
+    <h1 class="text-3xl font-bold text-center mb-6">📄 Academic Report Pro</h1>
 
-<button onclick="generar()">Generar Informe</button>
+    <!-- INPUTS -->
+    <div class="space-y-4">
+        <input id="tema" type="text" placeholder="Tema del informe"
+            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <input id="nombre" type="text" placeholder="Tu nombre"
+            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <button onclick="generar()"
+            class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+            Generar Informe
+        </button>
+    </div>
+
+    <!-- PREVIEW -->
+    <div id="preview" class="mt-8 hidden">
+        <h2 class="text-xl font-bold mb-3">Vista previa</h2>
+        <div id="contenidoPreview" class="bg-gray-50 p-4 rounded-lg text-sm max-h-64 overflow-y-auto"></div>
+
+        <button id="descargarBtn"
+            class="mt-4 w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700">
+            Descargar PDF
+        </button>
+    </div>
+
+</div>
 
 <script>
+
+let downloadUrl = "";
+
+// 🔥 GENERAR INFORME
 async function generar(){
     let tema = document.getElementById('tema').value;
 
@@ -45,7 +77,18 @@ async function generar(){
         Swal.close();
 
         if(data.success){
-            window.location.href = data.download_url;
+
+            downloadUrl = data.download_url;
+
+            // 🔥 Mostrar preview simple
+            document.getElementById('contenidoPreview').innerHTML =
+                `<p><strong>Tema:</strong> ${tema}</p>
+                 <p>El informe fue generado correctamente.</p>`;
+
+            document.getElementById('preview').classList.remove('hidden');
+
+            Swal.fire('Listo', 'Informe generado correctamente', 'success');
+
         } else {
             Swal.fire('Error', data.error, 'error');
         }
@@ -55,6 +98,14 @@ async function generar(){
         Swal.fire('Error', 'Fallo en la conexión', 'error');
     }
 }
+
+// 🔥 DESCARGAR
+document.getElementById('descargarBtn').addEventListener('click', () => {
+    if(downloadUrl){
+        window.open(downloadUrl, '_blank');
+    }
+});
+
 </script>
 
 </body>
