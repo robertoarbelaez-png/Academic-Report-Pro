@@ -1,44 +1,28 @@
 from flask import Flask, render_template, request, jsonify, send_file
+import os, uuid, requests, json, html
+from werkzeug.utils import secure_filename
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import letter
-from werkzeug.utils import secure_filename
-import os, uuid, requests, re, html
-from datetime import datetime
 
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
 
+# API
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# -------- CONFIG NORMAS --------
-NORMAS = {
-    "apa7": {"font": "Times-Roman", "size": 12},
-    "icontec": {"font": "Helvetica", "size": 12},
-    "ieee": {"font": "Times-Roman", "size": 10}
-}
-
-# -------- UTIL --------
-def limpiar(texto):
-    if not texto:
-        return ""
-    texto = html.escape(texto)
-    texto = texto.replace("\n", "<br/>")
-    texto = texto.replace("CONCLUSIONS", "CONCLUSIONES")
-    texto = texto.replace("INFORMÉ", "INFORME")
-    return texto
-
-# -------- FALLBACK LOCAL --------
+# -------- CONTENIDO LOCAL --------
 def contenido_local(tema):
     return {
-        "introduccion": f"Este informe analiza {tema}.",
-        "objetivos": "Analizar el tema.",
-        "marco_teorico": "Bases teóricas del tema.",
-        "metodologia": "Investigación descriptiva.",
-        "desarrollo": f"Resultados sobre {tema}.",
-        "conclusiones": "Se concluye que es importante.",
-        "recomendaciones": "Se recomienda seguir investigando."
+        "introduccion": f"Este informe analiza {tema}. Se abordan sus aspectos principales.",
+        "objetivos": "Analizar el tema y comprender su impacto en el contexto actual.",
+        "marco_teorico": f"El marco teórico de {tema} se fundamenta en investigaciones previas.",
+        "metodologia": "Se emplea un enfoque descriptivo basado en revisión documental.",
+        "desarrollo": f"Se analizan los principales aspectos relacionados con {tema}.",
+        "conclusiones": "Se concluye que el tema es relevante y requiere mayor estudio.",
+        "recomendaciones": "Se recomienda profundizar en investigaciones futuras.",
+        "referencias": "Fuentes académicas consultadas."
     }
 
 # -------- IA --------
@@ -48,23 +32,33 @@ def generar_ia(tema):
 
     try:
         prompt = f"""
-Genera un informe académico completo sobre: {tema}
+Genera un informe académico sobre: "{tema}"
 
-SECCIONES:
-INTRODUCCIÓN
-OBJETIVOS
-MARCO TEÓRICO
-METODOLOGÍA
-DESARROLLO
-CONCLUSIONES
-RECOMENDACIONES
+Responde SOLO en JSON con esta estructura:
 
-Todo en español y bien estructurado.
+{{
+  "introduccion": "",
+  "objetivos": "",
+  "marco_teorico": "",
+  "metodologia": "",
+  "desarrollo": "",
+  "conclusiones": "",
+  "recomendaciones": "",
+  "referencias": ""
+}}
+
+Todo en español, bien desarrollado.
 """
-        headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
+
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
         data = {
             "model": "llama-3.3-70b-versatile",
             "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.7,
             "max_tokens": 4000
         }
 
@@ -73,17 +67,32 @@ Todo en español y bien estructurado.
         if res.status_code != 200:
             return None
 
-        texto = res.json()['choices'][0]['message']['content']
+        texto = res.json()['choices'][0]['message']['content'].strip()
 
-        secciones = {}
-        for sec in ["INTRODUCCIÓN","OBJETIVOS","MARCO TEÓRICO","METODOLOGÍA","DESARROLLO","CONCLUSIONES","RECOMENDACIONES"]:
-            match = re.search(rf"{sec}:(.*?)(?=\n[A-Z]|$)", texto, re.DOTALL)
-            secciones[sec.lower()] = match.group(1).strip() if match else ""
+        if texto.startswith("```"):
+            texto = texto.replace("```json", "").replace("```", "").strip()
 
-        return secciones
+        return json.loads(texto)
 
-    except:
+    except Exception as e:
+        print("Error IA:", e)
         return None
+
+# -------- SEGURIDAD IA --------
+def asegurar_secciones(secciones, tema):
+    fallback = contenido_local(tema)
+
+    for key in fallback:
+        if key not in secciones or not str(secciones[key]).strip():
+            secciones[key] = fallback[key]
+
+    return secciones
+
+# -------- LIMPIAR TEXTO --------
+def limpiar(texto):
+    texto = html.escape(texto)
+    texto = texto.replace("\n", "<br/>")
+    return texto
 
 # -------- PDF --------
 def generar_pdf(datos, secciones):
@@ -95,12 +104,14 @@ def generar_pdf(datos, secciones):
 
     story = []
 
+    # PORTADA
     story.append(Paragraph("INFORME ACADÉMICO", styles['Title']))
     story.append(Spacer(1, 20))
     story.append(Paragraph(f"Tema: {datos['tema']}", styles['Normal']))
     story.append(Paragraph(f"Autor: {datos['nombre']}", styles['Normal']))
     story.append(PageBreak())
 
+    # SECCIONES
     for titulo, contenido in secciones.items():
         story.append(Paragraph(titulo.upper(), styles['Heading2']))
         story.append(Spacer(1, 10))
@@ -108,7 +119,7 @@ def generar_pdf(datos, secciones):
         story.append(PageBreak())
 
     doc.build(story)
-    return filename, path
+    return filename
 
 # -------- RUTAS --------
 @app.route('/')
@@ -123,26 +134,16 @@ def generar():
     if len(tema) < 3:
         return jsonify({'success': False, 'error': 'Tema inválido'})
 
-    modo = datos.get('modo', 'auto')
+    nombre = datos.get('nombre', 'Estudiante')
 
-    # 🔥 MODO MANUAL
-    if modo == "manual":
-        secciones = {
-            "introduccion": datos.get('introduccion', ''),
-            "objetivos": datos.get('objetivos', ''),
-            "marco_teorico": "",
-            "metodologia": "",
-            "desarrollo": "",
-            "conclusiones": datos.get('conclusiones', ''),
-            "recomendaciones": ""
-        }
+    secciones = generar_ia(tema)
 
+    if not secciones:
+        secciones = contenido_local(tema)
     else:
-        secciones = generar_ia(tema)
-        if not secciones:
-            secciones = contenido_local(tema)
+        secciones = asegurar_secciones(secciones, tema)
 
-    filename, path = generar_pdf(datos, secciones)
+    filename = generar_pdf({'tema': tema, 'nombre': nombre}, secciones)
 
     return jsonify({
         "success": True,
@@ -159,5 +160,5 @@ def descargar(filename):
 
     return send_file(path, as_attachment=True)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
