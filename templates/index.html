@@ -1,46 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
 <meta charset="UTF-8">
 <title>Academic Report Pro</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
 
-<div class="bg-white p-8 rounded-xl shadow w-full max-w-xl">
+<div class="bg-gray-800 p-8 rounded-xl shadow-xl w-full max-w-md">
+    <h1 class="text-2xl font-bold text-center mb-6">📄 Academic Report Pro</h1>
 
-<h1 class="text-2xl font-bold mb-4 text-center">⚡ Academic Report Pro</h1>
+    <input id="tema" placeholder="Tema..." class="w-full p-3 mb-4 rounded bg-gray-900 border border-gray-700">
 
-<input id="tema" placeholder="Tema" class="w-full p-3 border rounded mb-3">
-<input id="nombre" placeholder="Nombre" class="w-full p-3 border rounded mb-3">
-
-<button onclick="generar()" class="w-full bg-blue-600 text-white py-3 rounded">
-Generar Informe
-</button>
-
+    <button onclick="generar()" class="w-full bg-blue-600 p-3 rounded font-bold hover:bg-blue-700">
+        Generar Informe
+    </button>
 </div>
 
 <script>
-async function generar(){
-    Swal.fire({title:"Generando PDF...", didOpen:()=>Swal.showLoading()});
+async function generar() {
+    const tema = document.getElementById("tema").value;
 
-    const res = await fetch('/generar',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-            tema: document.getElementById('tema').value,
-            nombre: document.getElementById('nombre').value
-        })
+    if (!tema) {
+        Swal.fire("Error", "Escribe un tema", "error");
+        return;
+    }
+
+    Swal.fire({
+        title: "Generando...",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    const res = await fetch("/generar", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({tema})
     });
 
     const data = await res.json();
-    Swal.close();
 
-    if(data.success){
-        window.open(data.download_url);
+    if (data.success) {
+        Swal.fire("Listo", "Descargando...", "success");
+        window.location.href = data.download_url; // 🔥 descarga directa
+    } else {
+        Swal.fire("Error", data.error, "error");
     }
 }
 </script>
