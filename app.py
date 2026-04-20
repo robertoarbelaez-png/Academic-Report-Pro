@@ -14,7 +14,6 @@ import requests
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
 
-# CONFIG
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 
 # ================= LIMPIEZA =================
@@ -24,22 +23,28 @@ def limpiar_texto(texto):
 
     texto = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', texto)
 
-    # **negrita** → HTML
-    texto = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', texto)
+    # evitar texto pegado tipo palabraPalabra
+    texto = re.sub(r'([a-z])([A-Z])', r'\1<br/><br/>\2', texto)
 
-    # saltos
+    # saltos de línea
     texto = texto.replace('\n', '<br/><br/>')
-
-    texto = texto.replace('Conclusions', 'CONCLUSIONES')
-    texto = texto.replace('CONCLUSIONS', 'CONCLUSIONES')
 
     return texto.strip()
 
-def extraer_seccion(contenido, nombre):
-    patron = rf'\*\*{nombre}\*\*:?(.*?)(?=\*\*[A-Z]|$)'
-    match = re.search(patron, contenido, re.DOTALL | re.IGNORECASE)
-    if match:
-        return limpiar_texto(match.group(1).strip())
+# ================= EXTRAER SECCIONES =================
+def extraer_seccion(texto, seccion):
+    try:
+        partes = texto.split(seccion + ":")
+        if len(partes) > 1:
+            contenido = partes[1]
+
+            for s in ["INTRODUCCIÓN:", "OBJETIVOS:", "MARCO TEÓRICO:", "METODOLOGÍA:", "DESARROLLO:", "CONCLUSIONES:", "RECOMENDACIONES:"]:
+                if s != seccion + ":" and s in contenido:
+                    contenido = contenido.split(s)[0]
+
+            return limpiar_texto(contenido.strip())
+    except:
+        pass
     return ""
 
 # ================= CONTENIDO LOCAL =================
@@ -69,19 +74,42 @@ def generar():
         if not tema:
             return jsonify({'success': False, 'error': 'Tema requerido'}), 400
 
-        # ================= IA =================
+        # ================= PROMPT PRO =================
         secciones = None
         if GROQ_API_KEY:
             try:
-                prompt = f"""Genera un informe académico sobre: {tema}
+                prompt = f"""
+Genera un INFORME ACADÉMICO sobre: "{tema}"
 
-**INTRODUCCIÓN**
-**OBJETIVOS**
-**MARCO TEÓRICO**
-**METODOLOGÍA**
-**DESARROLLO**
-**CONCLUSIONES**
-**RECOMENDACIONES**
+IMPORTANTE:
+- Español
+- NO usar **
+- NO usar markdown
+- Separar bien títulos y contenido
+- Usar párrafos claros
+
+FORMATO:
+
+INTRODUCCIÓN:
+(texto)
+
+OBJETIVOS:
+(texto)
+
+MARCO TEÓRICO:
+(texto)
+
+METODOLOGÍA:
+(texto)
+
+DESARROLLO:
+(texto)
+
+CONCLUSIONES:
+(lista numerada)
+
+RECOMENDACIONES:
+(lista)
 """
 
                 headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
