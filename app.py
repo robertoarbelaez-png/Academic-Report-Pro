@@ -1,50 +1,92 @@
 from flask import Flask, render_template, request, jsonify, send_file
-import os
-import uuid
-from datetime import datetime
-import requests
-import re
-import html
-from werkzeug.utils import secure_filename
-
-from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import letter
+from werkzeug.utils import secure_filename
+import os, uuid, requests, re, html
+from datetime import datetime
 
 app = Flask(__name__)
 os.makedirs('informes_generados', exist_ok=True)
 
-# API KEY (opcional)
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# ---------- UTILIDADES ----------
+# -------- CONFIG NORMAS --------
+NORMAS = {
+    "apa7": {"font": "Times-Roman", "size": 12},
+    "icontec": {"font": "Helvetica", "size": 12},
+    "ieee": {"font": "Times-Roman", "size": 10}
+}
 
-def validar_texto(texto, minimo=3):
-    return isinstance(texto, str) and len(texto.strip()) >= minimo
-
-def limpiar_texto(texto):
+# -------- UTIL --------
+def limpiar(texto):
     if not texto:
         return ""
     texto = html.escape(texto)
-    texto = texto.replace('\n', '<br/>')
+    texto = texto.replace("\n", "<br/>")
+    texto = texto.replace("CONCLUSIONS", "CONCLUSIONES")
+    texto = texto.replace("INFORMÉ", "INFORME")
     return texto
 
+# -------- FALLBACK LOCAL --------
 def contenido_local(tema):
-    return f"""
-Introducción:<br/>
-Este informe trata sobre {tema}. Se analiza su impacto y relevancia actual.<br/><br/>
+    return {
+        "introduccion": f"Este informe analiza {tema}.",
+        "objetivos": "Analizar el tema.",
+        "marco_teorico": "Bases teóricas del tema.",
+        "metodologia": "Investigación descriptiva.",
+        "desarrollo": f"Resultados sobre {tema}.",
+        "conclusiones": "Se concluye que es importante.",
+        "recomendaciones": "Se recomienda seguir investigando."
+    }
 
-Desarrollo:<br/>
-El tema {tema} es importante en la actualidad debido a su influencia en la sociedad.<br/><br/>
+# -------- IA --------
+def generar_ia(tema):
+    if not GROQ_API_KEY:
+        return None
 
-Conclusiones:<br/>
-Se concluye que {tema} es un aspecto clave que requiere estudio continuo.
+    try:
+        prompt = f"""
+Genera un informe académico completo sobre: {tema}
+
+SECCIONES:
+INTRODUCCIÓN
+OBJETIVOS
+MARCO TEÓRICO
+METODOLOGÍA
+DESARROLLO
+CONCLUSIONES
+RECOMENDACIONES
+
+Todo en español y bien estructurado.
 """
+        headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
+        data = {
+            "model": "llama-3.3-70b-versatile",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 4000
+        }
 
-# ---------- PDF ----------
+        res = requests.post(GROQ_URL, headers=headers, json=data, timeout=60)
 
-def generar_pdf(datos, contenido):
+        if res.status_code != 200:
+            return None
+
+        texto = res.json()['choices'][0]['message']['content']
+
+        secciones = {}
+        for sec in ["INTRODUCCIÓN","OBJETIVOS","MARCO TEÓRICO","METODOLOGÍA","DESARROLLO","CONCLUSIONES","RECOMENDACIONES"]:
+            match = re.search(rf"{sec}:(.*?)(?=\n[A-Z]|$)", texto, re.DOTALL)
+            secciones[sec.lower()] = match.group(1).strip() if match else ""
+
+        return secciones
+
+    except:
+        return None
+
+# -------- PDF --------
+def generar_pdf(datos, secciones):
     filename = f"informe_{uuid.uuid4().hex[:6]}.pdf"
     path = os.path.join('informes_generados', filename)
 
@@ -55,71 +97,57 @@ def generar_pdf(datos, contenido):
 
     story.append(Paragraph("INFORME ACADÉMICO", styles['Title']))
     story.append(Spacer(1, 20))
+    story.append(Paragraph(f"Tema: {datos['tema']}", styles['Normal']))
+    story.append(Paragraph(f"Autor: {datos['nombre']}", styles['Normal']))
+    story.append(PageBreak())
 
-    story.append(Paragraph(f"<b>Tema:</b> {datos['tema']}", styles['Normal']))
-    story.append(Paragraph(f"<b>Nombre:</b> {datos['nombre']}", styles['Normal']))
-    story.append(Spacer(1, 20))
-
-    story.append(Paragraph(limpiar_texto(contenido), styles['Normal']))
+    for titulo, contenido in secciones.items():
+        story.append(Paragraph(titulo.upper(), styles['Heading2']))
+        story.append(Spacer(1, 10))
+        story.append(Paragraph(limpiar(contenido), styles['Normal']))
+        story.append(PageBreak())
 
     doc.build(story)
-
     return filename, path
 
-# ---------- RUTAS ----------
-
+# -------- RUTAS --------
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/generar', methods=['POST'])
 def generar():
-    try:
-        datos = request.json
-        tema = datos.get('tema', '').strip()
+    datos = request.json
+    tema = datos.get('tema', '').strip()
 
-        if not validar_texto(tema):
-            return jsonify({'success': False, 'error': 'Tema inválido'}), 400
+    if len(tema) < 3:
+        return jsonify({'success': False, 'error': 'Tema inválido'})
 
-        nombre = datos.get('nombre', 'Estudiante')
+    modo = datos.get('modo', 'auto')
 
-        contenido = ""
+    # 🔥 MODO MANUAL
+    if modo == "manual":
+        secciones = {
+            "introduccion": datos.get('introduccion', ''),
+            "objetivos": datos.get('objetivos', ''),
+            "marco_teorico": "",
+            "metodologia": "",
+            "desarrollo": "",
+            "conclusiones": datos.get('conclusiones', ''),
+            "recomendaciones": ""
+        }
 
-        # 🔥 IA (si hay API)
-        if GROQ_API_KEY:
-            try:
-                headers = {
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
-                }
+    else:
+        secciones = generar_ia(tema)
+        if not secciones:
+            secciones = contenido_local(tema)
 
-                data = {
-                    "model": "llama-3.3-70b-versatile",
-                    "messages": [{"role": "user", "content": f"Escribe un informe sobre {tema}"}],
-                    "max_tokens": 2000
-                }
+    filename, path = generar_pdf(datos, secciones)
 
-                res = requests.post(GROQ_URL, headers=headers, json=data, timeout=30)
-
-                if res.status_code == 200:
-                    contenido = res.json()['choices'][0]['message']['content']
-                else:
-                    contenido = contenido_local(tema)
-
-            except:
-                contenido = contenido_local(tema)
-        else:
-            contenido = contenido_local(tema)
-
-        filename, path = generar_pdf({'tema': tema, 'nombre': nombre}, contenido)
-
-        return jsonify({
-            'success': True,
-            'download_url': f'/descargar/{filename}'
-        })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+    return jsonify({
+        "success": True,
+        "download_url": f"/descargar/{filename}"
+    })
 
 @app.route('/descargar/<filename>')
 def descargar(filename):
@@ -127,9 +155,9 @@ def descargar(filename):
     path = os.path.join('informes_generados', safe)
 
     if not os.path.exists(path):
-        return "No existe", 404
+        return "No encontrado", 404
 
     return send_file(path, as_attachment=True)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
