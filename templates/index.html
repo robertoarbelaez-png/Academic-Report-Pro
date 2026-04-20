@@ -7,64 +7,47 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex items-center justify-center">
+<body class="bg-gray-900 text-white flex items-center justify-center h-screen">
 
-<div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-full max-w-md">
-    
-    <h1 class="text-3xl font-bold text-white text-center mb-6">
-        📄 Academic Report Pro
-    </h1>
+<div class="bg-gray-800 p-8 rounded-xl w-96">
+    <h1 class="text-2xl mb-4 text-center">📄 Generador de Informes</h1>
 
-    <input id="tema" placeholder="Tema del informe"
-        class="w-full p-3 mb-4 rounded-lg bg-gray-900 border border-gray-700 text-white">
+    <input id="tema" placeholder="Tema"
+    class="w-full mb-3 p-2 rounded bg-gray-700">
+
+    <input id="nombre" placeholder="Nombre"
+    class="w-full mb-3 p-2 rounded bg-gray-700">
 
     <button onclick="generar()"
-        class="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 font-bold text-white">
-        🤖 Generar Informe
-    </button>
-
+    class="w-full bg-blue-600 p-2 rounded">Generar</button>
 </div>
 
 <script>
-async function generar() {
-    const tema = document.getElementById("tema").value;
-
-    if (!tema) {
-        Swal.fire("Error", "Escribe un tema", "error");
-        return;
-    }
+async function generar(){
+    const tema = document.getElementById('tema').value;
 
     Swal.fire({
-        title: "Generando informe...",
-        html: "La IA está trabajando ⏳",
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
+        title:'Generando...',
+        allowOutsideClick:false,
+        didOpen:()=>Swal.showLoading()
     });
 
-    try {
-        const res = await fetch("/generar", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({tema})
-        });
+    const r = await fetch('/generar',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            tema:tema,
+            nombre:document.getElementById('nombre').value
+        })
+    });
 
-        const data = await res.json();
+    const data = await r.json();
 
-        Swal.close(); // 🔥 clave
-
-        if (data.success) {
-            window.location.href = data.download_url;
-
-            setTimeout(() => {
-                Swal.fire("✅ Listo", "Informe descargado", "success");
-            }, 1000);
-
-        } else {
-            Swal.fire("Error", data.error, "error");
-        }
-
-    } catch {
-        Swal.fire("Error", "Fallo del servidor", "error");
+    if(data.success){
+        Swal.close();
+        window.location = data.download_url;
+    }else{
+        Swal.fire('Error',data.error,'error');
     }
 }
 </script>
