@@ -7,7 +7,7 @@ from reportlab.platypus import (
     BaseDocTemplate, Frame, PageTemplate
 )
 from reportlab.platypus.tableofcontents import TableOfContents
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 
 app = Flask(__name__)
@@ -16,72 +16,43 @@ os.makedirs('informes_generados', exist_ok=True)
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# -------- CONTENIDO LOCAL --------
+# -------- CONTENIDO RÁPIDO --------
 def contenido_local(tema):
     return {
-        "introduccion": f"Este informe analiza {tema}.",
-        "objetivos": "Analizar el tema.",
-        "marco_teorico": "Bases teóricas.",
-        "metodologia": "Enfoque descriptivo.",
-        "desarrollo": f"Análisis de {tema}.",
-        "conclusiones": "Conclusiones del tema.",
-        "recomendaciones": "Recomendaciones.",
-        "referencias": "Fuentes académicas."
+        "introduccion": f"Este informe analiza {tema} desde una perspectiva académica.",
+        "objetivos": "Analizar el tema y comprender su impacto.",
+        "marco_teorico": "Se basa en conceptos teóricos relevantes.",
+        "metodologia": "Se utiliza un enfoque descriptivo.",
+        "desarrollo": f"Se desarrolla el tema {tema} con análisis crítico.",
+        "conclusiones": "Se concluye que el tema es relevante.",
+        "recomendaciones": "Se recomienda profundizar en el estudio.",
+        "referencias": "Fuentes académicas generales."
     }
 
-# -------- IA --------
+# -------- IA (OPCIONAL) --------
 def generar_ia(tema):
     if not GROQ_API_KEY:
         return None
 
     try:
-        prompt = f"""
-Genera un informe académico sobre: "{tema}"
-
-Responde SOLO en JSON:
-
-{{
-  "introduccion": "",
-  "objetivos": "",
-  "marco_teorico": "",
-  "metodologia": "",
-  "desarrollo": "",
-  "conclusiones": "",
-  "recomendaciones": "",
-  "referencias": ""
-}}
-"""
-
         headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
 
         data = {
             "model": "llama-3.3-70b-versatile",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 4000
+            "messages": [{"role": "user", "content": f"Genera un informe sobre {tema} en JSON"}],
+            "max_tokens": 1200
         }
 
-        res = requests.post(GROQ_URL, headers=headers, json=data, timeout=60)
+        res = requests.post(GROQ_URL, headers=headers, json=data, timeout=20)
 
         if res.status_code != 200:
             return None
 
         texto = res.json()['choices'][0]['message']['content'].strip()
-
-        if texto.startswith("```"):
-            texto = texto.replace("```json", "").replace("```", "").strip()
-
         return json.loads(texto)
 
     except:
         return None
-
-# -------- SEGURIDAD --------
-def asegurar_secciones(secciones, tema):
-    fallback = contenido_local(tema)
-    for key in fallback:
-        if key not in secciones or not str(secciones[key]).strip():
-            secciones[key] = fallback[key]
-    return secciones
 
 # -------- LIMPIAR --------
 def limpiar(texto):
@@ -91,7 +62,7 @@ def limpiar(texto):
 # -------- DOC TEMPLATE --------
 class MyDocTemplate(BaseDocTemplate):
     def __init__(self, filename):
-        super().__init__(filename)
+        super().__init__(filename, leftMargin=40, rightMargin=40, topMargin=60, bottomMargin=40)
         frame = Frame(self.leftMargin, self.bottomMargin, self.width, self.height)
         template = PageTemplate(id='normal', frames=frame, onPage=self.add_page_number)
         self.addPageTemplates([template])
@@ -111,6 +82,20 @@ def generar_pdf(datos, secciones):
 
     doc = MyDocTemplate(path)
     styles = getSampleStyleSheet()
+
+    estilo_normal = ParagraphStyle(
+        name='TextoAPA',
+        fontSize=11,
+        leading=16,
+        firstLineIndent=20
+    )
+
+    estilo_titulo = ParagraphStyle(
+        name='TituloPro',
+        fontSize=13,
+        spaceAfter=12
+    )
+
     story = []
 
     # PORTADA
@@ -120,24 +105,16 @@ def generar_pdf(datos, secciones):
     story.append(Paragraph(datos['tema'], styles['Heading1']))
     story.append(Spacer(1, 40))
     story.append(Paragraph(f"Autor: {datos['nombre']}", styles['Normal']))
-    story.append(Spacer(1, 20))
-    story.append(Paragraph("Institución: ________", styles['Normal']))
-    story.append(Spacer(1, 20))
-    story.append(Paragraph("Fecha: ________", styles['Normal']))
     story.append(PageBreak())
 
     # ÍNDICE
     story.append(Paragraph("ÍNDICE", styles['Title']))
-    story.append(Spacer(1, 20))
-
     toc = TableOfContents()
-    toc.levelStyles = [
-        ParagraphStyle(name='TOCHeading1', fontSize=12, leftIndent=20)
-    ]
+    toc.levelStyles = [ParagraphStyle(name='TOC', fontSize=11, leftIndent=20)]
+    toc.dotsMinLevel = 0
     story.append(toc)
     story.append(PageBreak())
 
-    # SECCIONES
     titulos = {
         "introduccion": "1. INTRODUCCIÓN",
         "objetivos": "2. OBJETIVOS",
@@ -150,9 +127,9 @@ def generar_pdf(datos, secciones):
     }
 
     for key, titulo in titulos.items():
-        story.append(Paragraph(titulo, styles['Heading1']))
+        story.append(Paragraph(titulo, estilo_titulo))
         story.append(Spacer(1, 12))
-        story.append(Paragraph(limpiar(secciones.get(key, "")), styles['Normal']))
+        story.append(Paragraph(limpiar(secciones.get(key, "")), estilo_normal))
         story.append(Spacer(1, 20))
 
     doc.build(story)
@@ -167,32 +144,13 @@ def index():
 def generar():
     datos = request.json
     tema = datos.get('tema', '').strip()
-    modo = datos.get('modo', 'auto')
-
-    if len(tema) < 3:
-        return jsonify({'success': False, 'error': 'Tema inválido'})
-
     nombre = datos.get('nombre', 'Estudiante')
 
-    # 🔥 MODOS
-    if modo == "manual":
-        secciones = {
-            "introduccion": datos.get('intro', ''),
-            "objetivos": datos.get('obj', ''),
-            "marco_teorico": "",
-            "metodologia": "",
-            "desarrollo": datos.get('des', ''),
-            "conclusiones": "",
-            "recomendaciones": "",
-            "referencias": ""
-        }
-    else:
-        secciones = generar_ia(tema)
+    if len(tema) < 3:
+        return jsonify({'success': False})
 
-    if not secciones:
-        secciones = contenido_local(tema)
-    else:
-        secciones = asegurar_secciones(secciones, tema)
+    # ⚡ SIEMPRE RÁPIDO
+    secciones = contenido_local(tema)
 
     filename = generar_pdf({'tema': tema, 'nombre': nombre}, secciones)
 
