@@ -19,29 +19,40 @@ async function generar(){
     let tema = document.getElementById('tema').value;
 
     if(!tema || tema.length < 3){
-        alert("Tema inválido");
+        Swal.fire('Error', 'Tema inválido', 'error');
         return;
     }
 
-    const datos = {
-        tema: tema,
-        nombre: document.getElementById('nombre').value
-    };
-
-    Swal.fire({title:"Generando...", didOpen:()=>Swal.showLoading()});
-
-    const res = await fetch('/generar',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify(datos)
+    Swal.fire({
+        title: "Generando informe...",
+        text: "Esto puede tardar unos segundos",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
     });
 
-    const data = await res.json();
+    try {
+        const res = await fetch('/generar',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+                tema: tema,
+                nombre: document.getElementById('nombre').value
+            })
+        });
 
-    if(data.success){
-        window.location.href = data.download_url;
-    } else {
-        alert(data.error);
+        const data = await res.json();
+
+        Swal.close();
+
+        if(data.success){
+            window.location.href = data.download_url;
+        } else {
+            Swal.fire('Error', data.error, 'error');
+        }
+
+    } catch (error) {
+        Swal.close();
+        Swal.fire('Error', 'Fallo en la conexión', 'error');
     }
 }
 </script>
