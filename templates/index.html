@@ -1,218 +1,46 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academic Report Pro | Generador de Informes con IA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
-    </style>
+<meta charset="UTF-8">
+<title>Generador de Informes</title>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="min-h-screen">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 mb-4 shadow-lg">
-                <span class="text-4xl">📄</span>
-            </div>
-            <h1 class="text-4xl font-bold text-white mb-2">Academic Report Pro</h1>
-            <p class="text-gray-400">Generador de informes académicos con IA</p>
-        </div>
-        
-        <!-- Tarjeta principal -->
-        <div class="bg-gray-800/50 backdrop-blur rounded-2xl p-6 shadow-xl border border-gray-700">
-            
-            <!-- Tabs de modo -->
-            <div class="flex gap-2 mb-6 bg-gray-900/50 rounded-xl p-1">
-                <button id="btnRapido" class="tab-btn flex-1 py-2 rounded-lg font-semibold transition-all bg-blue-600 text-white">⚡ Rápido</button>
-                <button id="btnAuto" class="tab-btn flex-1 py-2 rounded-lg font-semibold transition-all text-gray-400 hover:text-white">🤖 Automático</button>
-                <button id="btnManual" class="tab-btn flex-1 py-2 rounded-lg font-semibold transition-all text-gray-400 hover:text-white">✍️ Manual</button>
-            </div>
-            
-            <!-- Campo de tema -->
-            <div class="mb-4">
-                <label class="block text-gray-300 mb-2">📌 Tema del informe</label>
-                <input type="text" id="tema" placeholder="Ej: Impacto de la inteligencia artificial en la educación" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-700 text-white focus:outline-none focus:border-blue-500">
-            </div>
-            
-            <!-- Campos adicionales -->
-            <div class="grid md:grid-cols-2 gap-3 mb-4">
-                <input type="text" id="nombre" placeholder="Nombre del estudiante" class="p-3 rounded-xl bg-gray-900 border border-gray-700 text-white">
-                <input type="text" id="asignatura" placeholder="Asignatura" class="p-3 rounded-xl bg-gray-900 border border-gray-700 text-white">
-                <input type="text" id="profesor" placeholder="Profesor" class="p-3 rounded-xl bg-gray-900 border border-gray-700 text-white">
-                <input type="text" id="institucion" placeholder="Institución" class="p-3 rounded-xl bg-gray-900 border border-gray-700 text-white">
-                <input type="text" id="fechaEntrega" placeholder="Fecha (DD/MM/AAAA)" class="p-3 rounded-xl bg-gray-900 border border-gray-700 text-white">
-            </div>
-            
-            <!-- Selector de normas -->
-            <div class="mb-4">
-                <label class="block text-gray-300 mb-2">📚 Norma académica</label>
-                <select id="norma" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-700 text-white">
-                    <option value="apa7">📘 APA 7ª Edición</option>
-                    <option value="apa6">📗 APA 6ª Edición</option>
-                    <option value="icontec">🇨🇴 ICONTEC (Colombia)</option>
-                    <option value="vancouver">🩺 Vancouver</option>
-                    <option value="chicago">📖 Chicago</option>
-                    <option value="harvard">💼 Harvard</option>
-                    <option value="mla">✍️ MLA</option>
-                    <option value="ieee">⚡ IEEE</option>
-                </select>
-            </div>
-            
-            <!-- Modo Rápido -->
-            <div id="modoRapido" class="mb-4">
-                <textarea id="temaRapido" rows="3" placeholder="Describe tu tema de investigación en detalle..." class="w-full p-3 rounded-xl bg-gray-900 border border-gray-700 text-white"></textarea>
-            </div>
-            
-            <!-- Modo Automático (oculto) -->
-            <div id="modoAuto" class="mb-4" style="display:none;">
-                <textarea id="textoCompleto" rows="8" placeholder="Escribe aquí TODO lo que sabes sobre el tema..." class="w-full p-3 rounded-xl bg-gray-900 border border-gray-700 text-white"></textarea>
-            </div>
-            
-            <!-- Modo Manual (oculto) -->
-            <div id="modoManual" class="mb-4" style="display:none;">
-                <textarea id="introManual" rows="3" placeholder="1. INTRODUCCIÓN" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-700 mb-2"></textarea>
-                <textarea id="objetivosManual" rows="3" placeholder="2. OBJETIVOS" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-700 mb-2"></textarea>
-                <textarea id="conclusionesManual" rows="3" placeholder="3. CONCLUSIONES" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-700"></textarea>
-            </div>
-            
-            <!-- Botón generar -->
-            <button id="btnGenerar" class="w-full mt-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg transition-all">
-                🤖 Generar Informe con IA
-            </button>
-        </div>
-        
-        <!-- Features -->
-        <div class="grid md:grid-cols-3 gap-4 mt-8 text-center">
-            <div class="bg-gray-800/30 rounded-xl p-4">
-                <div class="text-2xl mb-2">🤖</div>
-                <div class="font-semibold text-white">IA Integrada</div>
-                <div class="text-sm text-gray-400">Groq Llama 3.3</div>
-            </div>
-            <div class="bg-gray-800/30 rounded-xl p-4">
-                <div class="text-2xl mb-2">📚</div>
-                <div class="font-semibold text-white">8 Normas</div>
-                <div class="text-sm text-gray-400">APA, ICONTEC, Vancouver...</div>
-            </div>
-            <div class="bg-gray-800/30 rounded-xl p-4">
-                <div class="text-2xl mb-2">⚡</div>
-                <div class="font-semibold text-white">3 Modos</div>
-                <div class="text-sm text-gray-400">Rápido, Auto, Manual</div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        let modoActual = 'rapido';
-        
-        // Tabs
-        document.getElementById('btnRapido').onclick = () => {
-            modoActual = 'rapido';
-            document.getElementById('modoRapido').style.display = 'block';
-            document.getElementById('modoAuto').style.display = 'none';
-            document.getElementById('modoManual').style.display = 'none';
-            actualizarTabs('btnRapido');
-        };
-        document.getElementById('btnAuto').onclick = () => {
-            modoActual = 'auto';
-            document.getElementById('modoRapido').style.display = 'none';
-            document.getElementById('modoAuto').style.display = 'block';
-            document.getElementById('modoManual').style.display = 'none';
-            actualizarTabs('btnAuto');
-        };
-        document.getElementById('btnManual').onclick = () => {
-            modoActual = 'manual';
-            document.getElementById('modoRapido').style.display = 'none';
-            document.getElementById('modoAuto').style.display = 'none';
-            document.getElementById('modoManual').style.display = 'block';
-            actualizarTabs('btnManual');
-        };
-        
-        function actualizarTabs(activo) {
-            const btns = ['btnRapido', 'btnAuto', 'btnManual'];
-            btns.forEach(btn => {
-                const el = document.getElementById(btn);
-                if (btn === activo) {
-                    el.className = 'flex-1 py-2 rounded-lg font-semibold transition-all bg-blue-600 text-white';
-                } else {
-                    el.className = 'flex-1 py-2 rounded-lg font-semibold transition-all text-gray-400 hover:text-white';
-                }
-            });
-        }
-        
-        // Generar informe
-        document.getElementById('btnGenerar').onclick = async () => {
-            let tema = document.getElementById('tema').value;
-            let temaRapido = document.getElementById('temaRapido').value;
-            
-            if (modoActual === 'rapido' && temaRapido) {
-                tema = temaRapido;
-            }
-            
-            if (!tema || tema.trim() === '') {
-                Swal.fire('Error', 'Por favor ingresa un tema para el informe', 'error');
-                return;
-            }
-            
-            // 🔥 MENSAJE DE IA GENERANDO (lo que echabas de menos)
-            Swal.fire({
-                title: '🤖 IA generando informe...',
-                html: '<div class="text-lg mb-2">La inteligencia artificial está analizando tu tema</div><div class="text-sm text-gray-500">Esto puede tomar unos segundos</div><div class="mt-4"><div class="animate-pulse flex justify-center"><div class="w-3 h-3 bg-blue-500 rounded-full mx-1"></div><div class="w-3 h-3 bg-blue-500 rounded-full mx-1"></div><div class="w-3 h-3 bg-blue-500 rounded-full mx-1"></div></div></div>',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-            
-            const datos = {
-                modo: modoActual,
-                tema: tema,
-                nombre: document.getElementById('nombre').value || '',
-                asignatura: document.getElementById('asignatura').value || '',
-                profesor: document.getElementById('profesor').value || '',
-                institucion: document.getElementById('institucion').value || '',
-                fecha_entrega: document.getElementById('fechaEntrega').value || '',
-                norma: document.getElementById('norma').value || 'apa7'
-            };
-            
-            if (modoActual === 'auto') {
-                datos.texto_completo = document.getElementById('textoCompleto').value;
-            } else if (modoActual === 'manual') {
-                datos.introduccion = document.getElementById('introManual').value;
-                datos.objetivos = document.getElementById('objetivosManual').value;
-                datos.conclusiones = document.getElementById('conclusionesManual').value;
-            } else {
-                datos.texto_completo = document.getElementById('temaRapido').value;
-            }
-            
-            try {
-                const response = await fetch('/generar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(datos)
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    Swal.fire({
-                        title: '✅ ¡Informe generado con IA!',
-                        text: 'Tu informe académico está listo',
-                        icon: 'success',
-                        confirmButtonText: '📥 Descargar PDF'
-                    }).then(() => {
-                        window.location.href = result.download_url;
-                    });
-                } else {
-                    Swal.fire('Error', result.error, 'error');
-                }
-            } catch (error) {
-                Swal.fire('Error', 'No se pudo generar el informe', 'error');
-            }
-        };
-    </script>
+<body style="font-family: Arial; text-align:center; padding:40px;">
+
+<h1>📄 Generador de Informes</h1>
+
+<input id="tema" placeholder="Tema" style="padding:10px; width:300px;"><br><br>
+<input id="nombre" placeholder="Tu nombre" style="padding:10px; width:300px;"><br><br>
+
+<button onclick="generar()" style="padding:10px 20px;">Generar PDF</button>
+
+<script>
+async function generar() {
+    let tema = document.getElementById('tema').value;
+    let nombre = document.getElementById('nombre').value;
+
+    if (!tema || tema.length < 3) {
+        alert("Tema inválido");
+        return;
+    }
+
+    Swal.fire({title: "Generando...", didOpen: () => Swal.showLoading()});
+
+    const res = await fetch('/generar', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tema, nombre})
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+        window.location.href = data.download_url;
+    } else {
+        alert(data.error);
+    }
+}
+</script>
+
 </body>
 </html>
