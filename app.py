@@ -24,8 +24,8 @@ def contenido_local(tema):
         "marco_teorico": "Bases teóricas.",
         "metodologia": "Enfoque descriptivo.",
         "desarrollo": f"Análisis de {tema}.",
-        "conclusiones": "Se concluye que es relevante.",
-        "recomendaciones": "Se recomienda seguir investigando.",
+        "conclusiones": "Conclusiones del tema.",
+        "recomendaciones": "Recomendaciones.",
         "referencias": "Fuentes académicas."
     }
 
@@ -104,14 +104,13 @@ class MyDocTemplate(BaseDocTemplate):
     def add_page_number(self, canvas, doc):
         canvas.drawRightString(200*mm, 20, str(doc.page))
 
-# -------- PDF PRO --------
+# -------- PDF --------
 def generar_pdf(datos, secciones):
     filename = f"informe_{uuid.uuid4().hex[:6]}.pdf"
     path = os.path.join('informes_generados', filename)
 
     doc = MyDocTemplate(path)
     styles = getSampleStyleSheet()
-
     story = []
 
     # PORTADA
@@ -135,7 +134,6 @@ def generar_pdf(datos, secciones):
     toc.levelStyles = [
         ParagraphStyle(name='TOCHeading1', fontSize=12, leftIndent=20)
     ]
-
     story.append(toc)
     story.append(PageBreak())
 
@@ -169,13 +167,27 @@ def index():
 def generar():
     datos = request.json
     tema = datos.get('tema', '').strip()
+    modo = datos.get('modo', 'auto')
 
     if len(tema) < 3:
         return jsonify({'success': False, 'error': 'Tema inválido'})
 
     nombre = datos.get('nombre', 'Estudiante')
 
-    secciones = generar_ia(tema)
+    # 🔥 MODOS
+    if modo == "manual":
+        secciones = {
+            "introduccion": datos.get('intro', ''),
+            "objetivos": datos.get('obj', ''),
+            "marco_teorico": "",
+            "metodologia": "",
+            "desarrollo": datos.get('des', ''),
+            "conclusiones": "",
+            "recomendaciones": "",
+            "referencias": ""
+        }
+    else:
+        secciones = generar_ia(tema)
 
     if not secciones:
         secciones = contenido_local(tema)
