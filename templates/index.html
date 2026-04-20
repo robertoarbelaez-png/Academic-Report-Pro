@@ -1,111 +1,70 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
 <meta charset="UTF-8">
 <title>Academic Report Pro</title>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.tailwindcss.com"></script>
-
 </head>
 
 <body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-<div class="bg-white shadow-xl rounded-2xl p-8 w-full max-w-2xl">
+<div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-xl">
 
-    <h1 class="text-3xl font-bold text-center mb-6">📄 Academic Report Pro</h1>
+<h1 class="text-3xl font-bold text-center mb-6">📄 Academic Report Pro</h1>
 
-    <!-- INPUTS -->
-    <div class="space-y-4">
-        <input id="tema" type="text" placeholder="Tema del informe"
-            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+<input id="tema" placeholder="Tema" class="w-full p-3 border rounded mb-3">
+<input id="nombre" placeholder="Nombre" class="w-full p-3 border rounded mb-3">
 
-        <input id="nombre" type="text" placeholder="Tu nombre"
-            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+<button onclick="generar()" class="w-full bg-blue-600 text-white py-3 rounded">
+Generar Informe
+</button>
 
-        <button onclick="generar()"
-            class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
-            Generar Informe
-        </button>
-    </div>
+<div id="preview" class="mt-6 hidden">
+<h2 class="font-bold mb-2">Vista previa</h2>
+<div id="contenidoPreview" class="bg-gray-100 p-3 rounded text-sm"></div>
 
-    <!-- PREVIEW -->
-    <div id="preview" class="mt-8 hidden">
-        <h2 class="text-xl font-bold mb-3">Vista previa</h2>
-        <div id="contenidoPreview" class="bg-gray-50 p-4 rounded-lg text-sm max-h-64 overflow-y-auto"></div>
-
-        <button id="descargarBtn"
-            class="mt-4 w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700">
-            Descargar PDF
-        </button>
-    </div>
+<button id="descargarBtn" class="mt-3 w-full bg-green-600 text-white py-3 rounded">
+Descargar PDF
+</button>
+</div>
 
 </div>
 
 <script>
+let url = "";
 
-let downloadUrl = "";
-
-// 🔥 GENERAR INFORME
 async function generar(){
     let tema = document.getElementById('tema').value;
 
-    if(!tema || tema.length < 3){
-        Swal.fire('Error', 'Tema inválido', 'error');
-        return;
-    }
+    Swal.fire({title:"Generando...", didOpen:()=>Swal.showLoading()});
 
-    Swal.fire({
-        title: "Generando informe...",
-        text: "Esto puede tardar unos segundos",
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
+    const res = await fetch('/generar',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+            tema: tema,
+            nombre: document.getElementById('nombre').value
+        })
     });
 
-    try {
-        const res = await fetch('/generar',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({
-                tema: tema,
-                nombre: document.getElementById('nombre').value
-            })
-        });
+    const data = await res.json();
+    Swal.close();
 
-        const data = await res.json();
+    if(data.success){
+        url = data.download_url;
 
-        Swal.close();
+        document.getElementById('contenidoPreview').innerHTML =
+            "<p>Informe generado correctamente</p>";
 
-        if(data.success){
-
-            downloadUrl = data.download_url;
-
-            // 🔥 Mostrar preview simple
-            document.getElementById('contenidoPreview').innerHTML =
-                `<p><strong>Tema:</strong> ${tema}</p>
-                 <p>El informe fue generado correctamente.</p>`;
-
-            document.getElementById('preview').classList.remove('hidden');
-
-            Swal.fire('Listo', 'Informe generado correctamente', 'success');
-
-        } else {
-            Swal.fire('Error', data.error, 'error');
-        }
-
-    } catch (error) {
-        Swal.close();
-        Swal.fire('Error', 'Fallo en la conexión', 'error');
+        document.getElementById('preview').classList.remove('hidden');
     }
 }
 
-// 🔥 DESCARGAR
-document.getElementById('descargarBtn').addEventListener('click', () => {
-    if(downloadUrl){
-        window.open(downloadUrl, '_blank');
-    }
-});
-
+document.getElementById('descargarBtn').onclick = ()=>{
+    window.open(url);
+}
 </script>
 
 </body>
