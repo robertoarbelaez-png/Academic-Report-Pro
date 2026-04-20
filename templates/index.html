@@ -1,40 +1,59 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Generador de Informes</title>
+<title>Academic Report Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body style="font-family: Arial; text-align:center; padding:40px;">
 
-<h1>📄 Generador de Informes</h1>
+<h1>📄 Academic Report Pro</h1>
 
-<input id="tema" placeholder="Tema" style="padding:10px; width:300px;"><br><br>
-<input id="nombre" placeholder="Tu nombre" style="padding:10px; width:300px;"><br><br>
+<input id="tema" placeholder="Tema"><br><br>
+<input id="nombre" placeholder="Nombre"><br><br>
 
-<button onclick="generar()" style="padding:10px 20px;">Generar PDF</button>
+<select id="modo">
+<option value="auto">Automático</option>
+<option value="manual">Manual</option>
+</select>
+
+<br><br>
+
+<textarea id="intro" placeholder="Introducción (manual)"></textarea><br>
+<textarea id="obj" placeholder="Objetivos (manual)"></textarea><br>
+<textarea id="conclu" placeholder="Conclusiones (manual)"></textarea><br><br>
+
+<button onclick="generar()">Generar</button>
 
 <script>
-async function generar() {
+async function generar(){
     let tema = document.getElementById('tema').value;
-    let nombre = document.getElementById('nombre').value;
 
-    if (!tema || tema.length < 3) {
+    if(!tema || tema.length < 3){
         alert("Tema inválido");
         return;
     }
 
-    Swal.fire({title: "Generando...", didOpen: () => Swal.showLoading()});
+    const datos = {
+        tema: tema,
+        nombre: document.getElementById('nombre').value,
+        modo: document.getElementById('modo').value,
+        introduccion: document.getElementById('intro').value,
+        objetivos: document.getElementById('obj').value,
+        conclusiones: document.getElementById('conclu').value
+    };
 
-    const res = await fetch('/generar', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({tema, nombre})
+    Swal.fire({title:"Generando...", didOpen:()=>Swal.showLoading()});
+
+    const res = await fetch('/generar',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(datos)
     });
 
     const data = await res.json();
 
-    if (data.success) {
+    if(data.success){
         window.location.href = data.download_url;
     } else {
         alert(data.error);
