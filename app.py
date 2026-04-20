@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 
 from reportlab.platypus import (
     Paragraph, Spacer, PageBreak,
-    BaseDocTemplate, Frame, PageTemplate, TableOfContents
+    BaseDocTemplate, Frame, PageTemplate
 )
 from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.lib.pagesizes import letter
