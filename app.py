@@ -6,7 +6,7 @@ from reportlab.platypus import (
     Paragraph, Spacer, PageBreak,
     BaseDocTemplate, Frame, PageTemplate, TableOfContents
 )
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import mm
 
