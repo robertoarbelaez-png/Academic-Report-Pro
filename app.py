@@ -29,25 +29,29 @@ def contenido_local(tema):
         "introduccion": f"Este informe analiza {tema} desde una perspectiva académica.",
         "objetivos": f"Analizar {tema} y comprender su impacto.",
         "marco_teorico": f"Se fundamenta en teorías relacionadas con {tema}.",
-        "metodologia": "Enfoque descriptivo.",
+        "metodologia": "Enfoque descriptivo del estudio.",
         "desarrollo": f"Se desarrolla el tema {tema} con análisis crítico.",
         "conclusiones": f"{tema} es relevante en el contexto actual.",
         "recomendaciones": "Se recomienda profundizar en el tema."
     }
 
-# ================= GENERAR =================
+# ================= RUTAS =================
+@app.route('/')
+def home():
+    return render_template("index.html")
+
 @app.route('/generar', methods=['POST'])
 def generar():
     try:
         data = request.json
-        tema = data.get('tema')
+        tema = data.get('tema', '')
 
-        if not tema:
-            return jsonify({"success": False, "error": "Tema vacío"}), 400
+        if not tema or len(tema) < 3:
+            return jsonify({"success": False, "error": "Tema inválido"}), 400
 
         secciones = None
 
-        # IA (rápida)
+        # ===== IA (rápida) =====
         if GROQ_API_KEY:
             try:
                 res = requests.post(
@@ -55,10 +59,10 @@ def generar():
                     headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
                     json={
                         "model": "llama-3.3-70b-versatile",
-                        "messages": [{"role": "user", "content": f"Informe sobre {tema}"}],
+                        "messages": [{"role": "user", "content": f"Genera un informe académico sobre {tema}"}],
                         "max_tokens": 1500
                     },
-                    timeout=15
+                    timeout=25
                 )
                 if res.status_code == 200:
                     texto = limpiar_texto(res.json()['choices'][0]['message']['content'])
@@ -67,9 +71,11 @@ def generar():
             except:
                 pass
 
+        # fallback seguro
         if not secciones:
             secciones = contenido_local(tema)
 
+        # ===== PDF =====
         filename = f"informe_{uuid.uuid4().hex[:6]}.pdf"
         filepath = os.path.join('informes_generados', filename)
 
@@ -85,14 +91,31 @@ def generar():
 
         story = []
 
-        # PORTADA
+        # ===== PORTADA =====
         story.append(Spacer(1, 2*inch))
         story.append(Paragraph("INFORME ACADÉMICO", styles['Title']))
         story.append(Spacer(1, 0.3*inch))
-        story.append(Paragraph(tema, styles['Normal']))
+        story.append(Paragraph(tema.upper(), styles['Normal']))
+        story.append(Spacer(1, 0.5*inch))
+        story.append(Paragraph(f"Fecha: {datetime.now().strftime('%d/%m/%Y')}", styles['Normal']))
         story.append(PageBreak())
 
-        # SECCIONES
+        # ===== ÍNDICE =====
+        story.append(Paragraph("ÍNDICE", styles['Titulo']))
+        indices = [
+            "1. INTRODUCCIÓN ........................................ 2",
+            "2. OBJETIVOS ........................................... 3",
+            "3. MARCO TEÓRICO ....................................... 4",
+            "4. METODOLOGÍA ......................................... 5",
+            "5. DESARROLLO .......................................... 6",
+            "6. CONCLUSIONES ........................................ 7",
+            "7. RECOMENDACIONES ..................................... 8"
+        ]
+        for item in indices:
+            story.append(Paragraph(item, styles['Normal']))
+        story.append(PageBreak())
+
+        # ===== CONTENIDO =====
         for titulo, contenido in [
             ("1. INTRODUCCIÓN", secciones["introduccion"]),
             ("2. OBJETIVOS", secciones["objetivos"]),
@@ -116,14 +139,10 @@ def generar():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
-# ================= DESCARGA =================
 @app.route('/descargar/<file>')
 def descargar(file):
     return send_file(os.path.join('informes_generados', file), as_attachment=True)
 
-@app.route('/')
-def home():
-    return render_template("index.html")
-
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
